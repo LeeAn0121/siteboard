@@ -221,7 +221,7 @@ class SubActivity : AppCompatActivity() {
         return uri
     }
 
-    // 위치 가져오기 (무조건 한글 도로명 주소로 변환)
+    // 위치 가져오기 (시스템을 한국어 환경으로 속여서 Geocoder 호출)
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun fetchLocation() {
         binding.etLocation.setText("위치 찾는 중...")
@@ -231,12 +231,16 @@ class SubActivity : AppCompatActivity() {
                 ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
 
             if (location != null) {
-                // 🚨 핵심: 무조건 한국어(Locale.KOREA)를 사용하도록 강제 지정
-                val geocoder = android.location.Geocoder(this, Locale.KOREA)
+                // 🚨 꼼수: 현재 앱의 환경(Context)을 강제로 한국어로 둔갑시킵니다.
+                val config = android.content.res.Configuration(resources.configuration)
+                config.setLocale(Locale.KOREA)
+                val localizedContext = createConfigurationContext(config)
+
+                // 둔갑된 환경으로 Geocoder 생성
+                val geocoder = android.location.Geocoder(localizedContext, Locale.KOREA)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
-                        // "대한민국" 이라는 단어를 빼고 깔끔한 도로명/지번 주소만 남김
                         val address = addresses.firstOrNull()?.getAddressLine(0)?.replace("대한민국 ", "") ?: "주소를 찾을 수 없습니다."
                         runOnUiThread { binding.etLocation.setText(address) }
                     }
@@ -247,7 +251,7 @@ class SubActivity : AppCompatActivity() {
                 }
             } else {
                 binding.etLocation.setText("")
-                Toast.makeText(this, "GPS 신호를 찾을 수 없습니다. (실내이거나 위치가 꺼져있을 수 있습니다)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "GPS 신호를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             binding.etLocation.setText("")
