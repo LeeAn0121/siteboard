@@ -4,12 +4,15 @@ import android.Manifest
 import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.graphics.*
+import android.location.Geocoder
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.jongwook.siteboard.databinding.ActivitySubBinding
@@ -21,6 +24,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class SubActivity : AppCompatActivity() {
+
+    private val requestLocationPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
+        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) fetchLocation()
+        else Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+    }
+
     private lateinit var binding: ActivitySubBinding
     private var currentPhotoUri: Uri? = null
     private val db by lazy { AppDatabase.getDatabase(this) }
@@ -69,6 +78,14 @@ class SubActivity : AppCompatActivity() {
 
         binding.btnGallery.setOnClickListener {
             if (validateInputs()) pickImageLauncher.launch(arrayOf("image/*"))
+        }
+
+        binding.btnGps.setOnClickListener {
+            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                fetchLocation()
+            } else {
+                requestLocationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+            }
         }
     }
 
@@ -202,5 +219,36 @@ class SubActivity : AppCompatActivity() {
         val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         uri?.let { contentResolver.openOutputStream(it)?.use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out) } }
         return uri
+    }
+
+    // 클래스 맨 아래에 GPS 및 주소 변환(Geocoder) 함수 추가
+    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
+    private fun fetchLocation() {
+        binding.etLocation.setText("위치 찾는 중...")
+        try {
+            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
+            val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+
+            if (location != null) {
+                val geocoder = Geocoder(this, Locale.KOREA)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
+                        val address = addresses.firstOrNull()?.getAddressLine(0)?.replace("대한민국 ", "") ?: "주소 변환 실패"
+                        runOnUiThread { binding.etLocation.setText(address) }
+                    }
+                } else {
+                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+                    val address = addresses?.firstOrNull()?.getAddressLine(0)?.replace("대한민국 ", "") ?: "주소 변환 실패"
+                    binding.etLocation.setText(address)
+                }
+            } else {
+                binding.etLocation.setText("")
+                Toast.makeText(this, "GPS 신호를 찾을 수 없습니다. 스마트폰 위치 설정을 켜주세요.", Toast.LENGTH_SHORT).show()
+            }
+        } catch (e: Exception) {
+            binding.etLocation.setText("")
+            Toast.makeText(this, "위치 오류 발생", Toast.LENGTH_SHORT).show()
+        }
     }
 }

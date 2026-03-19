@@ -30,6 +30,22 @@ class DetailActivity : AppCompatActivity() {
         // 사진 띄우기
         binding.ivDetailImage.setImageURI(Uri.parse(imageUri))
 
+        // --- 핀치 줌(확대/축소) 로직 추가 ---
+        var scaleFactor = 1.0f
+        val scaleGestureDetector = android.view.ScaleGestureDetector(this, object : android.view.ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(detector: android.view.ScaleGestureDetector): Boolean {
+                scaleFactor *= detector.scaleFactor
+                scaleFactor = Math.max(1.0f, Math.min(scaleFactor, 5.0f)) // 1배 ~ 5배까지 확대 제한
+                binding.ivDetailImage.scaleX = scaleFactor
+                binding.ivDetailImage.scaleY = scaleFactor
+                return true
+            }
+        })
+        binding.ivDetailImage.setOnTouchListener { _, event ->
+            scaleGestureDetector.onTouchEvent(event)
+            true
+        }
+
         // 1. 카톡/문자 공유 기능
         binding.btnShare.setOnClickListener {
             val shareIntent = Intent(Intent.ACTION_SEND).apply {
