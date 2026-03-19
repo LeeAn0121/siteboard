@@ -18,7 +18,7 @@
             android:layout_marginBottom="16dp"/>
 
         <EditText android:id="@+id/etTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" android:hint="제목 (필수)" />
-        <EditText android:id="@+id/etDesc" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" android:hint="설명 (옵션)" />
+        <EditText android:id="@+id/etDesc" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="12dp" android:hint="작업 내용 (옵션)" />
 
         <EditText android:id="@+id/etLocation" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="24dp" android:hint="위치 (옵션)" />
 

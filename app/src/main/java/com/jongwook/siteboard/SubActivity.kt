@@ -199,7 +199,7 @@ class SubActivity : AppCompatActivity() {
         }
 
         val lines = mutableListOf("제목: $title")
-        if (desc.isNotEmpty()) lines.add("설명: $desc")
+        if (desc.isNotEmpty()) lines.add("작업 내용: $desc")
         if (loc.isNotEmpty()) lines.add("위치: $loc")
         lines.add("일시: " + SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()))
 
