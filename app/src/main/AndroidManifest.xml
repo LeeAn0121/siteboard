@@ -27,6 +27,8 @@
 
         <activity android:name=".SubActivity" />
 
+        <activity android:name=".DetailActivity" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.jongwook.siteboard.fileprovider"

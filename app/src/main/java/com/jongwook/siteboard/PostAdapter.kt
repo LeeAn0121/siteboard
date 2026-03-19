@@ -1,5 +1,6 @@
 package com.jongwook.siteboard
 
+import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -16,6 +17,20 @@ class PostAdapter : ListAdapter<PostEntity, PostAdapter.ViewHolder>(DiffCallback
             binding.tvDate.text = post.date
             // 저장된 Uri 문자열을 파싱해서 이미지 표시
             binding.ivPost.setImageURI(Uri.parse(post.imageUri))
+
+            // [추가된 부분] 리스트의 항목을 클릭하면 상세 화면(DetailActivity)으로 이동 및 데이터 전달
+            itemView.setOnClickListener {
+                val context = itemView.context
+                val intent = Intent(context, DetailActivity::class.java).apply {
+                    putExtra("id", post.id)
+                    putExtra("title", post.title)
+                    putExtra("desc", post.description)
+                    putExtra("loc", post.location)
+                    putExtra("imageUri", post.imageUri)
+                    putExtra("date", post.date)
+                }
+                context.startActivity(intent)
+            }
         }
     }
 

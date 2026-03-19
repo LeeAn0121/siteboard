@@ -19,6 +19,12 @@ interface PostDao {
 
     @Insert
     suspend fun insert(post: PostEntity)
+
+    @Update
+    suspend fun update(post: PostEntity)
+
+    @Delete
+    suspend fun delete(post: PostEntity)
 }
 
 @Database(entities = [PostEntity::class], version = 1)

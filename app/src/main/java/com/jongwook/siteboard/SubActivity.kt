@@ -25,48 +25,23 @@ class SubActivity : AppCompatActivity() {
     private var currentPhotoUri: Uri? = null
     private val db by lazy { AppDatabase.getDatabase(this) }
 
-    // 권한 요청 (카메라)
-    private val requestCameraPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { granted ->
-        if (granted) launchCamera()
-        else Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
+    // [추가] 수정 모드 판별 변수
+    private var isEditMode = false
+    private var editPostId = 0
+
+    private val requestCameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) launchCamera() else Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
     }
 
-    // [수정] 카메라 촬영 결과 처리
-    private val takePictureLauncher = registerForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { isSuccess ->
-        if (isSuccess) {
-            currentPhotoUri?.let { uri ->
-                try {
-                    // 캐시에 저장된 임시 사진을 비트맵으로 불러와 화면에 강제 표출
-                    val inputStream = contentResolver.openInputStream(uri)
-                    val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
-                    binding.ivPreview.setImageBitmap(bitmap)
-                    inputStream?.close()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    Toast.makeText(this, "사진 미리보기를 불러올 수 없습니다.", Toast.LENGTH_SHORT).show()
-                }
-            }
-        } else {
-            // 촬영 취소 시
-            currentPhotoUri = null
-        }
+    // [변경] 사진을 찍거나 고르면 바로 processAndSaveImage() 호출하여 자동 저장!
+    private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
+        if (isSuccess) currentPhotoUri?.let { processAndSaveImage(it) }
     }
 
-    // 갤러리 선택
-    private val pickImageLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri: Uri? ->
+    private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
-            contentResolver.takePersistableUriPermission(
-                it,
-                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-            )
-            currentPhotoUri = it
-            binding.ivPreview.setImageURI(it)
+            contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            processAndSaveImage(it)
         }
     }
 
@@ -75,109 +50,75 @@ class SubActivity : AppCompatActivity() {
         binding = ActivitySubBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // [추가] 기존 글 수정(Edit)으로 들어왔을 경우 데이터 채워넣기
+        if (intent.hasExtra("edit_id")) {
+            isEditMode = true
+            editPostId = intent.getIntExtra("edit_id", 0)
+            binding.etTitle.setText(intent.getStringExtra("edit_title"))
+            binding.etDesc.setText(intent.getStringExtra("edit_desc"))
+            binding.etLocation.setText(intent.getStringExtra("edit_loc"))
+            Toast.makeText(this, "내용 수정 후 사진을 다시 촬영/선택하면 덮어쓰기 됩니다.", Toast.LENGTH_LONG).show()
+        }
+
         binding.btnCamera.setOnClickListener {
-            if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                launchCamera()
-            } else {
-                requestCameraPermission.launch(Manifest.permission.CAMERA)
+            if (validateInputs()) {
+                if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) launchCamera()
+                else requestCameraPermission.launch(Manifest.permission.CAMERA)
             }
         }
 
         binding.btnGallery.setOnClickListener {
-            pickImageLauncher.launch(arrayOf("image/*"))
-        }
-
-        binding.btnSave.setOnClickListener {
-            val title = binding.etTitle.text.toString().trim()
-            val desc = binding.etDesc.text.toString().trim()
-            val loc = binding.etLocation.text.toString().trim()
-
-            if (title.isEmpty()) {
-                Toast.makeText(this, "제목을 입력해주세요.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            if (currentPhotoUri == null) {
-                Toast.makeText(this, "사진을 먼저 선택하거나 촬영해주세요.", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            // 사진 합성 및 DB 저장 코루틴 실행
-            processAndSaveImage(title, desc, loc)
+            if (validateInputs()) pickImageLauncher.launch(arrayOf("image/*"))
         }
     }
 
-    // [수정] 카메라 실행 로직 (FileProvider 캐시 방식)
+    private fun validateInputs(): Boolean {
+        if (binding.etTitle.text.toString().trim().isEmpty()) {
+            Toast.makeText(this, "제목을 입력해주세요.", Toast.LENGTH_SHORT).show()
+            return false
+        }
+        return true
+    }
+
     private fun launchCamera() {
         try {
-            // 1. 앱 내부 캐시 폴더에 임시 파일 생성
-            val tempFile = java.io.File(cacheDir, "temp_camera_image.jpg")
-
-            // 2. FileProvider를 통해 안전한 URI 생성 (매니페스트에 등록된 authorities 사용)
-            currentPhotoUri = androidx.core.content.FileProvider.getUriForFile(
-                this,
-                "com.jongwook.siteboard.fileprovider",
-                tempFile
-            )
-
-            // 3. 카메라 앱 호출
-            currentPhotoUri?.let { uri ->
-                takePictureLauncher.launch(uri)
-            }
+            val tempFile = java.io.File(cacheDir, "temp_camera.jpg")
+            currentPhotoUri = androidx.core.content.FileProvider.getUriForFile(this, "com.jongwook.siteboard.fileprovider", tempFile)
+            currentPhotoUri?.let { takePictureLauncher.launch(it) }
         } catch (e: Exception) {
-            e.printStackTrace()
-            Toast.makeText(this, "카메라를 실행할 수 없습니다.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "카메라 실행 오류", Toast.LENGTH_SHORT).show()
         }
     }
 
-    // (문제 2 해결) 사진에 텍스트를 합성하고 저장하는 메인 함수
-    private fun processAndSaveImage(title: String, desc: String, loc: String) {
-        binding.btnSave.isEnabled = false // 저장 중 중복 클릭 방지
-        binding.btnSave.text = "저장 중..."
+    // 🌟 핵심: 이미지 합성 및 자동 저장 로직
+    private fun processAndSaveImage(uri: Uri) {
+        val title = binding.etTitle.text.toString().trim()
+        val desc = binding.etDesc.text.toString().trim()
+        val loc = binding.etLocation.text.toString().trim()
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // 1. 원본 이미지 불러오기
-                val originalBitmap = loadBitmapFromUri(currentPhotoUri!!)
-                if (originalBitmap == null) throw Exception("이미지를 불러올 수 없습니다.")
-
-                // 2. 이미지 위에 텍스트 합성
+                val originalBitmap = loadBitmapFromUri(uri) ?: throw Exception("이미지 로드 실패")
                 val stampedBitmap = stampTextOnBitmap(originalBitmap, title, desc, loc)
+                val newSavedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
 
-                // 3. 합성된 새 이미지를 갤러리(SITEBOARD 폴더)에 저장
-                val newSavedUri = saveBitmapToGallery(stampedBitmap, title)
-                if (newSavedUri == null) throw Exception("합성된 이미지 저장에 실패했습니다.")
-
-                // 4. Room DB에 기록 (새로 생성된 이미지 경로 저장)
                 val currentDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
-                db.postDao().insert(
-                    PostEntity(
-                        title = title,
-                        description = desc,         // 추가된 설명 파라미터 전달
-                        location = loc,             // 추가된 위치 파라미터 전달
-                        imageUri = newSavedUri.toString(), // imagePath 대신 변경된 imageUri 사용
-                        date = currentDate
-                    )
+                val post = PostEntity(
+                    id = if (isEditMode) editPostId else 0, // 수정 모드면 기존 ID 덮어쓰기
+                    title = title, description = desc, location = loc,
+                    imageUri = newSavedUri.toString(), date = currentDate
                 )
 
-                // 5. 원본이 방금 찍은 임시 카메라 사진이라면 원본은 삭제 (용량 확보)
-                if (currentPhotoUri.toString().contains("SITEBOARD")) {
-                    contentResolver.delete(currentPhotoUri!!, null, null)
-                }
+                // DB 저장 또는 덮어쓰기(업데이트)
+                if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
 
-                // UI 업데이트 및 액티비티 종료
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@SubActivity, "성공적으로 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SubActivity, if(isEditMode) "수정 완료!" else "저장 완료!", Toast.LENGTH_SHORT).show()
                     setResult(RESULT_OK)
-                    finish()
+                    finish() // 완료 즉시 화면 닫고 메인으로!
                 }
-
             } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@SubActivity, "오류 발생: ${e.message}", Toast.LENGTH_SHORT).show()
-                    binding.btnSave.isEnabled = true
-                    binding.btnSave.text = "SITEBOARD 저장"
-                }
+                withContext(Dispatchers.Main) { Toast.makeText(this@SubActivity, "오류: ${e.message}", Toast.LENGTH_SHORT).show() }
             }
         }
     }
@@ -187,87 +128,61 @@ class SubActivity : AppCompatActivity() {
         return try {
             inputStream = contentResolver.openInputStream(uri)
             BitmapFactory.decodeStream(inputStream)
-        } catch (e: Exception) {
-            null
-        } finally {
-            inputStream?.close()
-        }
+        } finally { inputStream?.close() }
     }
 
-    // 비트맵에 텍스트를 그리는 핵심 로직
+    // 🌟 추가 요청사항: 흰색 반투명 배경 + 검은 글씨 적용!
     private fun stampTextOnBitmap(bitmap: Bitmap, title: String, desc: String, loc: String): Bitmap {
-        // 원본 이미지를 복사하여 수정 가능한 캔버스 생성
         val resultBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(resultBitmap)
 
-        // 해상도에 맞춰 글자 크기 동적 설정 (사진 세로 길이의 약 3.5%)
-        val calculatedTextSize = (resultBitmap.height * 0.035f).coerceAtLeast(30f)
-
+        val calcSize = (resultBitmap.height * 0.035f).coerceAtLeast(30f)
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.WHITE // 글자색 흰색
-            textSize = calculatedTextSize
+            color = Color.BLACK // 배경이 밝으므로 검은 글씨
+            textSize = calcSize
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-            // 가독성을 위한 검은색 그림자 테두리 효과
-            setShadowLayer(8f, 2f, 2f, Color.BLACK)
         }
 
-        // 그릴 텍스트 목록 정리
-        val timeStamp = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
-        val linesToDraw = mutableListOf<String>()
-        linesToDraw.add("제목: $title")
-        if (desc.isNotEmpty()) linesToDraw.add("설명: $desc")
-        if (loc.isNotEmpty()) linesToDraw.add("위치: $loc")
-        linesToDraw.add("일시: $timeStamp")
+        val lines = mutableListOf("제목: $title")
+        if (desc.isNotEmpty()) lines.add("설명: $desc")
+        if (loc.isNotEmpty()) lines.add("위치: $loc")
+        lines.add("일시: " + SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()))
 
-        // 좌측 하단 시작 좌표 설정
+        // 텍스트 중 가장 긴 가로 길이 구하기
+        var maxTextWidth = 0f
+        for (line in lines) {
+            val width = textPaint.measureText(line)
+            if (width > maxTextWidth) maxTextWidth = width
+        }
+
         val padding = resultBitmap.width * 0.03f
-        var startY = resultBitmap.height - padding - (linesToDraw.size * calculatedTextSize * 1.3f)
+        val lineSpacing = calcSize * 1.4f
+        val totalHeight = lines.size * lineSpacing
+        val startY = resultBitmap.height - padding - totalHeight
 
-        // 한 줄씩 사진에 텍스트 각인
-        for (line in linesToDraw) {
-            startY += calculatedTextSize * 1.3f
-            canvas.drawText(line, padding, startY, textPaint)
+        // 반투명 배경 박스 그리기
+        val bgPaint = Paint().apply { color = Color.argb(160, 255, 255, 255) } // 흰색 투명도 60%
+        val bgRect = RectF(padding - 20f, startY - calcSize, padding + maxTextWidth + 20f, startY + totalHeight + 10f)
+        canvas.drawRoundRect(bgRect, 16f, 16f, bgPaint) // 모서리가 둥근 박스
+
+        // 텍스트 그리기
+        var textY = startY
+        for (line in lines) {
+            canvas.drawText(line, padding, textY, textPaint)
+            textY += lineSpacing
         }
-
         return resultBitmap
     }
 
-    // 합성된 비트맵을 갤러리에 저장하는 로직
     private fun saveBitmapToGallery(bitmap: Bitmap, titleText: String): Uri? {
-        val safeTitle = titleText.replace(Regex("[^a-zA-Z0-9가-힣]"), "_")
-        val fileName = "${safeTitle}_${System.currentTimeMillis()}.jpg"
-
+        val fileName = "${titleText}_${System.currentTimeMillis()}.jpg"
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/SITEBOARD_Docs")
-            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/SITEBOARD_Docs")
         }
-
         val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-        uri?.let {
-            contentResolver.openOutputStream(it)?.use { outputStream ->
-                // 화질 95%로 압축하여 저장
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 95, outputStream)
-            }
-        }
+        uri?.let { contentResolver.openOutputStream(it)?.use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out) } }
         return uri
-    }
-
-    // --- 추가할 코드: 메모리 부족으로 앱이 죽어도 Uri를 기억하는 기능 ---
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        // 화면이 꺼지기 직전에 현재 Uri 값을 Bundle에 안전하게 보관합니다.
-        currentPhotoUri?.let { outState.putString("photo_uri_backup", it.toString()) }
-    }
-
-    override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-        super.onRestoreInstanceState(savedInstanceState)
-        // 화면이 다시 켜질 때 보관했던 Uri 값을 복구합니다.
-        val backupUriString = savedInstanceState.getString("photo_uri_backup")
-        if (backupUriString != null) {
-            currentPhotoUri = Uri.parse(backupUriString)
-        }
     }
 }
