@@ -68,13 +68,24 @@ class DetailActivity : AppCompatActivity() {
             finish() // 상세화면 닫기
         }
 
-        // 3. 삭제 기능
+        // 3. 삭제 기능 (DB + 앨범 실제 파일 동시 삭제)
         binding.btnDelete.setOnClickListener {
             val postToDelete = PostEntity(id, title, desc, loc, imageUri, date)
             lifecycleScope.launch(Dispatchers.IO) {
+                try {
+                    // 🚨 추가됨: 스마트폰 앨범(MediaStore)에서 실제 사진 파일 삭제
+                    if (imageUri.isNotEmpty()) {
+                        contentResolver.delete(Uri.parse(imageUri), null, null)
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace() // 혹시 파일이 이미 없더라도 앱이 튕기지 않게 방어
+                }
+
+                // DB에서 데이터 삭제
                 db.postDao().delete(postToDelete)
+
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@DetailActivity, "삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@DetailActivity, "모두 삭제되었습니다.", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             }

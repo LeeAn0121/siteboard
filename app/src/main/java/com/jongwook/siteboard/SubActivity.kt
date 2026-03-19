@@ -221,34 +221,37 @@ class SubActivity : AppCompatActivity() {
         return uri
     }
 
-    // 클래스 맨 아래에 GPS 및 주소 변환(Geocoder) 함수 추가
+    // 위치 가져오기 (무조건 한글 도로명 주소로 변환)
     @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
     private fun fetchLocation() {
         binding.etLocation.setText("위치 찾는 중...")
         try {
-            val locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-            val location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                ?: locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+            val locationManager = getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
+            val location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
+                ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
 
             if (location != null) {
-                val geocoder = Geocoder(this, Locale.KOREA)
+                // 🚨 핵심: 무조건 한국어(Locale.KOREA)를 사용하도록 강제 지정
+                val geocoder = android.location.Geocoder(this, Locale.KOREA)
+
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
-                        val address = addresses.firstOrNull()?.getAddressLine(0)?.replace("대한민국 ", "") ?: "주소 변환 실패"
+                        // "대한민국" 이라는 단어를 빼고 깔끔한 도로명/지번 주소만 남김
+                        val address = addresses.firstOrNull()?.getAddressLine(0)?.replace("대한민국 ", "") ?: "주소를 찾을 수 없습니다."
                         runOnUiThread { binding.etLocation.setText(address) }
                     }
                 } else {
                     val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                    val address = addresses?.firstOrNull()?.getAddressLine(0)?.replace("대한민국 ", "") ?: "주소 변환 실패"
+                    val address = addresses?.firstOrNull()?.getAddressLine(0)?.replace("대한민국 ", "") ?: "주소를 찾을 수 없습니다."
                     binding.etLocation.setText(address)
                 }
             } else {
                 binding.etLocation.setText("")
-                Toast.makeText(this, "GPS 신호를 찾을 수 없습니다. 스마트폰 위치 설정을 켜주세요.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "GPS 신호를 찾을 수 없습니다. (실내이거나 위치가 꺼져있을 수 있습니다)", Toast.LENGTH_SHORT).show()
             }
         } catch (e: Exception) {
             binding.etLocation.setText("")
-            Toast.makeText(this, "위치 오류 발생", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "위치 변환 오류", Toast.LENGTH_SHORT).show()
         }
     }
 }

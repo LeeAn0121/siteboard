@@ -94,6 +94,7 @@ class MainActivity : AppCompatActivity() {
     // 클래스 맨 아래에 PDF 생성 함수 추가
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun exportToPdf() {
+        // [예외 처리] 데이터가 1개도 없을 때 튕기지 않고 Toast 알림 후 종료
         if (allPosts.isEmpty()) {
             android.widget.Toast.makeText(this, "내보낼 데이터가 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
             return
