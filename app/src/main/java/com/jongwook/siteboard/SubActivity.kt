@@ -24,12 +24,6 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class SubActivity : AppCompatActivity() {
-
-    private val requestLocationPermission = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
-        if (permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true) fetchLocation()
-        else Toast.makeText(this, "위치 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
-    }
-
     private lateinit var binding: ActivitySubBinding
     private var currentPhotoUri: Uri? = null
     private val db by lazy { AppDatabase.getDatabase(this) }
@@ -59,14 +53,26 @@ class SubActivity : AppCompatActivity() {
         binding = ActivitySubBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // [추가] 기존 글 수정(Edit)으로 들어왔을 경우 데이터 채워넣기
+        // GPS 버튼 이벤트 관련 코드는 삭제되었습니다.
+
+        // [수정됨] 수정(Edit)으로 들어왔을 경우
         if (intent.hasExtra("edit_id")) {
             isEditMode = true
             editPostId = intent.getIntExtra("edit_id", 0)
             binding.etTitle.setText(intent.getStringExtra("edit_title"))
             binding.etDesc.setText(intent.getStringExtra("edit_desc"))
             binding.etLocation.setText(intent.getStringExtra("edit_loc"))
-            Toast.makeText(this, "내용 수정 후 사진을 다시 촬영/선택하면 덮어쓰기 됩니다.", Toast.LENGTH_LONG).show()
+
+            // 사진 첨부 및 테마 관련 UI 싹 다 숨기기
+            binding.tvThemeLabel.visibility = android.view.View.GONE
+            binding.rgTheme.visibility = android.view.View.GONE
+            binding.tvPhotoLabel.visibility = android.view.View.GONE
+            binding.layoutPhotoButtons.visibility = android.view.View.GONE
+
+            // 텍스트 수정 전용 버튼 띄우기
+            binding.btnEditSave.visibility = android.view.View.VISIBLE
+
+            Toast.makeText(this, "앱 내부의 텍스트 정보만 수정됩니다. (사진 워터마크 변경 불가)", Toast.LENGTH_LONG).show()
         }
 
         binding.btnCamera.setOnClickListener {
@@ -80,11 +86,40 @@ class SubActivity : AppCompatActivity() {
             if (validateInputs()) pickImageLauncher.launch(arrayOf("image/*"))
         }
 
-        binding.btnGps.setOnClickListener {
-            if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                fetchLocation()
-            } else {
-                requestLocationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+        // [추가됨] 수정 완료 버튼 눌렀을 때의 동작
+        binding.btnEditSave.setOnClickListener {
+            if (validateInputs()) {
+                updateTextOnly()
+            }
+        }
+    }
+
+    // [추가됨] 사진 변경 없이 DB의 텍스트 정보만 업데이트하는 함수
+    private fun updateTextOnly() {
+        val title = binding.etTitle.text.toString().trim()
+        val desc = binding.etDesc.text.toString().trim()
+        val loc = binding.etLocation.text.toString().trim()
+
+        // DetailActivity에서 넘겨준 원본 사진 경로와 날짜를 그대로 받아서 씁니다.
+        val originalImageUri = intent.getStringExtra("edit_imageUri") ?: ""
+        val originalDate = intent.getStringExtra("edit_date") ?: ""
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            val updatedPost = PostEntity(
+                id = editPostId,
+                title = title,
+                description = desc,
+                location = loc,
+                imageUri = originalImageUri,
+                date = originalDate
+            )
+
+            db.postDao().update(updatedPost)
+
+            withContext(Dispatchers.Main) {
+                Toast.makeText(this@SubActivity, "정보가 수정되었습니다.", Toast.LENGTH_SHORT).show()
+                setResult(RESULT_OK)
+                finish()
             }
         }
     }
@@ -219,43 +254,5 @@ class SubActivity : AppCompatActivity() {
         val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         uri?.let { contentResolver.openOutputStream(it)?.use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out) } }
         return uri
-    }
-
-    // 위치 가져오기 (시스템을 한국어 환경으로 속여서 Geocoder 호출)
-    @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
-    private fun fetchLocation() {
-        binding.etLocation.setText("위치 찾는 중...")
-        try {
-            val locationManager = getSystemService(android.content.Context.LOCATION_SERVICE) as android.location.LocationManager
-            val location = locationManager.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER)
-                ?: locationManager.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER)
-
-            if (location != null) {
-                // 🚨 꼼수: 현재 앱의 환경(Context)을 강제로 한국어로 둔갑시킵니다.
-                val config = android.content.res.Configuration(resources.configuration)
-                config.setLocale(Locale.KOREA)
-                val localizedContext = createConfigurationContext(config)
-
-                // 둔갑된 환경으로 Geocoder 생성
-                val geocoder = android.location.Geocoder(localizedContext, Locale.KOREA)
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    geocoder.getFromLocation(location.latitude, location.longitude, 1) { addresses ->
-                        val address = addresses.firstOrNull()?.getAddressLine(0)?.replace("대한민국 ", "") ?: "주소를 찾을 수 없습니다."
-                        runOnUiThread { binding.etLocation.setText(address) }
-                    }
-                } else {
-                    val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                    val address = addresses?.firstOrNull()?.getAddressLine(0)?.replace("대한민국 ", "") ?: "주소를 찾을 수 없습니다."
-                    binding.etLocation.setText(address)
-                }
-            } else {
-                binding.etLocation.setText("")
-                Toast.makeText(this, "GPS 신호를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
-            }
-        } catch (e: Exception) {
-            binding.etLocation.setText("")
-            Toast.makeText(this, "위치 변환 오류", Toast.LENGTH_SHORT).show()
-        }
     }
 }

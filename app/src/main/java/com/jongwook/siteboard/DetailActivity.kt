@@ -63,9 +63,12 @@ class DetailActivity : AppCompatActivity() {
                 putExtra("edit_title", title)
                 putExtra("edit_desc", desc)
                 putExtra("edit_loc", loc)
+                // 👇 아래 두 줄 추가! (기존 사진 경로와 날짜를 보존하기 위함)
+                putExtra("edit_imageUri", imageUri)
+                putExtra("edit_date", date)
             }
             startActivity(editIntent)
-            finish() // 상세화면 닫기
+            finish()
         }
 
         // 3. 삭제 기능 (DB + 앨범 실제 파일 동시 삭제)
