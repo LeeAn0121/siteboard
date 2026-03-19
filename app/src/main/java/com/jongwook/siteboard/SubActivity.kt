@@ -131,18 +131,20 @@ class SubActivity : AppCompatActivity() {
         } finally { inputStream?.close() }
     }
 
-    // 🌟 추가 요청사항: 흰색 반투명 배경 + 검은 글씨 적용!
+    // 🌟 수정됨: 완전 좌측 끝, 최하단에 붙는 배경 박스와 텍스트 로직
     private fun stampTextOnBitmap(bitmap: Bitmap, title: String, desc: String, loc: String): Bitmap {
         val resultBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(resultBitmap)
 
+        // 글자 크기 (사진 높이의 3.5%)
         val calcSize = (resultBitmap.height * 0.035f).coerceAtLeast(30f)
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.BLACK // 배경이 밝으므로 검은 글씨
+            color = Color.BLACK // 검은 글씨
             textSize = calcSize
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
 
+        // 입력된 텍스트 목록 생성
         val lines = mutableListOf("제목: $title")
         if (desc.isNotEmpty()) lines.add("설명: $desc")
         if (loc.isNotEmpty()) lines.add("위치: $loc")
@@ -155,22 +157,35 @@ class SubActivity : AppCompatActivity() {
             if (width > maxTextWidth) maxTextWidth = width
         }
 
-        val padding = resultBitmap.width * 0.03f
-        val lineSpacing = calcSize * 1.4f
-        val totalHeight = lines.size * lineSpacing
-        val startY = resultBitmap.height - padding - totalHeight
+        // 박스 내부 여백 및 줄간격 설정
+        val paddingX = calcSize * 0.8f // 좌우 여백
+        val paddingY = calcSize * 0.8f // 상하 여백
+        val lineSpacing = calcSize * 1.4f // 줄 간격
+        val totalTextHeight = (lines.size - 1) * lineSpacing + calcSize // 전체 글자 높이
 
-        // 반투명 배경 박스 그리기
-        val bgPaint = Paint().apply { color = Color.argb(160, 255, 255, 255) } // 흰색 투명도 60%
-        val bgRect = RectF(padding - 20f, startY - calcSize, padding + maxTextWidth + 20f, startY + totalHeight + 10f)
-        canvas.drawRoundRect(bgRect, 16f, 16f, bgPaint) // 모서리가 둥근 박스
+        // 💡 박스 좌표 계산 (좌측: 0, 하단: 사진의 끝)
+        val bgBottom = resultBitmap.height.toFloat()
+        val bgTop = bgBottom - totalTextHeight - (paddingY * 2)
+        val bgRight = maxTextWidth + (paddingX * 2)
 
-        // 텍스트 그리기
-        var textY = startY
+        // 반투명 흰색 배경 (투명도 160/255)
+        val bgPaint = Paint().apply { color = Color.argb(160, 255, 255, 255) }
+
+        // 꼼수: 왼쪽(-30f)과 아래(+30f)를 화면 밖으로 살짝 빼서 둥근 모서리를 잘라버립니다.
+        // 이렇게 하면 왼쪽과 아래는 직각으로 벽에 딱 붙고, 우측 상단만 예쁘게 둥글어집니다.
+        val bgRect = RectF(-30f, bgTop, bgRight, bgBottom + 30f)
+        canvas.drawRoundRect(bgRect, 20f, 20f, bgPaint)
+
+        // 텍스트 그리기 좌표 (첫 줄의 위치)
+        // drawText는 글자의 아랫부분(Baseline)을 기준으로 그려지므로 약간의 높이 보정이 필요합니다.
+        var textY = bgTop + paddingY + (calcSize * 0.85f)
+
         for (line in lines) {
-            canvas.drawText(line, padding, textY, textPaint)
+            // 좌측 여백(paddingX)부터 글씨 시작
+            canvas.drawText(line, paddingX, textY, textPaint)
             textY += lineSpacing
         }
+
         return resultBitmap
     }
 
