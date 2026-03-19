@@ -90,35 +90,46 @@ class SubActivity : AppCompatActivity() {
         }
     }
 
-    // 🌟 핵심: 이미지 합성 및 자동 저장 로직
+    // 이미지 합성 및 자동 저장 로직 (로딩 스피너 적용 및 테마 값 전달)
     private fun processAndSaveImage(uri: Uri) {
         val title = binding.etTitle.text.toString().trim()
         val desc = binding.etDesc.text.toString().trim()
         val loc = binding.etLocation.text.toString().trim()
 
+        // 라디오 버튼 상태 확인 (어두운 테마인지?)
+        val isDarkTheme = binding.rbDark.isChecked
+
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                // UI 스레드에서 로딩 창 띄우기
+                withContext(Dispatchers.Main) {
+                    binding.layoutLoading.visibility = android.view.View.VISIBLE
+                }
+
                 val originalBitmap = loadBitmapFromUri(uri) ?: throw Exception("이미지 로드 실패")
-                val stampedBitmap = stampTextOnBitmap(originalBitmap, title, desc, loc)
+                // 테마 변수(isDarkTheme) 추가 전달
+                val stampedBitmap = stampTextOnBitmap(originalBitmap, title, desc, loc, isDarkTheme)
                 val newSavedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
 
                 val currentDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
                 val post = PostEntity(
-                    id = if (isEditMode) editPostId else 0, // 수정 모드면 기존 ID 덮어쓰기
+                    id = if (isEditMode) editPostId else 0,
                     title = title, description = desc, location = loc,
                     imageUri = newSavedUri.toString(), date = currentDate
                 )
 
-                // DB 저장 또는 덮어쓰기(업데이트)
                 if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
 
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@SubActivity, if(isEditMode) "수정 완료!" else "저장 완료!", Toast.LENGTH_SHORT).show()
                     setResult(RESULT_OK)
-                    finish() // 완료 즉시 화면 닫고 메인으로!
+                    finish()
                 }
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) { Toast.makeText(this@SubActivity, "오류: ${e.message}", Toast.LENGTH_SHORT).show() }
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@SubActivity, "오류: ${e.message}", Toast.LENGTH_SHORT).show()
+                    binding.layoutLoading.visibility = android.view.View.GONE // 에러 시 로딩 숨김
+                }
             }
         }
     }
@@ -131,57 +142,49 @@ class SubActivity : AppCompatActivity() {
         } finally { inputStream?.close() }
     }
 
-    // 🌟 수정됨: 완전 좌측 끝, 최하단에 붙는 배경 박스와 텍스트 로직
-    private fun stampTextOnBitmap(bitmap: Bitmap, title: String, desc: String, loc: String): Bitmap {
+    // 🌟 수정됨: 완전 좌측 끝, 최하단에 붙는 배경 박스와 텍스트 로직 (테마에 따른 색상 반전)
+    private fun stampTextOnBitmap(bitmap: Bitmap, title: String, desc: String, loc: String, isDarkTheme: Boolean): Bitmap {
         val resultBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(resultBitmap)
 
-        // 글자 크기 (사진 높이의 3.5%)
         val calcSize = (resultBitmap.height * 0.035f).coerceAtLeast(30f)
+
+        // ✨ 테마에 따른 글자색/배경색 결정
+        val textColor = if (isDarkTheme) Color.WHITE else Color.BLACK
+        val bgColor = if (isDarkTheme) Color.argb(160, 0, 0, 0) else Color.argb(160, 255, 255, 255)
+
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = Color.BLACK // 검은 글씨
+            color = textColor
             textSize = calcSize
             typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         }
 
-        // 입력된 텍스트 목록 생성
         val lines = mutableListOf("제목: $title")
         if (desc.isNotEmpty()) lines.add("설명: $desc")
         if (loc.isNotEmpty()) lines.add("위치: $loc")
         lines.add("일시: " + SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()))
 
-        // 텍스트 중 가장 긴 가로 길이 구하기
         var maxTextWidth = 0f
         for (line in lines) {
             val width = textPaint.measureText(line)
             if (width > maxTextWidth) maxTextWidth = width
         }
 
-        // 박스 내부 여백 및 줄간격 설정
-        val paddingX = calcSize * 0.8f // 좌우 여백
-        val paddingY = calcSize * 0.8f // 상하 여백
-        val lineSpacing = calcSize * 1.4f // 줄 간격
-        val totalTextHeight = (lines.size - 1) * lineSpacing + calcSize // 전체 글자 높이
+        val paddingX = calcSize * 0.8f
+        val paddingY = calcSize * 0.8f
+        val lineSpacing = calcSize * 1.4f
+        val totalTextHeight = (lines.size - 1) * lineSpacing + calcSize
 
-        // 💡 박스 좌표 계산 (좌측: 0, 하단: 사진의 끝)
         val bgBottom = resultBitmap.height.toFloat()
         val bgTop = bgBottom - totalTextHeight - (paddingY * 2)
         val bgRight = maxTextWidth + (paddingX * 2)
 
-        // 반투명 흰색 배경 (투명도 160/255)
-        val bgPaint = Paint().apply { color = Color.argb(160, 255, 255, 255) }
-
-        // 꼼수: 왼쪽(-30f)과 아래(+30f)를 화면 밖으로 살짝 빼서 둥근 모서리를 잘라버립니다.
-        // 이렇게 하면 왼쪽과 아래는 직각으로 벽에 딱 붙고, 우측 상단만 예쁘게 둥글어집니다.
+        val bgPaint = Paint().apply { color = bgColor }
         val bgRect = RectF(-30f, bgTop, bgRight, bgBottom + 30f)
         canvas.drawRoundRect(bgRect, 20f, 20f, bgPaint)
 
-        // 텍스트 그리기 좌표 (첫 줄의 위치)
-        // drawText는 글자의 아랫부분(Baseline)을 기준으로 그려지므로 약간의 높이 보정이 필요합니다.
         var textY = bgTop + paddingY + (calcSize * 0.85f)
-
         for (line in lines) {
-            // 좌측 여백(paddingX)부터 글씨 시작
             canvas.drawText(line, paddingX, textY, textPaint)
             textY += lineSpacing
         }

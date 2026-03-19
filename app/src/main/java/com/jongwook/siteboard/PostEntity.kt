@@ -15,7 +15,7 @@ data class PostEntity(
 @Dao
 interface PostDao {
     @Query("SELECT * FROM site_posts ORDER BY id DESC")
-    fun getAll(): kotlinx.coroutines.flow.Flow<List<PostEntity>>
+    fun getAllPosts(): kotlinx.coroutines.flow.Flow<List<PostEntity>>
 
     @Insert
     suspend fun insert(post: PostEntity)
