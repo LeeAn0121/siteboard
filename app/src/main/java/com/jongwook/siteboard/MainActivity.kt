@@ -94,7 +94,7 @@ class MainActivity : AppCompatActivity() {
     // 클래스 맨 아래에 PDF 생성 함수 추가
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun exportToPdf() {
-        // [예외 처리] 데이터가 1개도 없을 때 튕기지 않고 Toast 알림 후 종료
+        // [예외 처리] 데이터가 1개도 없을 때  Toast 알림 후 종료
         if (allPosts.isEmpty()) {
             android.widget.Toast.makeText(this, "내보낼 데이터가 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
             return
@@ -103,14 +103,20 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
             try {
                 withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(this@MainActivity, "PDF 보고서를 생성 중입니다...", android.widget.Toast.LENGTH_SHORT).show()
+                    android.widget.Toast.makeText(this@MainActivity, "고화질 PDF 보고서를 생성 중입니다...", android.widget.Toast.LENGTH_SHORT).show()
                 }
 
                 val pdfDocument = android.graphics.pdf.PdfDocument()
-                val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 사이즈 규격
+                val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 규격 (72 DPI 기준)
 
-                // 모든 게시글을 순회하며 페이지 생성
-                for ((index, post) in allPosts.withIndex()) {
+                // 고화질 출력을 위한 비트맵 페인트 설정
+                val bitmapPaint = android.graphics.Paint().apply {
+                    isFilterBitmap = true // ⭐️ 핵심: 비트맵 필터링 활성화 (이미지 선명도 향상)
+                    isAntiAlias = true    // 경계면 부드럽게 처리
+                    isDither = true       // 색상 표현 개선
+                }
+
+                for (post in allPosts) {
                     val page = pdfDocument.startPage(pageInfo)
                     val canvas = page.canvas
                     val paint = android.graphics.Paint().apply {
@@ -119,8 +125,9 @@ class MainActivity : AppCompatActivity() {
                         isFakeBoldText = true
                     }
 
-                    // 텍스트 정보 입력
+                    // 1. 텍스트 정보 입력
                     canvas.drawText("📋 SITEBOARD 현장 작업 보고서", 50f, 60f, paint)
+
                     paint.textSize = 14f
                     paint.isFakeBoldText = false
                     canvas.drawText("• 현장명(제목): ${post.title}", 50f, 110f, paint)
@@ -128,34 +135,49 @@ class MainActivity : AppCompatActivity() {
                     canvas.drawText("• 일시: ${post.date}", 50f, 170f, paint)
                     canvas.drawText("• 작업 내용: ${post.description}", 50f, 200f, paint)
 
-                    // 사진 입력 (A4 사이즈에 맞게 비율 조정)
+                    // 2. 사진 입력 (원본 해상도 유지하며 그리기)
                     try {
                         val uri = android.net.Uri.parse(post.imageUri)
                         val inputStream = contentResolver.openInputStream(uri)
                         val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
+
                         if (bitmap != null) {
-                            val scaledBitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, 495, (495f * bitmap.height / bitmap.width).toInt(), true)
-                            canvas.drawBitmap(scaledBitmap, 50f, 240f, null)
+                            // 사진이 들어갈 가로 폭 설정 (A4 가로 595에서 여백 제외 495)
+                            val margin = 50f
+                            val targetWidth = 495f
+                            val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
+                            val targetHeight = targetWidth * aspectRatio
+
+                            // ⭐️ 수정한 부분: createScaledBitmap 대신 RectF를 사용하여 캔버스에서 직접 스케일링
+                            val destRect = android.graphics.RectF(margin, 240f, margin + targetWidth, 240f + targetHeight)
+
+                            // 원본 비트맵을 지정된 영역에 고화질 페인트를 사용하여 직접 그림
+                            canvas.drawBitmap(bitmap, null, destRect, bitmapPaint)
+
+                            // 메모리 확보를 위해 비트맵 해제
+                            bitmap.recycle()
                         }
                         inputStream?.close()
-                    } catch (e: Exception) { e.printStackTrace() }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
 
                     pdfDocument.finishPage(page)
                 }
 
-                // 스마트폰 [다운로드] 폴더에 PDF 저장
+                // 3. 다운로드 폴더에 저장
                 val fileName = "SITEBOARD_Report_${System.currentTimeMillis()}.pdf"
                 val values = android.content.ContentValues().apply {
                     put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
                     put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-                        put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
-                    }
+                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
                 }
 
                 val uri = contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
                 uri?.let {
-                    contentResolver.openOutputStream(it)?.use { outputStream -> pdfDocument.writeTo(outputStream) }
+                    contentResolver.openOutputStream(it)?.use { outputStream ->
+                        pdfDocument.writeTo(outputStream)
+                    }
                 }
                 pdfDocument.close()
 

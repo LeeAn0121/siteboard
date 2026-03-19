@@ -53,9 +53,9 @@ class SubActivity : AppCompatActivity() {
         binding = ActivitySubBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // GPS 버튼 이벤트 관련 코드는 삭제되었습니다.
+        // (주의: GPS 권한 요청 및 fetchLocation 관련 코드는 삭제되었습니다.)
 
-        // [수정됨] 수정(Edit)으로 들어왔을 경우
+        // [수정] 수정(Edit) 모드 진입 시 데이터만 채워넣음 (UI 숨기지 않음)
         if (intent.hasExtra("edit_id")) {
             isEditMode = true
             editPostId = intent.getIntExtra("edit_id", 0)
@@ -63,16 +63,8 @@ class SubActivity : AppCompatActivity() {
             binding.etDesc.setText(intent.getStringExtra("edit_desc"))
             binding.etLocation.setText(intent.getStringExtra("edit_loc"))
 
-            // 사진 첨부 및 테마 관련 UI 싹 다 숨기기
-            binding.tvThemeLabel.visibility = android.view.View.GONE
-            binding.rgTheme.visibility = android.view.View.GONE
-            binding.tvPhotoLabel.visibility = android.view.View.GONE
-            binding.layoutPhotoButtons.visibility = android.view.View.GONE
-
-            // 텍스트 수정 전용 버튼 띄우기
-            binding.btnEditSave.visibility = android.view.View.VISIBLE
-
-            Toast.makeText(this, "앱 내부의 텍스트 정보만 수정됩니다. (사진 워터마크 변경 불가)", Toast.LENGTH_LONG).show()
+            // 🚨 안내 Toast 변경 (사용자에게 사진을 다시 선택하라고 알림)
+            Toast.makeText(this, "내용 고친 후 사진을 다시 촬영/선택하면 워터마크가 바뀝니다.", Toast.LENGTH_LONG).show()
         }
 
         binding.btnCamera.setOnClickListener {
@@ -86,12 +78,7 @@ class SubActivity : AppCompatActivity() {
             if (validateInputs()) pickImageLauncher.launch(arrayOf("image/*"))
         }
 
-        // [추가됨] 수정 완료 버튼 눌렀을 때의 동작
-        binding.btnEditSave.setOnClickListener {
-            if (validateInputs()) {
-                updateTextOnly()
-            }
-        }
+        // (주의: updateTextOnly 전용 버튼 이벤트는 삭제되었습니다.)
     }
 
     // [추가됨] 사진 변경 없이 DB의 텍스트 정보만 업데이트하는 함수
