@@ -29,7 +29,7 @@
             <RadioButton android:id="@+id/rbDark" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="어둡게(검은 배경)" android:layout_weight="1"/>
         </RadioGroup>
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="사진 첨부 및 자동 저장 (워터마크 갱신)" android:textColor="#666666" android:layout_marginBottom="8dp"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="갤러리 선택 및 카메라 촬영" android:textColor="#666666" android:layout_marginBottom="8dp"/>
 
         <LinearLayout
             android:layout_width="match_parent"
