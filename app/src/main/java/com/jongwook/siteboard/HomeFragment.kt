@@ -130,7 +130,7 @@ class HomeFragment : Fragment() {
                     val canvas = page.canvas
 
                     // 1. 문서 헤더 및 장식 선
-                    canvas.drawText("SITEBOARD 현장 점검 보고서", margin, margin, textPaint)
+                    canvas.drawText("SITEBOARD 현장 보고서", margin, margin, textPaint)
                     canvas.drawLine(margin, margin + 10f, pageWidth - margin, margin + 10f, textPaint)
 
                     // 2. 메인 제목 (프로젝트명)
@@ -148,32 +148,55 @@ class HomeFragment : Fragment() {
                     canvas.drawText("• 작업 내용 : $safeDesc", margin, currentY, textPaint)
                     currentY += 40f
 
-                    // 4. 현장 사진 불러오기 및 A4 비율에 맞게 리사이징
+                    // 4. 현장 사진 불러오기 (고화질 유지)
                     try {
-                        val uri = android.net.Uri.parse(post.imageUri)
+                        val imageString = post.imageUri
+                        var bitmap: android.graphics.Bitmap? = null
 
-                        // 안드로이드 버전에 따라 이미지 불러오는 방식 분기
-                        val bitmap = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                            val source = android.graphics.ImageDecoder.createSource(requireContext().contentResolver, uri)
-                            android.graphics.ImageDecoder.decodeBitmap(source)
+                        if (imageString.startsWith("content://") || imageString.startsWith("file://")) {
+                            val uri = android.net.Uri.parse(imageString)
+                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                                val source = android.graphics.ImageDecoder.createSource(requireContext().contentResolver, uri)
+                                bitmap = android.graphics.ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
+                                    decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
+                                }
+                            } else {
+                                @Suppress("DEPRECATION")
+                                bitmap = android.provider.MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
+                            }
                         } else {
-                            @Suppress("DEPRECATION")
-                            android.provider.MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
+                            bitmap = android.graphics.BitmapFactory.decodeFile(imageString)
                         }
 
-                        // A4 가로 여백을 뺀 너비에 맞춰서 사진 비율(Scale) 계산
-                        val targetWidth = pageWidth - (margin * 2)
-                        val scale = targetWidth / bitmap.width.toFloat()
-                        val targetHeight = bitmap.height * scale
+                        if (bitmap != null) {
+                            // 💡 고화질 인쇄를 위한 특수 붓(Paint) 세팅
+                            val highQualityPaint = android.graphics.Paint().apply {
+                                isAntiAlias = true       // 테두리 부드럽게 (계단현상 방지)
+                                isFilterBitmap = true    // 비트맵 스무딩 처리
+                                isDither = true          // 색상 깨짐 방지
+                            }
 
-                        // 사진 리사이징 후 캔버스에 그리기
-                        val scaledBitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, targetWidth.toInt(), targetHeight.toInt(), true)
-                        canvas.drawBitmap(scaledBitmap, margin, currentY, null)
+                            // PDF 상에서 사진이 차지할 '물리적 너비와 높이' 계산
+                            val targetCanvasWidth = pageWidth - (margin * 2)
+                            val scale = targetCanvasWidth / bitmap.width.toFloat()
+                            val targetCanvasHeight = bitmap.height * scale
+
+                            // 💡 사진 픽셀을 자르지 않고, 고화질 원본을 지정된 영역(RectF)에 압축해서 그려넣음!
+                            val dstRect = android.graphics.RectF(
+                                margin,
+                                currentY,
+                                margin + targetCanvasWidth,
+                                currentY + targetCanvasHeight
+                            )
+
+                            canvas.drawBitmap(bitmap, null, dstRect, highQualityPaint)
+                        } else {
+                            canvas.drawText("[! 이미지 파일을 찾을 수 없습니다 !]", margin, currentY, textPaint)
+                        }
 
                     } catch (e: Exception) {
                         e.printStackTrace()
-                        // 사진이 삭제되었거나 경로가 깨진 경우 예외 처리
-                        canvas.drawText("[! 이미지를 불러올 수 없거나 삭제되었습니다 !]", margin, currentY, textPaint)
+                        canvas.drawText("[! 이미지 로드 실패: ${e.localizedMessage} !]", margin, currentY, textPaint)
                     }
 
                     // 한 페이지 작업 끝
