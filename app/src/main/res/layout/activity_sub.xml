@@ -50,6 +50,19 @@
             <EditText android:id="@+id/etDesc" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="100dp" android:gravity="top" android:background="@null" android:padding="16dp" android:hint="여기에 입력하세요" android:textColorHint="#757575" android:textColor="#FFFFFF" android:textSize="16sp" android:inputType="textMultiLine"/>
         </androidx.cardview.widget.CardView>
 
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switchContinuous"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🔄 연속 촬영 (저장 후 내용 유지하기)"
+            android:textColor="#D0BCFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:thumbTint="#FFFFFF"
+            app:trackTint="#7C4DFF"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="32dp"/>
+
     </LinearLayout>
 </ScrollView>
 

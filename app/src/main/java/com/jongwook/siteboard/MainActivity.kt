@@ -1,195 +1,38 @@
 package com.jongwook.siteboard
 
-import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.text.Editable
-import android.text.TextWatcher
-import android.view.View
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.fragment.app.Fragment
 import com.jongwook.siteboard.databinding.ActivityMainBinding
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
-    private val postAdapter = PostAdapter()
-    private val db by lazy { AppDatabase.getDatabase(this) }
-
-    // 원본 데이터를 보관할 리스트
-    private var allPosts: List<PostEntity> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initRecyclerView()
-        observePosts()
-        setupSearch()
-
-        binding.btnOpenSub.setOnClickListener {
-            startActivity(Intent(this, SubActivity::class.java))
+        // 앱이 켜지면 기본으로 홈 프래그먼트를 보여줌
+        if (savedInstanceState == null) {
+            replaceFragment(HomeFragment())
         }
 
-        binding.btnExportPdf.setOnClickListener {
-            exportToPdf()
-        }
-    }
-
-    private fun initRecyclerView() {
-        binding.rvPostList.apply {
-            // [UX 개선] 1열 리스트에서 2열 격자(Grid) 뷰로 변경!
-            layoutManager = GridLayoutManager(this@MainActivity, 2)
-            adapter = postAdapter
-            setHasFixedSize(true)
-        }
-    }
-
-    private fun observePosts() {
-        lifecycleScope.launch {
-            db.postDao().getAllPosts().collect { postList ->
-                allPosts = postList
-                filterList(binding.etSearch.text.toString()) // 데이터가 갱신되면 검색어에 맞게 필터링
+        // 하단 탭 바 터치 이벤트 처리
+        binding.bottomNavigationView.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.nav_home -> replaceFragment(HomeFragment())
+                 R.id.nav_archive -> replaceFragment(ArchiveFragment()) // 나중에 추가할 보관함
+                 R.id.nav_settings -> replaceFragment(SettingsFragment()) // 나중에 추가할 설정
             }
+            true
         }
     }
 
-    private fun setupSearch() {
-        binding.etSearch.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                filterList(s.toString())
-            }
-            override fun afterTextChanged(s: Editable?) {}
-        })
-    }
-
-    // [기능 추가] 검색 필터링 및 텅 빈 화면(Empty State) 처리
-    private fun filterList(query: String) {
-        val filtered = if (query.isEmpty()) {
-            allPosts
-        } else {
-            allPosts.filter {
-                it.title.contains(query, ignoreCase = true) ||
-                        it.location?.contains(query, ignoreCase = true) == true
-            }
-        }
-
-        postAdapter.submitList(filtered)
-
-        // 검색 결과가 없거나 게시글이 0개면 안내 문구 표시
-        if (filtered.isEmpty()) {
-            binding.layoutEmpty.visibility = View.VISIBLE
-            binding.rvPostList.visibility = View.GONE
-        } else {
-            binding.layoutEmpty.visibility = View.GONE
-            binding.rvPostList.visibility = View.VISIBLE
-        }
-    }
-
-    // 클래스 맨 아래에 PDF 생성 함수 추가
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun exportToPdf() {
-        // [예외 처리] 데이터가 1개도 없을 때  Toast 알림 후 종료
-        if (allPosts.isEmpty()) {
-            android.widget.Toast.makeText(this, "내보낼 데이터가 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-            try {
-                withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(this@MainActivity, "고화질 PDF 보고서를 생성 중입니다...", android.widget.Toast.LENGTH_SHORT).show()
-                }
-
-                val pdfDocument = android.graphics.pdf.PdfDocument()
-                val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 규격 (72 DPI 기준)
-
-                // 고화질 출력을 위한 비트맵 페인트 설정
-                val bitmapPaint = android.graphics.Paint().apply {
-                    isFilterBitmap = true // ⭐️ 핵심: 비트맵 필터링 활성화 (이미지 선명도 향상)
-                    isAntiAlias = true    // 경계면 부드럽게 처리
-                    isDither = true       // 색상 표현 개선
-                }
-
-                for (post in allPosts) {
-                    val page = pdfDocument.startPage(pageInfo)
-                    val canvas = page.canvas
-                    val paint = android.graphics.Paint().apply {
-                        textSize = 18f
-                        color = android.graphics.Color.BLACK
-                        isFakeBoldText = true
-                    }
-
-                    // 1. 텍스트 정보 입력
-                    canvas.drawText("📋 SITEBOARD 현장 작업 보고서", 50f, 60f, paint)
-
-                    paint.textSize = 14f
-                    paint.isFakeBoldText = false
-                    canvas.drawText("• 현장명(제목): ${post.title}", 50f, 110f, paint)
-                    canvas.drawText("• 위치: ${post.location}", 50f, 140f, paint)
-                    canvas.drawText("• 일시: ${post.date}", 50f, 170f, paint)
-                    canvas.drawText("• 작업 내용: ${post.description}", 50f, 200f, paint)
-
-                    // 2. 사진 입력 (원본 해상도 유지하며 그리기)
-                    try {
-                        val uri = android.net.Uri.parse(post.imageUri)
-                        val inputStream = contentResolver.openInputStream(uri)
-                        val bitmap = android.graphics.BitmapFactory.decodeStream(inputStream)
-
-                        if (bitmap != null) {
-                            // 사진이 들어갈 가로 폭 설정 (A4 가로 595에서 여백 제외 495)
-                            val margin = 50f
-                            val targetWidth = 495f
-                            val aspectRatio = bitmap.height.toFloat() / bitmap.width.toFloat()
-                            val targetHeight = targetWidth * aspectRatio
-
-                            // ⭐️ 수정한 부분: createScaledBitmap 대신 RectF를 사용하여 캔버스에서 직접 스케일링
-                            val destRect = android.graphics.RectF(margin, 240f, margin + targetWidth, 240f + targetHeight)
-
-                            // 원본 비트맵을 지정된 영역에 고화질 페인트를 사용하여 직접 그림
-                            canvas.drawBitmap(bitmap, null, destRect, bitmapPaint)
-
-                            // 메모리 확보를 위해 비트맵 해제
-                            bitmap.recycle()
-                        }
-                        inputStream?.close()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-
-                    pdfDocument.finishPage(page)
-                }
-
-                // 3. 다운로드 폴더에 저장
-                val fileName = "SITEBOARD_Report_${System.currentTimeMillis()}.pdf"
-                val values = android.content.ContentValues().apply {
-                    put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-                    put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-                    put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
-                }
-
-                val uri = contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
-                uri?.let {
-                    contentResolver.openOutputStream(it)?.use { outputStream ->
-                        pdfDocument.writeTo(outputStream)
-                    }
-                }
-                pdfDocument.close()
-
-                withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(this@MainActivity, "다운로드 폴더에 PDF가 저장되었습니다!", android.widget.Toast.LENGTH_LONG).show()
-                }
-
-            } catch (e: Exception) {
-                withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(this@MainActivity, "PDF 변환 실패: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
-                }
-            }
-        }
+    // 프래그먼트를 교체하는 공통 함수
+    private fun replaceFragment(fragment: Fragment) {
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.mainContainer, fragment)
+            .commit()
     }
 }

@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresPermission
@@ -83,30 +84,46 @@ class SubActivity : AppCompatActivity() {
 
     // [추가됨] 사진 변경 없이 DB의 텍스트 정보만 업데이트하는 함수
     private fun updateTextOnly() {
-        val title = binding.etTitle.text.toString().trim()
-        val desc = binding.etDesc.text.toString().trim()
-        val loc = binding.etLocation.text.toString().trim()
+        // 1. 먼저 저장할 데이터를 객체로 만듭니다.
+        val title = binding.etTitle.text.toString()
+        val desc = binding.etDesc.text.toString()
+        val loc = binding.etLocation.text.toString()
+        val date = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+// imageUri는 이미 전역 변수로 가지고 계신 값을 사용하면 됩니다. (예: currentPhotoUri.toString())
 
-        // DetailActivity에서 넘겨준 원본 사진 경로와 날짜를 그대로 받아서 씁니다.
-        val originalImageUri = intent.getStringExtra("edit_imageUri") ?: ""
-        val originalDate = intent.getStringExtra("edit_date") ?: ""
+        val postToSave = PostEntity(
+            title = title,
+            description = desc,
+            location = loc,
+            imageUri = currentPhotoUri.toString(), // 촬영된 사진의 경로
+            date = date
+        )
 
+// 2. 이제 비동기(IO 스레드)에서 저장합니다.
         lifecycleScope.launch(Dispatchers.IO) {
-            val updatedPost = PostEntity(
-                id = editPostId,
-                title = title,
-                description = desc,
-                location = loc,
-                imageUri = originalImageUri,
-                date = originalDate
-            )
+            try {
+                // [수정 포인트] 위에서 만든 postToSave를 여기에 넣습니다!
+                db.postDao().insert(postToSave)
 
-            db.postDao().update(updatedPost)
+                withContext(Dispatchers.Main) {
+                    // 로딩 화면 끄기
+                    binding.layoutLoading.visibility = View.GONE
+                    Toast.makeText(this@SubActivity, "현장 기록이 저장되었습니다.", Toast.LENGTH_SHORT).show()
 
-            withContext(Dispatchers.Main) {
-                Toast.makeText(this@SubActivity, "정보가 수정되었습니다.", Toast.LENGTH_SHORT).show()
-                setResult(RESULT_OK)
-                finish()
+                    // [연속 촬영 모드 체크]
+                    if (binding.switchContinuous.isChecked) {
+                        // 연속 촬영 중이면 사진 경로만 초기화하고 화면은 유지
+                        currentPhotoUri = null
+                        Toast.makeText(this@SubActivity, "글씨는 유지됩니다. 다음 사진을 찍으세요!", Toast.LENGTH_SHORT).show()
+                    } else {
+                        // 일반 모드면 화면 닫기
+                        finish()
+                    }
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@SubActivity, "저장 중 오류 발생: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -159,10 +176,30 @@ class SubActivity : AppCompatActivity() {
 
                 if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
 
+//                withContext(Dispatchers.Main) {
+//                    Toast.makeText(this@SubActivity, if(isEditMode) "수정 완료!" else "저장 완료!", Toast.LENGTH_SHORT).show()
+//                    setResult(RESULT_OK)
+//                    finish()
+//                }
+
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@SubActivity, if(isEditMode) "수정 완료!" else "저장 완료!", Toast.LENGTH_SHORT).show()
-                    setResult(RESULT_OK)
-                    finish()
+                    binding.layoutLoading.visibility = View.GONE // 로딩 끄기
+                    Toast.makeText(this@SubActivity, "현장 기록이 저장되었습니다.", Toast.LENGTH_SHORT).show()
+
+                    // 💡 [연속 촬영 모드 체크 로직]
+                    if (binding.switchContinuous.isChecked) {
+                        // 연속 촬영 On: 액티비티를 끄지 않고, 메모리의 사진 경로만 지워줌 (글씨는 남김)
+                        currentPhotoUri = null
+
+                        // UX 극대화: 토스트 띄우고 바로 카메라 앱을 다시 켜주면 진짜 편함!
+                        Toast.makeText(this@SubActivity, "다음 사진을 촬영하세요", Toast.LENGTH_SHORT).show()
+                        // launchCamera() // 원한다면 주석을 풀어서 저장 직후 카메라 자동 실행되게 할 수 있음
+
+                    } else {
+                        // 연속 촬영 Off: 기존처럼 단일 저장 후 화면 닫기
+                        setResult(RESULT_OK)
+                        finish()
+                    }
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {

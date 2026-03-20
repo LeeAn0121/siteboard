@@ -18,13 +18,13 @@ interface PostDao {
     fun getAllPosts(): kotlinx.coroutines.flow.Flow<List<PostEntity>>
 
     @Insert
-    suspend fun insert(post: PostEntity)
+    fun insert(post: PostEntity) // suspend 제거, 반환 타입 제거
 
     @Update
-    suspend fun update(post: PostEntity)
+    fun update(post: PostEntity) // suspend 제거, 반환 타입 제거
 
     @Delete
-    suspend fun delete(post: PostEntity)
+    fun delete(post: PostEntity) // suspend 제거, 반환 타입 제거
 }
 
 @Database(entities = [PostEntity::class], version = 1)
