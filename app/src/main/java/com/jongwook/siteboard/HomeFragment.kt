@@ -33,71 +33,64 @@ class HomeFragment : Fragment() {
 
         db = AppDatabase.getDatabase(requireContext())
 
-        // 💡 [수정] 1. 어댑터 초기화 (다중 선택 콜백 함수 연결)
+        // 💡 1. 어댑터 초기화 및 선택 모드 상태 관리
         postAdapter = PostAdapter { selectedCount ->
             if (selectedCount > 0) {
-                // 선택 모드 켜기 (새로 추가한 일괄 삭제 UI 띄우기)
+                // 선택 모드 ON: 추가 버튼 숨기고 삭제 메뉴 노출
                 binding.layoutSelectionMode.visibility = View.VISIBLE
                 binding.layoutTop.visibility = View.GONE
+                binding.btnOpenSub.hide() // FAB 숨기기 (로직 충돌 방지)
                 binding.tvSelectedCount.text = "${selectedCount}개 선택됨"
             } else {
-                // 선택 모드 끄기 (검색/PDF UI로 복구)
+                // 선택 모드 OFF: 추가 버튼 다시 보이고 일반 메뉴 노출
                 binding.layoutSelectionMode.visibility = View.GONE
                 binding.layoutTop.visibility = View.VISIBLE
+                binding.btnOpenSub.show() // FAB 다시 보이기
             }
         }
 
+        // 💡 2. 리사이클러뷰 세팅
         binding.rvPostList.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.rvPostList.adapter = postAdapter
 
-        // 💡 [추가] 2. 다중 선택 '취소' 버튼 누를 때
+        // 💡 3. [가장 중요] 추가 버튼(+) 클릭 리스너 및 우선순위 확보
+        binding.btnOpenSub.bringToFront() // 다른 레이아웃보다 위로 올리기
+        binding.btnOpenSub.setOnClickListener {
+            val intent = Intent(requireContext(), SubActivity::class.java)
+            startActivity(intent)
+        }
+
+        // 💡 4. 선택 모드 취소/삭제 버튼 리스너
         binding.btnCancelSelection.setOnClickListener {
             postAdapter.exitSelectionMode()
         }
 
-        // 💡 [추가] 3. 다중 선택 '일괄 삭제' 버튼 누를 때
         binding.btnDeleteSelected.setOnClickListener {
             val postsToDelete = postAdapter.selectedItems.toList()
-
             android.app.AlertDialog.Builder(requireContext())
                 .setTitle("일괄 삭제")
                 .setMessage("선택한 ${postsToDelete.size}개의 기록과 원본 사진을 완전히 삭제하시겠습니까?")
                 .setPositiveButton("삭제") { _, _ ->
                     viewLifecycleOwner.lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                         try {
-                            // 1) 앨범(MediaStore)에서 원본 사진 싹 지우기
                             for (post in postsToDelete) {
                                 if (post.imageUri.isNotEmpty()) {
-                                    try {
-                                        requireContext().contentResolver.delete(Uri.parse(post.imageUri), null, null)
-                                    } catch (e: Exception) {
-                                        e.printStackTrace()
-                                    }
+                                    requireContext().contentResolver.delete(Uri.parse(post.imageUri), null, null)
                                 }
                             }
-                            // 2) DB에서 데이터 일괄 삭제 (PostDao에 추가해둔 함수 사용)
                             db.postDao().deleteList(postsToDelete)
-
-                            // 3) 삭제 끝난 뒤 UI 원래대로 돌려놓기
                             kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                                 postAdapter.exitSelectionMode()
                                 android.widget.Toast.makeText(requireContext(), "${postsToDelete.size}개가 삭제되었습니다.", android.widget.Toast.LENGTH_SHORT).show()
                             }
-                        } catch (e: Exception) {
-                            e.printStackTrace()
-                        }
+                        } catch (e: Exception) { e.printStackTrace() }
                     }
                 }
                 .setNegativeButton("취소", null)
                 .show()
         }
 
-        binding.btnOpenSub.setOnClickListener {
-            val intent = Intent(requireContext(), SubActivity::class.java)
-            startActivity(intent)
-        }
-
-        // 검색창 실시간 타이핑 감지
+        // 💡 5. 검색창 및 PDF 버튼 (기존 유지)
         binding.etSearch.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -106,7 +99,6 @@ class HomeFragment : Fragment() {
             override fun afterTextChanged(s: android.text.Editable?) {}
         })
 
-        // PDF 추출 버튼
         binding.btnExportPdf.setOnClickListener {
             if (allPosts.isEmpty()) {
                 android.widget.Toast.makeText(requireContext(), "추출할 데이터가 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
@@ -115,7 +107,7 @@ class HomeFragment : Fragment() {
             }
         }
 
-        // DB Flow 자동 새로고침 (변경 없음)
+        // 💡 6. 실시간 데이터 관찰 (기존 유지)
         viewLifecycleOwner.lifecycleScope.launch {
             db.postDao().getAllPosts().collect { postList ->
                 if (postList.isEmpty()) {
@@ -124,7 +116,6 @@ class HomeFragment : Fragment() {
                 } else {
                     allPosts = postList
                     filterList(binding.etSearch.text.toString())
-
                     binding.layoutEmpty.visibility = View.GONE
                     binding.rvPostList.visibility = View.VISIBLE
                     postAdapter.submitList(postList)

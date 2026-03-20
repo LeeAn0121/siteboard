@@ -18,6 +18,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Siteboard">
 
+
+
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -39,14 +41,22 @@
             android:screenOrientation="portrait"
             android:exported="false" />
 
+        <activity
+            android:name=".SubActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
         <activity android:name=".DetailActivity"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:exported="false" />
 
         <activity android:name=".ProjectDetailActivity"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:exported="false" />
 
         <activity android:name=".WatermarkSettingsActivity"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

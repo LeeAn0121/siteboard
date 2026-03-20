@@ -1,8 +1,35 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp") // KSP 플러그인
 }
+
+// 💡 [자동 버전업 로직 시작]
+val versionPropsFile = file("version.properties")
+val versionProps = Properties()
+
+// 파일이 있으면 읽어오고, 없으면 새로 만듭니다.
+if (versionPropsFile.canRead()) {
+    versionProps.load(FileInputStream(versionPropsFile))
+} else {
+    versionProps.setProperty("VERSION_CODE", "0")
+}
+
+// 현재 숫자를 가져와서 +1 해줍니다.
+val currentCode = (versionProps.getProperty("VERSION_CODE") ?: "0").toInt()
+val autoVersionCode = currentCode + 1
+versionProps.setProperty("VERSION_CODE", autoVersionCode.toString())
+
+// 증가된 숫자를 다시 파일에 저장합니다.
+versionProps.store(versionPropsFile.writer(), "Auto-increment build version")
+
+// 사용자에게 보여질 버전 이름 (예: 1.0.1, 1.0.2 ...)
+val autoVersionName = "1.0.$autoVersionCode"
+// 💡 [자동 버전업 로직 끝]
+
 
 android {
     namespace = "com.jongwook.siteboard"
@@ -12,8 +39,10 @@ android {
         applicationId = "com.jongwook.siteboard"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+
+        // 💡 [적용 완료!] 고정된 숫자 대신 위에서 만든 자동 변수를 넣습니다.
+        versionCode = autoVersionCode
+        versionName = autoVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
