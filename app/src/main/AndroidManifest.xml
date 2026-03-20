@@ -20,8 +20,8 @@
 
         <activity
             android:name=".SplashActivity"
-            android:screenOrientation="portrait"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -30,11 +30,14 @@
 
         <activity
             android:name=".MainActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.Siteboard" />
+
+        <activity
+            android:name=".PermissionActivity"
             android:screenOrientation="portrait"
             android:exported="false" />
-
-        <activity android:name=".SubActivity"
-            android:screenOrientation="portrait" />
 
         <activity android:name=".DetailActivity"
             android:screenOrientation="portrait" />

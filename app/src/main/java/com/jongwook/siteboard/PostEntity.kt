@@ -26,6 +26,9 @@ interface PostDao {
     @Delete
     fun delete(post: PostEntity) // suspend 제거, 반환 타입 제거
 
+    @Query("DELETE FROM site_posts")
+    fun deleteAll() // 💡 모든 데이터를 한 방에 날리는 쿼리
+
     @Delete
     fun deleteList(posts: List<PostEntity>) // 💡 일괄 삭제용 함수 추가!
 }
