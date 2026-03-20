@@ -13,3 +13,10 @@
 .externalNativeBuild
 .cxx
 local.properties
+/app/release/app-release.apk
+/hs_err_pid8388.log
+/hs_err_pid37580.log
+/app/release/baselineProfiles/0/app-release.dm
+/app/release/output-metadata.json
+/app/release/baselineProfiles/1/app-release.dm
+/app/release/siteboard.apk.txt
