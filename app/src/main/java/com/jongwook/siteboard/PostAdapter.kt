@@ -3,35 +3,93 @@ package com.jongwook.siteboard
 import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.jongwook.siteboard.databinding.ItemPostBinding
 
-class PostAdapter : ListAdapter<PostEntity, PostAdapter.ViewHolder>(DiffCallback) {
+class PostAdapter(
+    // 💡 [추가] 선택 상태가 변할 때 HomeFragment에 개수를 알려주는 콜백
+    private val onSelectionChanged: (Int) -> Unit
+) : ListAdapter<PostEntity, PostAdapter.ViewHolder>(DiffCallback) {
+
+    // 💡 [추가] 다중 선택 모드 관련 변수
+    var isSelectionMode = false
+    val selectedItems = mutableSetOf<PostEntity>()
 
     inner class ViewHolder(private val binding: ItemPostBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(post: PostEntity) {
             binding.tvTitle.text = post.title
             binding.tvDate.text = post.date
-            // 저장된 Uri 문자열을 파싱해서 이미지 표시
-            binding.ivPost.setImageURI(Uri.parse(post.imageUri))
 
-            // [추가된 부분] 리스트의 항목을 클릭하면 상세 화면(DetailActivity)으로 이동 및 데이터 전달
+            try {
+                binding.ivPost.setImageURI(Uri.parse(post.imageUri))
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            // 💡 [추가] 1. 선택 모드에 따른 체크박스(cbSelect) 껐다 켜기
+            if (isSelectionMode) {
+                binding.cbSelect.visibility = View.VISIBLE
+                binding.cbSelect.isChecked = selectedItems.contains(post)
+            } else {
+                binding.cbSelect.visibility = View.GONE
+                binding.cbSelect.isChecked = false
+            }
+
+            // 💡 [수정] 2. 짧게 눌렀을 때의 동작 분기
             itemView.setOnClickListener {
-                val context = itemView.context
-                val intent = Intent(context, DetailActivity::class.java).apply {
-                    putExtra("id", post.id)
-                    putExtra("title", post.title)
-                    putExtra("desc", post.description)
-                    putExtra("loc", post.location)
-                    putExtra("imageUri", post.imageUri)
-                    putExtra("date", post.date)
+                if (isSelectionMode) {
+                    // 선택 모드일 때는 상세화면 이동 대신 체크박스 끄고 켜기
+                    toggleSelection(post)
+                } else {
+                    // 일반 모드일 때는 기존처럼 상세 화면(DetailActivity)으로 이동
+                    val context = itemView.context
+                    val intent = Intent(context, DetailActivity::class.java).apply {
+                        putExtra("id", post.id)
+                        putExtra("title", post.title)
+                        putExtra("desc", post.description)
+                        putExtra("loc", post.location)
+                        putExtra("imageUri", post.imageUri)
+                        putExtra("date", post.date)
+                    }
+                    context.startActivity(intent)
                 }
-                context.startActivity(intent)
+            }
+
+            // 💡 [추가] 3. 꾹~ 길게 눌렀을 때 (다중 선택 모드 진입)
+            itemView.setOnLongClickListener {
+                if (!isSelectionMode) {
+                    isSelectionMode = true
+                    toggleSelection(post)
+                }
+                true
             }
         }
+    }
+
+    // 💡 [추가] 선택 토글 로직
+    private fun toggleSelection(post: PostEntity) {
+        if (selectedItems.contains(post)) {
+            selectedItems.remove(post)
+            if (selectedItems.isEmpty()) {
+                isSelectionMode = false // 다 빼면 일반 모드로 복귀
+            }
+        } else {
+            selectedItems.add(post)
+        }
+        notifyDataSetChanged()
+        onSelectionChanged(selectedItems.size) // 뷰(Fragment)에 알림
+    }
+
+    // 💡 [추가] 선택 모드 강제 종료
+    fun exitSelectionMode() {
+        isSelectionMode = false
+        selectedItems.clear()
+        notifyDataSetChanged()
+        onSelectionChanged(0)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

@@ -25,6 +25,9 @@ interface PostDao {
 
     @Delete
     fun delete(post: PostEntity) // suspend 제거, 반환 타입 제거
+
+    @Delete
+    fun deleteList(posts: List<PostEntity>) // 💡 일괄 삭제용 함수 추가!
 }
 
 @Database(entities = [PostEntity::class], version = 1)

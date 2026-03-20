@@ -25,7 +25,12 @@ class ProjectDetailActivity : AppCompatActivity() {
         binding.btnBack.setOnClickListener { finish() }
 
         // 3. 종욱님의 PostAdapter 재활용! (격자 세팅)
-        postAdapter = PostAdapter()
+        // 💡 어댑터가 요구하는 필수 파라미터(콜백)를 넣어줍니다.
+        postAdapter = PostAdapter { selectedCount ->
+            // 폴더 상세 화면에는 아직 '일괄 삭제 상단바 UI'를 만들지 않았으므로,
+            // 일단 에러가 나지 않도록 빈 칸(비활성화)으로 둡니다!
+            // 나중에 폴더 안에서도 일괄 삭제가 필요해지면 여기에 로직을 넣으면 됩니다.
+        }
         binding.rvProjectPosts.layoutManager = GridLayoutManager(this, 2)
         binding.rvProjectPosts.adapter = postAdapter
 

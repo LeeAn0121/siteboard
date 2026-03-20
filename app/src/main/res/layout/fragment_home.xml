@@ -49,6 +49,49 @@
             android:insetBottom="0dp"/>
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/layoutSelectionMode"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="20dp"
+        android:background="?attr/colorSurface"
+        android:elevation="8dp"
+        android:gravity="center_vertical"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ImageButton
+            android:id="@+id/btnCancelSelection"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            app:tint="?android:attr/textColorPrimary"/>
+
+        <TextView
+            android:id="@+id/tvSelectedCount"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="1개 선택됨"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="?android:attr/textColorPrimary"
+            android:layout_marginStart="16dp"/>
+
+        <Button
+            android:id="@+id/btnDeleteSelected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="삭제"
+            android:textColor="?attr/colorError"
+            android:backgroundTint="@android:color/transparent"
+            app:strokeColor="?attr/colorError"
+            app:strokeWidth="1dp"
+            app:cornerRadius="12dp"/>
+    </LinearLayout>
+
     <TextView
         android:id="@+id/tvTitle"
         android:layout_width="wrap_content"
