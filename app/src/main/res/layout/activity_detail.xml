@@ -1,25 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:background="#111111"> <ImageView
+    android:id="@+id/ivDetailImage"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:scaleType="fitCenter" />
 
-    <ImageView
-        android:id="@+id/ivDetailImage"
+    <View
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:scaleType="fitCenter" />
+        android:layout_height="160dp"
+        android:background="#66000000"
+        app:layout_constraintBottom_toBottomOf="parent"/>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:padding="20dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-        <Button android:id="@+id/btnShare" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="공유하기" />
-        <Button android:id="@+id/btnEdit" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginHorizontal="8dp" android:text="수정" />
-        <Button android:id="@+id/btnDelete" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="삭제" android:backgroundTint="#F44336"/>
+        <Button
+            android:id="@+id/btnShare"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:backgroundTint="#33FFFFFF"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:text="공유"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            app:cornerRadius="20dp" />
+
+        <Button
+            android:id="@+id/btnEdit"
+            android:layout_width="0dp"
+            android:layout_height="64dp"
+            android:layout_marginHorizontal="12dp"
+            android:layout_weight="1"
+            android:backgroundTint="#FF6F00"
+            android:text="내용 수정하기"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="20dp" />
+
+        <Button
+            android:id="@+id/btnDelete"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:backgroundTint="#E53935"
+            android:text="삭제"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            app:cornerRadius="20dp"
+            android:insetBottom="0dp"
+            android:insetTop="0dp" />
     </LinearLayout>
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
