@@ -40,7 +40,10 @@
             android:screenOrientation="portrait" />
 
         <activity android:name=".ProjectDetailActivity"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
+
+        <activity android:name=".WatermarkSettingsActivity"
+            android:screenOrientation="portrait" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

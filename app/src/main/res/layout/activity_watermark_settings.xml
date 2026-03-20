@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F8F9FA">
+
+    <LinearLayout
+        android:id="@+id/layoutTop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="20dp"
+        android:gravity="center_vertical"
+        app:layout_constraintTop_toTopOf="parent">
+        <ImageButton android:id="@+id/btnBack" android:layout_width="48dp" android:layout_height="48dp" android:src="@android:drawable/ic_menu_revert" android:background="?attr/selectableItemBackgroundBorderless" app:tint="#111111"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="워터마크 상세 설정" android:textSize="20sp" android:textStyle="bold" android:textColor="#111111" android:layout_marginStart="12dp"/>
+    </LinearLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/layoutTop"
+        app:layout_constraintBottom_toTopOf="@id/btnSaveSettings">
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="20dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="미리보기 (Preview)" android:textStyle="bold" android:textColor="#555555" android:layout_marginBottom="8dp"/>
+            <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="250dp" app:cardCornerRadius="12dp" android:layout_marginBottom="24dp">
+                <ImageView android:id="@+id/ivPreview" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" android:background="#DDDDDD"/>
+            </androidx.cardview.widget.CardView>
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="워터마크 기준 위치" android:textStyle="bold" android:textColor="#555555" android:layout_marginBottom="8dp"/>
+            <RadioGroup android:id="@+id/rgVertical" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="8dp">
+                <RadioButton android:id="@+id/rbTop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="상단 (Top)"/>
+                <RadioButton android:id="@+id/rbBottom" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="하단 (Bottom)"/>
+            </RadioGroup>
+            <RadioGroup android:id="@+id/rgHorizontal" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="24dp">
+                <RadioButton android:id="@+id/rbLeft" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="좌측 (Left)"/>
+                <RadioButton android:id="@+id/rbRight" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="우측 (Right)"/>
+            </RadioGroup>
+
+            <TextView android:id="@+id/tvMarginX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="가로 여백 (X): 50px" android:textStyle="bold" android:textColor="#555555"/>
+            <SeekBar android:id="@+id/sbMarginX" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" android:progress="50" android:layout_marginBottom="16dp"/>
+
+            <TextView android:id="@+id/tvMarginY" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="세로 여백 (Y): 50px" android:textStyle="bold" android:textColor="#555555"/>
+            <SeekBar android:id="@+id/sbMarginY" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" android:progress="50" android:layout_marginBottom="24dp"/>
+
+            <TextView android:id="@+id/tvFontSize" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="글씨 크기: 40pt" android:textStyle="bold" android:textColor="#555555"/>
+            <SeekBar android:id="@+id/sbFontSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progress="40" android:layout_marginBottom="24dp"/>
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/switchBgBox"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="반투명 배경 박스 사용 (글씨 강조)"
+                android:textColor="#111111"
+                android:textStyle="bold"
+                android:layout_marginBottom="32dp"/>
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/btnSaveSettings"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_margin="20dp"
+        android:text="설정 저장하기"
+        android:textColor="#FFFFFF"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:backgroundTint="#FF6F00"
+        app:cornerRadius="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
