@@ -22,32 +22,27 @@
             android:layout_weight="1"
             app:cardCornerRadius="24dp"
             app:cardElevation="0dp"
-            app:cardBackgroundColor="#FFFFFF"
-            android:layout_marginEnd="12dp">
+            app:cardBackgroundColor="?attr/colorSurface" android:layout_marginEnd="12dp">
+
             <EditText
                 android:id="@+id/etSearch"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="?android:attr/windowBackground"
-                android:hint="현장명 또는 위치 검색"
+                android:background="@null" android:hint="현장명 또는 위치 검색"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textColorHint="?android:attr/textColorHint"
                 android:textSize="15sp"
                 android:paddingHorizontal="20dp"
                 android:drawableStart="@android:drawable/ic_menu_search"
                 android:drawablePadding="8dp"
-                android:drawableTint="#9E9E9E"/>
-        </androidx.cardview.widget.CardView>
+                android:drawableTint="?android:attr/textColorSecondary"/> </androidx.cardview.widget.CardView>
 
         <Button
             android:id="@+id/btnExportPdf"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:text="PDF 내보내기"
-            android:textColor="?android:attr/textColorPrimary"
-            android:textColorHint="?android:attr/textColorHint"
-            android:textStyle="bold"
-            android:background="?android:attr/windowBackground"
+            android:textColor="#FFFFFF" android:textStyle="bold"
             android:backgroundTint="#FF6F00"
             app:cornerRadius="12dp"
             android:insetTop="0dp"
@@ -61,7 +56,6 @@
         android:text="전체 기록"
         android:textSize="24sp"
         android:textColor="?android:attr/textColorPrimary"
-        android:textColorHint="?android:attr/textColorHint"
         android:textStyle="bold"
         android:layout_marginStart="20dp"
         android:layout_marginTop="8dp"
@@ -91,8 +85,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📷" android:textSize="48sp" android:layout_marginBottom="16dp"/>
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="기록된 사진이 없습니다" android:textSize="18sp" android:textColor="#555555" android:textStyle="bold"/>
-    </LinearLayout>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="기록된 사진이 없습니다" android:textSize="18sp" android:textColor="?android:attr/textColorSecondary" android:textStyle="bold"/> </LinearLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/btnOpenSub"
