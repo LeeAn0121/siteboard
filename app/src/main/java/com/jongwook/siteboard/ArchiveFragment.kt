@@ -29,24 +29,35 @@ class ArchiveFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             db.postDao().getAllPosts().collect { postList ->
 
-                // 코틀린의 마법: 제목(title)을 기준으로 리스트를 그룹화합니다.
-                // 결과 예시: "지하 2층 누수" -> [사진1, 사진2, 사진3]
+                // 제목(title)을 기준으로 리스트 그룹화
                 val groupedPosts = postList.groupBy { it.title }
 
-                // 화면에 뿌려줄 문자열 리스트 생성
-                val displayList = mutableListOf<String>()
+                // 💡 [핵심 추가] 제목들만 따로 뽑아서 리스트로 만들기 (클릭 시 몇 번째 제목인지 알기 위해)
+                val titles = groupedPosts.keys.toList()
 
-                for ((title, postsInGroup) in groupedPosts) {
-                    displayList.add("📁 $title \n   └ 총 ${postsInGroup.size}장의 현장 기록")
+                // 화면에 뿌려줄 문자열 세팅
+                val displayList = titles.map { title ->
+                    "📁 $title \n   └ 총 ${groupedPosts[title]?.size}장의 현장 기록"
                 }
 
-                // 기본 어댑터를 사용해 ListView에 데이터 뿌리기 (간편한 UI 구성)
-                val adapter = ArrayAdapter(
+                // 어댑터 연결
+                val adapter = android.widget.ArrayAdapter(
                     requireContext(),
                     android.R.layout.simple_list_item_1,
                     displayList
                 )
                 binding.lvProjects.adapter = adapter
+
+                // 💡 [핵심 추가] 리스트 항목을 눌렀을 때의 동작
+                binding.lvProjects.setOnItemClickListener { _, _, position, _ ->
+                    // 사용자가 누른 위치(position)의 진짜 제목 가져오기
+                    val selectedTitle = titles[position]
+
+                    // 해당 프로젝트의 사진들을 모아보는 새 화면(ProjectDetailActivity)으로 이동!
+                    val intent = android.content.Intent(requireContext(), ProjectDetailActivity::class.java)
+                    intent.putExtra("PROJECT_TITLE", selectedTitle)
+                    startActivity(intent)
+                }
             }
         }
     }
