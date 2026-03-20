@@ -153,7 +153,9 @@ class SubActivity : AppCompatActivity() {
         val loc = binding.etLocation.text.toString().trim()
 
         // 라디오 버튼 상태 확인 (어두운 테마인지?)
-        val isDarkTheme = binding.rbDark.isChecked
+        // 설정 화면(WatermarkSettingsActivity)에서 저장해둔 테마 값을 몰래 꺼내옵니다!
+        val prefs = getSharedPreferences("WatermarkPrefs", android.content.Context.MODE_PRIVATE)
+        val isDarkTheme = prefs.getBoolean("wm_is_theme_dark", false)
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {

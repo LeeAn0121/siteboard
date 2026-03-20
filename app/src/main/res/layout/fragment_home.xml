@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8F9FA">
+    android:background="?android:attr/windowBackground">
 
     <LinearLayout
         android:id="@+id/layoutTop"
@@ -28,10 +28,10 @@
                 android:id="@+id/etSearch"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@null"
+                android:background="?android:attr/windowBackground"
                 android:hint="현장명 또는 위치 검색"
-                android:textColorHint="#9E9E9E"
-                android:textColor="#111111"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textColorHint="?android:attr/textColorHint"
                 android:textSize="15sp"
                 android:paddingHorizontal="20dp"
                 android:drawableStart="@android:drawable/ic_menu_search"
@@ -44,8 +44,10 @@
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:text="PDF 내보내기"
-            android:textColor="#FFFFFF"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textColorHint="?android:attr/textColorHint"
             android:textStyle="bold"
+            android:background="?android:attr/windowBackground"
             android:backgroundTint="#FF6F00"
             app:cornerRadius="12dp"
             android:insetTop="0dp"
@@ -58,7 +60,8 @@
         android:layout_height="wrap_content"
         android:text="전체 기록"
         android:textSize="24sp"
-        android:textColor="#111111"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textColorHint="?android:attr/textColorHint"
         android:textStyle="bold"
         android:layout_marginStart="20dp"
         android:layout_marginTop="8dp"
@@ -72,6 +75,7 @@
         android:clipToPadding="false"
         android:padding="12dp"
         android:layout_marginTop="12dp"
+        android:background="?android:attr/windowBackground"
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
         app:layout_constraintBottom_toBottomOf="parent" />
 
@@ -97,7 +101,7 @@
         android:layout_margin="24dp"
         android:src="@android:drawable/ic_input_add"
         app:tint="#FFFFFF"
-        app:backgroundTint="#7C4DFF"
+        app:backgroundTint="#FF6F00"
         app:elevation="6dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

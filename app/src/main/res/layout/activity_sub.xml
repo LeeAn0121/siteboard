@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#151515"> <ScrollView
+    android:background="?android:attr/windowBackground"> <ScrollView
     android:layout_width="match_parent"
     android:layout_height="0dp"
     app:layout_constraintTop_toTopOf="parent"
@@ -20,34 +20,98 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="워터마크 테마 및 정보 입력"
-            android:textSize="20sp"
-            android:textColor="#FFFFFF"
+            android:text="현장 정보 입력"
+            android:textSize="22sp"
+            android:textColor="?android:attr/textColorPrimary"
             android:textStyle="bold"
             android:gravity="center"
             android:layout_marginTop="16dp"
             android:layout_marginBottom="32dp"/>
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="워터마크 테마 선택" android:textColor="#DDDDDD" android:textSize="16sp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="프로젝트명 (제목)"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"/>
 
-        <RadioGroup android:id="@+id/rgTheme" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="32dp">
-            <RadioButton android:id="@+id/rbLight" android:layout_width="0dp" android:layout_height="56dp" android:text="밝게 (미니멀)" android:checked="true" android:layout_weight="1" android:buttonTint="#D0BCFF" android:textColor="#FFFFFF" android:background="#2C2C2E" android:layout_marginEnd="6dp" android:paddingStart="12dp"/>
-            <RadioButton android:id="@+id/rbDark" android:layout_width="0dp" android:layout_height="56dp" android:text="어둡게 (강조)" android:layout_weight="1" android:buttonTint="#D0BCFF" android:textColor="#FFFFFF" android:background="#2C2C2E" android:layout_marginStart="6dp" android:paddingStart="12dp"/>
-        </RadioGroup>
-
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="프로젝트명 (제목)" android:textColor="#DDDDDD" android:textSize="14sp" android:layout_marginBottom="8dp"/>
-        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="60dp" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:cardBackgroundColor="#2A2A2C" android:layout_marginBottom="20dp">
-            <EditText android:id="@+id/etTitle" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@null" android:paddingHorizontal="16dp" android:hint="여기에 입력하세요" android:textColorHint="#757575" android:textColor="#FFFFFF" android:textSize="16sp" android:inputType="text"/>
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            android:layout_marginBottom="20dp">
+            <EditText
+                android:id="@+id/etTitle"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:paddingHorizontal="16dp"
+                android:hint="여기에 입력하세요"
+                android:textColorHint="?android:attr/textColorHint"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:inputType="text"/>
         </androidx.cardview.widget.CardView>
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="위치" android:textColor="#DDDDDD" android:textSize="14sp" android:layout_marginBottom="8dp"/>
-        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="60dp" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:cardBackgroundColor="#2A2A2C" android:layout_marginBottom="20dp">
-            <EditText android:id="@+id/etLocation" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@null" android:paddingHorizontal="16dp" android:hint="여기에 입력하세요" android:textColorHint="#757575" android:textColor="#FFFFFF" android:textSize="16sp" android:inputType="text"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="위치"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"/>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            android:layout_marginBottom="20dp">
+            <EditText
+                android:id="@+id/etLocation"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@null"
+                android:paddingHorizontal="16dp"
+                android:hint="여기에 입력하세요"
+                android:textColorHint="?android:attr/textColorHint"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="16sp"
+                android:inputType="text"/>
         </androidx.cardview.widget.CardView>
 
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="작업 내용" android:textColor="#DDDDDD" android:textSize="14sp" android:layout_marginBottom="8dp"/>
-        <androidx.cardview.widget.CardView android:layout_width="match_parent" android:layout_height="wrap_content" app:cardCornerRadius="16dp" app:cardElevation="0dp" app:cardBackgroundColor="#2A2A2C" android:layout_marginBottom="32dp">
-            <EditText android:id="@+id/etDesc" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="100dp" android:gravity="top" android:background="@null" android:padding="16dp" android:hint="여기에 입력하세요" android:textColorHint="#757575" android:textColor="#FFFFFF" android:textSize="16sp" android:inputType="textMultiLine"/>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="작업 내용"
+            android:textColor="?android:attr/textColorSecondary"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp"/>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="2dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            android:layout_marginBottom="32dp">
+            <EditText
+                android:id="@+id/etDesc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="100dp"
+                android:gravity="top"
+                android:background="@null"
+                android:padding="16dp"
+                android:hint="여기에 입력하세요"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textColorHint="?android:attr/textColorHint"
+                android:textSize="16sp"
+                android:inputType="textMultiLine"/>
         </androidx.cardview.widget.CardView>
 
         <com.google.android.material.switchmaterial.SwitchMaterial
@@ -55,11 +119,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="🔄 연속 촬영 (저장 후 내용 유지하기)"
-            android:textColor="#D0BCFF"
+            android:textColor="?attr/colorPrimary"
             android:textSize="16sp"
             android:textStyle="bold"
-            app:thumbTint="#FFFFFF"
-            app:trackTint="#7C4DFF"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="32dp"/>
 
@@ -73,7 +135,8 @@
         android:orientation="horizontal"
         android:paddingHorizontal="20dp"
         android:paddingVertical="16dp"
-        android:background="#151515"
+        android:background="?attr/colorSurface"
+        android:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <Button
@@ -82,9 +145,9 @@
             android:layout_height="64dp"
             android:layout_weight="1"
             android:text="저장 (앨범)"
-            android:textColor="#111111"
-            android:backgroundTint="#E8DDFB"
-            app:cornerRadius="32dp"
+            android:textColor="?attr/colorOnPrimary"
+            android:backgroundTint="?attr/colorPrimary"
+            app:cornerRadius="16dp"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginEnd="8dp"/>
@@ -95,18 +158,41 @@
             android:layout_height="64dp"
             android:layout_weight="1"
             android:text="사진 촬영"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#151515"
-            app:strokeColor="#FFFFFF"
+            android:textColor="?attr/colorPrimary"
+            android:backgroundTint="@android:color/transparent"
+            app:strokeColor="?attr/colorPrimary"
             app:strokeWidth="1dp"
-            app:cornerRadius="32dp"
+            app:cornerRadius="16dp"
             android:textSize="16sp"
             android:textStyle="bold"
             android:layout_marginStart="8dp"/>
     </LinearLayout>
 
-    <LinearLayout android:id="@+id/layoutLoading" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#E6000000" android:gravity="center" android:orientation="vertical" android:visibility="gone" android:clickable="true" android:focusable="true" app:layout_constraintTop_toTopOf="parent">
-        <ProgressBar android:layout_width="wrap_content" android:layout_height="wrap_content" android:indeterminateTint="#D0BCFF"/>
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="처리 중입니다..." android:textColor="#FFFFFF" android:layout_marginTop="16dp" android:textSize="16sp"/>
+    <LinearLayout
+        android:id="@+id/layoutLoading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#99000000"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        android:clickable="true"
+        android:focusable="true"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminateTint="?attr/colorPrimary"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="처리 중입니다..."
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="16dp"
+            android:textSize="16sp"
+            android:textStyle="bold"/>
     </LinearLayout>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

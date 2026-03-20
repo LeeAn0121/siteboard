@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFFFF"
+    android:background="?android:attr/windowBackground"
     android:padding="24dp">
 
     <TextView
@@ -32,10 +32,12 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
+            android:textColor="?android:attr/textColorPrimary"
+            android:textColorHint="?android:attr/textColorHint"
             android:layout_marginBottom="32dp">
-            <TextView android:layout_width="56dp" android:layout_height="56dp" android:background="#FFF0E6" android:text="📸" android:textSize="24sp" android:gravity="center" app:cornerRadius="28dp"/>
+            <TextView android:layout_width="56dp" android:layout_height="56dp" android:background="?android:attr/windowBackground" android:text="📸" android:textSize="24sp" android:gravity="center" app:cornerRadius="28dp"/>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginStart="16dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="카메라 (필수)" android:textSize="18sp" android:textStyle="bold" android:textColor="#111111"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="카메라 (필수)" android:textSize="18sp" android:textStyle="bold" android:textColor="?android:attr/textColorPrimary" android:textColorHint="?android:attr/textColorHint"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="현장 사진을 촬영하기 위해 필요합니다." android:textSize="14sp" android:textColor="#757575" android:layout_marginTop="4dp"/>
             </LinearLayout>
         </LinearLayout>
@@ -45,10 +47,10 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical">
-            <TextView android:layout_width="56dp" android:layout_height="56dp" android:background="#FFF0E6" android:text="💾" android:textSize="24sp" android:gravity="center" app:cornerRadius="28dp"/>
+            <TextView android:layout_width="56dp" android:layout_height="56dp" android:background="?android:attr/windowBackground" android:text="💾" android:textSize="24sp" android:gravity="center" app:cornerRadius="28dp"/>
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginStart="16dp">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="저장공간 (필수)" android:textSize="18sp" android:textStyle="bold" android:textColor="#111111"/>
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="사진에 워터마크를 합성하고 기기에 저장합니다." android:textSize="14sp" android:textColor="#757575" android:layout_marginTop="4dp"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="저장공간 (필수)" android:textSize="18sp" android:textStyle="bold" android:textColor="?android:attr/textColorPrimary"/>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="사진에 워터마크를 합성하고 기기에 저장합니다." android:textSize="14sp" android:textColor="?android:attr/textColorPrimary" android:layout_marginTop="4dp"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>
@@ -60,7 +62,8 @@
         android:text="동의하고 시작하기"
         android:textSize="18sp"
         android:textStyle="bold"
-        android:textColor="#FFFFFF"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textColorHint="?android:attr/textColorHint"
         android:backgroundTint="#FF6F00"
         app:cornerRadius="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
