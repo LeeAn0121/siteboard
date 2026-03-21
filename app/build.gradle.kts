@@ -80,6 +80,17 @@ dependencies {
     // 💡 GPS 위치 정보를 가져오기 위한 구글 플레이 서비스 라이브러리
     implementation("com.google.android.gms:play-services-location:21.2.0")
 
+    implementation("com.google.mlkit:face-detection:16.1.5")
+
+    // 🚀 [추가] Google ML Kit 개인정보 보호용 라이브러리
+    implementation("com.google.mlkit:face-detection:16.1.5")
+    // 얼굴 감지
+    implementation("com.google.mlkit:text-recognition-korean:16.0.0")
+    // 한글/숫자 인식 (번호판용)
+
+    // 🚀 [추가] Task를 코루틴에서 await()로 쓸 수 있게 해주는 라이브러리
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+
     // Room DB 설정
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")

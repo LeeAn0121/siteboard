@@ -19,10 +19,15 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.face.FaceDetection
+import com.google.mlkit.vision.face.FaceDetectorOptions
+import com.google.mlkit.vision.text.TextRecognition
 import com.jongwook.siteboard.databinding.ActivitySubBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.tasks.await // 💡 주의: 이 import가 빨간불이면 아래 가이드를 참고하세요!
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
@@ -56,16 +61,14 @@ class SubActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // ==========================================
-        // 🚀 [추가] 위치 입력칸 강제 수정 불가 처리 (터치 및 키보드 입력 차단)
+        // 🚀 위치 입력칸 강제 수정 불가 처리 (터치 및 키보드 입력 차단)
         // ==========================================
         binding.etLocation.isFocusable = false
         binding.etLocation.isFocusableInTouchMode = false
         binding.etLocation.isCursorVisible = false
         binding.etLocation.setOnClickListener {
-            // 사용자가 터치했을 때 안내 메시지
             Toast.makeText(this, "위치는 GPS에 의해 자동 기록되며 임의로 수정할 수 없습니다.", Toast.LENGTH_SHORT).show()
         }
-        // ==========================================
 
         if (intent.hasExtra("edit_id")) {
             isEditMode = true
@@ -87,7 +90,7 @@ class SubActivity : AppCompatActivity() {
             if (validateInputs()) pickImageLauncher.launch(arrayOf("image/*"))
         }
 
-        // 💡 화면이 켜지자마자 위치를 가져오도록 onCreate 맨 마지막에 추가!
+        // 화면이 켜지자마자 위치를 가져오도록 호출
         fetchCurrentLocationAndAddress()
     }
 
@@ -118,14 +121,30 @@ class SubActivity : AppCompatActivity() {
             try {
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.VISIBLE
+                    // 데이터 처리 중임을 알림
+                    Toast.makeText(this@SubActivity, "보안 처리 및 이미지 저장 중...", Toast.LENGTH_SHORT).show()
                 }
 
-                // 💡 [수정] 단순히 비트맵만 가져오지 않고, EXIF 정보를 기반으로 회전까지 완료된 비트맵을 가져옵니다!
+                // 1. 방향이 바로 잡힌 원본 비트맵 로드
                 val orientedBitmap = loadOrientedBitmapFromUri(uri) ?: throw Exception("이미지 로드 실패")
 
-                // 💡 [핵심] 이제 똑바로 서 있는 비트맵(orientedBitmap)에 워터마크를 새깁니다.
-                val stampedBitmap = stampTextOnBitmap(orientedBitmap, title, desc, loc)
+                // 🛡️ 2. [추가된 핵심 로직] 워터마크 찍기 전에 개인정보 자동 블러 처리 실행
+                val privacyBlurredBitmap = detectAndBlurPrivacy(orientedBitmap)
 
+                // 메모리 아끼기 위해 블러 처리 후 필요 없어진 원본 삭제
+                if (orientedBitmap != privacyBlurredBitmap && !orientedBitmap.isRecycled) {
+                    orientedBitmap.recycle()
+                }
+
+                // 3. [수정됨] 블러 처리가 완료된 비트맵 위에 워터마크를 새깁니다.
+                val stampedBitmap = stampTextOnBitmap(privacyBlurredBitmap, title, desc, loc)
+
+                // 워터마크 처리 후 필요 없어진 블러 이미지 삭제
+                if (privacyBlurredBitmap != stampedBitmap && !privacyBlurredBitmap.isRecycled) {
+                    privacyBlurredBitmap.recycle()
+                }
+
+                // 4. 갤러리에 저장
                 val newSavedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
 
                 val currentDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
@@ -139,7 +158,7 @@ class SubActivity : AppCompatActivity() {
 
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
-                    Toast.makeText(this@SubActivity, "현장 기록이 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@SubActivity, "현장 기록이 안전하게 저장되었습니다.", Toast.LENGTH_SHORT).show()
 
                     if (binding.switchContinuous.isChecked) {
                         currentPhotoUri = null
@@ -158,36 +177,26 @@ class SubActivity : AppCompatActivity() {
         }
     }
 
-    // 💡 [추가] 꼬리표(EXIF) 정보를 읽어서, 필요하면 회전시켜서 똑바로 세워주는 함수
+    // 💡 꼬리표(EXIF) 정보를 읽어서, 필요하면 회전시켜서 똑바로 세워주는 함수
     private fun loadOrientedBitmapFromUri(uri: Uri): Bitmap? {
         var inputStream: InputStream? = null
         return try {
-            // 1. 원본 비트맵 로드
             inputStream = contentResolver.openInputStream(uri)
             val originalBitmap = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
 
             if (originalBitmap == null) return null
 
-            // 💡 2. 다시 파일을 열어서 EXIF 정보(방향 꼬리표) 읽기
             inputStream = contentResolver.openInputStream(uri)
             val exif = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                // 안드로이드 7.0 이상
                 android.media.ExifInterface(inputStream!!)
-            } else {
-                // 안드로이드 6.0 이하 (file:// 경로가 필요할 수 있음)
-                // 현재 앱은 Q(10) 이상 타겟이므로 InputStream 방식만 있어도 무방합니다.
-                null
-            }
+            } else null
             inputStream?.close()
 
-            // 💡 3. 방향 정보 알아내기
             val orientation = exif?.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL)
                 ?: android.media.ExifInterface.ORIENTATION_NORMAL
 
-            // 💡 4. 정보에 따라 회전시켜서 반환
             rotateBitmap(originalBitmap, orientation)
-
         } catch (e: Exception) {
             Log.e("SubActivity", "이미지 회전 실패", e)
             null
@@ -196,27 +205,24 @@ class SubActivity : AppCompatActivity() {
         }
     }
 
-    // 💡 [추가] EXIF 정보에 따라 비트맵을 실제로 회전시키는 유틸 함수
     private fun rotateBitmap(bitmap: Bitmap, orientation: Int): Bitmap {
         val matrix = Matrix()
         when (orientation) {
-            android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.setRotate(90f)   // 시계 90도
-            android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.setRotate(180f) // 180도 (뒤집힘)
-            android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.setRotate(270f) // 시계 270도
-            android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.setScale(-1f, 1f) // 좌우 반전
-            android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.setScale(1f, -1f)   // 상하 반전
-            else -> return bitmap // 회전 필요 없음 (기본 가로 상태)
+            android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.setRotate(90f)
+            android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.setRotate(180f)
+            android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.setRotate(270f)
+            android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.setScale(-1f, 1f)
+            android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.setScale(1f, -1f)
+            else -> return bitmap
         }
 
         return try {
-            // Matrix를 적용해 새로운 회전된 비트맵 생성
             val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-            // 메모리 아끼기 위해 원본 누워있는 비트맵은 삭제
             if (bitmap != rotatedBitmap) bitmap.recycle()
             rotatedBitmap
         } catch (e: Exception) {
             e.printStackTrace()
-            bitmap // 실패 시 원본이라도 반환
+            bitmap
         }
     }
 
@@ -225,7 +231,6 @@ class SubActivity : AppCompatActivity() {
         val resultBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(resultBitmap)
 
-        // 1. 설정값 불러오기
         val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
         val isTop = prefs.getBoolean("wm_is_top", false)
         val isLeft = prefs.getBoolean("wm_is_left", true)
@@ -236,8 +241,6 @@ class SubActivity : AppCompatActivity() {
         val textColorCode = prefs.getInt("wm_color",  Color.YELLOW)
         val fontType = prefs.getString("wm_font", "DEFAULT")
 
-        // 2. 가로/세로 각각의 해상도 스케일링 (1000x800 기준)
-        // 이 계산법이 들어가야 사진 해상도가 달라도 여백이 정확하게 맞습니다!
         val scaleX = resultBitmap.width / 1000f
         val scaleY = resultBitmap.height / 800f
 
@@ -245,11 +248,10 @@ class SubActivity : AppCompatActivity() {
         val actualMarginX = baseMarginX * scaleX
         val actualMarginY = baseMarginY * scaleY
 
-        // 3. 텍스트 세팅
         val lines = mutableListOf("제목 : $title")
         if (loc.isNotEmpty()) lines.add("위치 : $loc")
         if (desc.isNotEmpty()) lines.add("작업내용 : ${desc.replace("\n", " ")}")
-        lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())) // 초 단위까지 추가!
+        lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
 
         val typefaceSelection = when (fontType) {
             "SERIF" -> Typeface.create(Typeface.SERIF, Typeface.BOLD)
@@ -267,20 +269,17 @@ class SubActivity : AppCompatActivity() {
             setShadowLayer(5f, 3f, 3f, Color.BLACK)
         }
 
-        // 4. 오차 없는 블록 높이/너비 계산 (미리보기와 동일 공식)
         val fm = textPaint.fontMetrics
         val singleTextHeight = fm.descent - fm.ascent
         val lineSpacing = actualFontSize * 0.5f
         val totalHeight = (lines.size * singleTextHeight) + ((lines.size - 1) * lineSpacing)
         val maxTextWidth = lines.maxOf { textPaint.measureText(it) }
 
-        // 5. 시작점 X, Y 지정
         val startX = if (isLeft) actualMarginX else resultBitmap.width - actualMarginX - maxTextWidth
         val startY = if (isTop) actualMarginY else resultBitmap.height - actualMarginY - totalHeight
 
         val padding = actualFontSize * 0.4f
 
-        // 6. 박스 그리기
         if (useBgBox) {
             val bgPaint = Paint().apply { color = Color.parseColor("#66000000") }
             val bgRect = RectF(
@@ -292,7 +291,6 @@ class SubActivity : AppCompatActivity() {
             canvas.drawRoundRect(bgRect, 10f * scaleX, 10f * scaleX, bgPaint)
         }
 
-        // 7. 텍스트 그리기
         var textDrawY = startY - fm.ascent
         for (line in lines) {
             canvas.drawText(line, startX, textDrawY, textPaint)
@@ -318,7 +316,6 @@ class SubActivity : AppCompatActivity() {
 
         fusedLocationClient.lastLocation.addOnSuccessListener { lastLoc ->
             if (lastLoc != null) {
-                // 🚀 [추가] 가짜 위치(Fake GPS) 방지 로직 적용
                 if (isMockLocation(lastLoc)) {
                     Toast.makeText(this, "가짜 위치(Fake GPS) 앱 사용이 감지되었습니다.", Toast.LENGTH_LONG).show()
                     binding.etLocation.setText("위치 조작 감지됨")
@@ -329,7 +326,6 @@ class SubActivity : AppCompatActivity() {
                 fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                     .addOnSuccessListener { currentLoc ->
                         if (currentLoc != null) {
-                            // 🚀 [추가] 가짜 위치(Fake GPS) 방지 로직 적용
                             if (isMockLocation(currentLoc)) {
                                 Toast.makeText(this, "가짜 위치(Fake GPS) 앱 사용이 감지되었습니다.", Toast.LENGTH_LONG).show()
                                 binding.etLocation.setText("위치 조작 감지됨")
@@ -346,7 +342,6 @@ class SubActivity : AppCompatActivity() {
         }.addOnFailureListener { binding.etLocation.setText("") }
     }
 
-    // 💡 [분리된 함수] 위도/경도를 한글 주소로 바꿔주는 역할만 전담
     private fun convertLocationToAddress(lat: Double, lng: Double) {
         val geocoder = Geocoder(this, Locale.KOREAN)
         try {
@@ -384,19 +379,97 @@ class SubActivity : AppCompatActivity() {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/SITEBOARD") // 폴더명 변경
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/SITEBOARD")
         }
         val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         uri?.let { contentResolver.openOutputStream(it)?.use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out) } }
         return uri
     }
 
-    // 💡 [추가] 가짜 GPS(Mock Location) 사용 여부 확인 함수
     private fun isMockLocation(location: android.location.Location): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             location.isMock
         } else {
             location.isFromMockProvider
         }
+    }
+
+    // =============================================================================================
+    // 🛡️ [ML Kit 개인정보 보호] 핵심 이미지 처리 함수들
+    // =============================================================================================
+
+    private suspend fun detectAndBlurPrivacy(originalBitmap: Bitmap): Bitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        val blurredBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
+        val canvas = Canvas(blurredBitmap)
+        val imageForMlKit = InputImage.fromBitmap(originalBitmap, 0)
+
+        val faceOptions = FaceDetectorOptions.Builder()
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+            .build()
+        val faceDetector = FaceDetection.getClient(faceOptions)
+
+        val textRecognizer = TextRecognition.getClient(com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions.Builder().build())
+
+        try {
+            // 💡 await() 함수를 사용해 비동기 작업을 코루틴에서 기다립니다.
+            val faces = faceDetector.process(imageForMlKit).await()
+            val textResult = textRecognizer.process(imageForMlKit).await()
+
+            // 얼굴 블러
+            for (face in faces) {
+                blurBitmapArea(blurredBitmap, canvas, face.boundingBox)
+            }
+
+            // 번호판 블러
+            for (block in textResult.textBlocks) {
+                for (line in block.lines) {
+                    val text = line.text.replace(" ", "")
+                    val platePattern = "^(\\d{2,3}[가-힣]\\d{4})|([가-힣]{2}\\d{2}[가-힣]\\d{4})$".toRegex()
+
+                    if (text.matches(platePattern) || text.length in 7..9) {
+                        blurBitmapArea(blurredBitmap, canvas, line.boundingBox)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SubActivity", "개인정보 감지 실패: ${e.message}")
+            return@withContext originalBitmap
+        } finally {
+            faceDetector.close()
+            textRecognizer.close()
+        }
+
+        return@withContext blurredBitmap
+    }
+
+    /**
+     * 옵션 1: 형체를 알아볼 수 없도록 아주 강한 모자이크(픽셀화) 처리
+     */
+    private fun blurBitmapArea(bitmap: Bitmap, canvas: Canvas, bounds: Rect?) {
+        if (bounds == null) return
+
+        val safeLeft = Math.max(0, bounds.left)
+        val safeTop = Math.max(0, bounds.top)
+        val safeWidth = Math.min(bounds.width(), bitmap.width - safeLeft)
+        val safeHeight = Math.min(bounds.height(), bitmap.height - safeTop)
+
+        if (safeWidth <= 0 || safeHeight <= 0) return
+
+        val croppedBitmap = Bitmap.createBitmap(bitmap, safeLeft, safeTop, safeWidth, safeHeight)
+
+        // 🚀 [수정됨] 흐림 강도 대폭 증가 (숫자가 클수록 입자가 커지고 형체를 알아볼 수 없게 됨)
+        // 기존 8 -> 25 로 변경. (더 강하게 원하시면 30~40으로 올리셔도 됩니다)
+        val blurScale = 25
+        val scaledWidth = Math.max(1, safeWidth / blurScale)
+        val scaledHeight = Math.max(1, safeHeight / blurScale)
+
+        val smallBitmap = Bitmap.createScaledBitmap(croppedBitmap, scaledWidth, scaledHeight, false)
+        val finalBlurredChunk = Bitmap.createScaledBitmap(smallBitmap, safeWidth, safeHeight, true)
+
+        canvas.drawBitmap(finalBlurredChunk, safeLeft.toFloat(), safeTop.toFloat(), null)
+
+        croppedBitmap.recycle()
+        smallBitmap.recycle()
+        finalBlurredChunk.recycle()
     }
 }
