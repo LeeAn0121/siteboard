@@ -83,7 +83,26 @@ class SettingsFragment : Fragment() {
                 FileWriter(file).use { it.write(csvData.toString()) }
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "다운로드 폴더에 CSV가 저장되었습니다!", Toast.LENGTH_LONG).show()
+                    val snackbar = com.google.android.material.snackbar.Snackbar.make(
+                        requireView(),
+                        "CSV(엑셀) 데이터가 저장되었습니다!",
+                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG
+                    )
+
+                    // 💡 [핵심] 다운로드 폴더로 바로가는 액션 버튼 추가
+                    snackbar.setAction("폴더 열기") {
+                        val intent = android.content.Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS)
+                        intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+                        try {
+                            startActivity(intent)
+                        } catch (e: Exception) {
+                            Toast.makeText(requireContext(), "파일 관리자 앱을 실행할 수 없습니다.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    // 액션 버튼 글씨 색상 강조
+                    snackbar.setActionTextColor(android.graphics.Color.parseColor("#FF6F00"))
+                    snackbar.show()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
