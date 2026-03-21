@@ -55,6 +55,18 @@ class SubActivity : AppCompatActivity() {
         binding = ActivitySubBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // ==========================================
+        // 🚀 [추가] 위치 입력칸 강제 수정 불가 처리 (터치 및 키보드 입력 차단)
+        // ==========================================
+        binding.etLocation.isFocusable = false
+        binding.etLocation.isFocusableInTouchMode = false
+        binding.etLocation.isCursorVisible = false
+        binding.etLocation.setOnClickListener {
+            // 사용자가 터치했을 때 안내 메시지
+            Toast.makeText(this, "위치는 GPS에 의해 자동 기록되며 임의로 수정할 수 없습니다.", Toast.LENGTH_SHORT).show()
+        }
+        // ==========================================
+
         if (intent.hasExtra("edit_id")) {
             isEditMode = true
             editPostId = intent.getIntExtra("edit_id", 0)
@@ -290,36 +302,42 @@ class SubActivity : AppCompatActivity() {
         return resultBitmap
     }
 
-
     // 🌟 [완벽 방어 적용] GPS로 현재 위치를 잡아 한글 주소로 변환하는 로직
     private fun fetchCurrentLocationAndAddress() {
-        // 💡 1. 수정 모드일 때는 기존에 썼던 주소를 유지해야 하므로 GPS를 새로 잡지 않음!
         if (isEditMode) return
 
-        // 💡 2. 위치 권한 확인 (권한이 없으면 사용자에게 안내)
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             Toast.makeText(this, "위치 권한이 없어 주소를 자동으로 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // 힌트 텍스트 임시 변경
         binding.etLocation.setText("📍 현재 위치를 찾는 중...")
 
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // 💡 3. 더 빠르고 안정적인 위치 가져오기 (최근 위치를 먼저 확인하고, 없으면 새로 요청)
         fusedLocationClient.lastLocation.addOnSuccessListener { lastLoc ->
             if (lastLoc != null) {
-                convertLocationToAddress(lastLoc.latitude, lastLoc.longitude)
+                // 🚀 [추가] 가짜 위치(Fake GPS) 방지 로직 적용
+                if (isMockLocation(lastLoc)) {
+                    Toast.makeText(this, "가짜 위치(Fake GPS) 앱 사용이 감지되었습니다.", Toast.LENGTH_LONG).show()
+                    binding.etLocation.setText("위치 조작 감지됨")
+                } else {
+                    convertLocationToAddress(lastLoc.latitude, lastLoc.longitude)
+                }
             } else {
-                // 최근 위치가 없으면 강제로 현재 위치 새로고침
                 fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                     .addOnSuccessListener { currentLoc ->
                         if (currentLoc != null) {
-                            convertLocationToAddress(currentLoc.latitude, currentLoc.longitude)
+                            // 🚀 [추가] 가짜 위치(Fake GPS) 방지 로직 적용
+                            if (isMockLocation(currentLoc)) {
+                                Toast.makeText(this, "가짜 위치(Fake GPS) 앱 사용이 감지되었습니다.", Toast.LENGTH_LONG).show()
+                                binding.etLocation.setText("위치 조작 감지됨")
+                            } else {
+                                convertLocationToAddress(currentLoc.latitude, currentLoc.longitude)
+                            }
                         } else {
-                            binding.etLocation.setText("") // 실내/지하 등 아예 못 잡는 경우
+                            binding.etLocation.setText("")
                             Toast.makeText(this, "GPS 신호가 약해 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
                         }
                     }
@@ -371,5 +389,14 @@ class SubActivity : AppCompatActivity() {
         val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         uri?.let { contentResolver.openOutputStream(it)?.use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out) } }
         return uri
+    }
+
+    // 💡 [추가] 가짜 GPS(Mock Location) 사용 여부 확인 함수
+    private fun isMockLocation(location: android.location.Location): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            location.isMock
+        } else {
+            location.isFromMockProvider
+        }
     }
 }

@@ -22,6 +22,7 @@ class DetailActivity : AppCompatActivity() {
         binding = ActivityDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // 💡 1. UI 텍스트 데이터 매핑 (기존 코드)
         val id = intent.getIntExtra("id", -1)
         val title = intent.getStringExtra("title") ?: "제목 없음"
         val desc = intent.getStringExtra("desc") ?: "내용 없음"
@@ -34,6 +35,26 @@ class DetailActivity : AppCompatActivity() {
         binding.tvDetailDate.text = "📅 $date"
         binding.tvDetailLocation.text = if (loc.isBlank()) "📍 위치 미입력" else "📍 $loc"
         binding.tvDetailDesc.text = desc
+
+        // ==========================================
+        // 🚀 추가된 부분: 위치 텍스트 클릭 시 지도 앱 실행
+        // ==========================================
+        binding.tvDetailLocation.setOnClickListener {
+            if (loc.isNotBlank() && loc != "위치 미입력") {
+                // geo:0,0?q=주소 형식으로 Intent 생성 (OS가 알아서 지도 앱 목록을 띄워줌)
+                val geoUri = Uri.parse("geo:0,0?q=${Uri.encode(loc)}")
+                val mapIntent = Intent(Intent.ACTION_VIEW, geoUri)
+
+                try {
+                    startActivity(mapIntent)
+                } catch (e: Exception) {
+                    Toast.makeText(this@DetailActivity, "실행할 수 있는 지도 앱이 없습니다.", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(this@DetailActivity, "저장된 위치 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+            }
+        }
+        // ==========================================
 
         // 💡 2. 사진 띄우기
         if (imageUri.isNotEmpty()) {

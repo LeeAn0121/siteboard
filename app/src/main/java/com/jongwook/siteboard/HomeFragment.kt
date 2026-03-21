@@ -67,7 +67,9 @@ class HomeFragment : Fragment() {
 
         binding.btnDeleteSelected.setOnClickListener {
             val postsToDelete = postAdapter.selectedItems.toList()
-            android.app.AlertDialog.Builder(requireContext())
+
+            // 1. 빌더로 다이얼로그를 생성만 합니다 (show 대신 create 사용)
+            val dialog = android.app.AlertDialog.Builder(requireContext())
                 .setTitle("일괄 삭제")
                 .setMessage("선택한 ${postsToDelete.size}개의 기록과 원본 사진을 완전히 삭제하시겠습니까?")
                 .setPositiveButton("삭제") { _, _ ->
@@ -75,7 +77,7 @@ class HomeFragment : Fragment() {
                         try {
                             for (post in postsToDelete) {
                                 if (post.imageUri.isNotEmpty()) {
-                                    requireContext().contentResolver.delete(Uri.parse(post.imageUri), null, null)
+                                    requireContext().contentResolver.delete(android.net.Uri.parse(post.imageUri), null, null)
                                 }
                             }
                             db.postDao().deleteList(postsToDelete)
@@ -87,7 +89,20 @@ class HomeFragment : Fragment() {
                     }
                 }
                 .setNegativeButton("취소", null)
-                .show()
+                .create()
+
+            // 🚀 2. [핵심] 팝업창이 화면에 뜰 때 버튼 색상을 주황색(#FF6F00)으로 덮어씌웁니다.
+            dialog.setOnShowListener {
+                // BUTTON_POSITIVE = "삭제" 버튼
+                dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(android.graphics.Color.parseColor("#FF6F00"))
+
+                // BUTTON_NEGATIVE = "취소" 버튼
+                dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(android.graphics.Color.parseColor("#FF6F00"))
+                // (만약 취소 버튼은 회색 등 다른 색으로 하고 싶으시면 위 색상 코드를 "#888888" 등으로 바꾸시면 됩니다)
+            }
+
+            // 3. 화면에 띄우기
+            dialog.show()
         }
 
         // 💡 5. 검색창 및 PDF 버튼 (기존 유지)
