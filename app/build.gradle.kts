@@ -77,6 +77,9 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
+    // 💡 GPS 위치 정보를 가져오기 위한 구글 플레이 서비스 라이브러리
+    implementation("com.google.android.gms:play-services-location:21.2.0")
+
     // Room DB 설정
     val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion")

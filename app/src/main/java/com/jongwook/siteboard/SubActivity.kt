@@ -5,15 +5,20 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.*
+import android.location.Geocoder
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
 import com.jongwook.siteboard.databinding.ActivitySubBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -69,6 +74,9 @@ class SubActivity : AppCompatActivity() {
         binding.btnGallery.setOnClickListener {
             if (validateInputs()) pickImageLauncher.launch(arrayOf("image/*"))
         }
+
+        // 💡 화면이 켜지자마자 위치를 가져오도록 onCreate 맨 마지막에 추가!
+        fetchCurrentLocationAndAddress()
     }
 
     private fun validateInputs(): Boolean {
@@ -100,10 +108,11 @@ class SubActivity : AppCompatActivity() {
                     binding.layoutLoading.visibility = View.VISIBLE
                 }
 
-                val originalBitmap = loadBitmapFromUri(uri) ?: throw Exception("이미지 로드 실패")
+                // 💡 [수정] 단순히 비트맵만 가져오지 않고, EXIF 정보를 기반으로 회전까지 완료된 비트맵을 가져옵니다!
+                val orientedBitmap = loadOrientedBitmapFromUri(uri) ?: throw Exception("이미지 로드 실패")
 
-                // 💡 [핵심] 이제 환경 설정값을 stampTextOnBitmap 내부에서 직접 불러옵니다!
-                val stampedBitmap = stampTextOnBitmap(originalBitmap, title, desc, loc)
+                // 💡 [핵심] 이제 똑바로 서 있는 비트맵(orientedBitmap)에 워터마크를 새깁니다.
+                val stampedBitmap = stampTextOnBitmap(orientedBitmap, title, desc, loc)
 
                 val newSavedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
 
@@ -137,12 +146,66 @@ class SubActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadBitmapFromUri(uri: Uri): Bitmap? {
+    // 💡 [추가] 꼬리표(EXIF) 정보를 읽어서, 필요하면 회전시켜서 똑바로 세워주는 함수
+    private fun loadOrientedBitmapFromUri(uri: Uri): Bitmap? {
         var inputStream: InputStream? = null
         return try {
+            // 1. 원본 비트맵 로드
             inputStream = contentResolver.openInputStream(uri)
-            BitmapFactory.decodeStream(inputStream)
-        } finally { inputStream?.close() }
+            val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            inputStream?.close()
+
+            if (originalBitmap == null) return null
+
+            // 💡 2. 다시 파일을 열어서 EXIF 정보(방향 꼬리표) 읽기
+            inputStream = contentResolver.openInputStream(uri)
+            val exif = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                // 안드로이드 7.0 이상
+                android.media.ExifInterface(inputStream!!)
+            } else {
+                // 안드로이드 6.0 이하 (file:// 경로가 필요할 수 있음)
+                // 현재 앱은 Q(10) 이상 타겟이므로 InputStream 방식만 있어도 무방합니다.
+                null
+            }
+            inputStream?.close()
+
+            // 💡 3. 방향 정보 알아내기
+            val orientation = exif?.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL)
+                ?: android.media.ExifInterface.ORIENTATION_NORMAL
+
+            // 💡 4. 정보에 따라 회전시켜서 반환
+            rotateBitmap(originalBitmap, orientation)
+
+        } catch (e: Exception) {
+            Log.e("SubActivity", "이미지 회전 실패", e)
+            null
+        } finally {
+            inputStream?.close()
+        }
+    }
+
+    // 💡 [추가] EXIF 정보에 따라 비트맵을 실제로 회전시키는 유틸 함수
+    private fun rotateBitmap(bitmap: Bitmap, orientation: Int): Bitmap {
+        val matrix = Matrix()
+        when (orientation) {
+            android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.setRotate(90f)   // 시계 90도
+            android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.setRotate(180f) // 180도 (뒤집힘)
+            android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.setRotate(270f) // 시계 270도
+            android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.setScale(-1f, 1f) // 좌우 반전
+            android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.setScale(1f, -1f)   // 상하 반전
+            else -> return bitmap // 회전 필요 없음 (기본 가로 상태)
+        }
+
+        return try {
+            // Matrix를 적용해 새로운 회전된 비트맵 생성
+            val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            // 메모리 아끼기 위해 원본 누워있는 비트맵은 삭제
+            if (bitmap != rotatedBitmap) bitmap.recycle()
+            rotatedBitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+            bitmap // 실패 시 원본이라도 반환
+        }
     }
 
     // 🌟 100% 싱크로율 보장: 미리보기와 완벽히 똑같은 여백과 비율로 도장 찍기
@@ -228,12 +291,82 @@ class SubActivity : AppCompatActivity() {
     }
 
 
+    // 🌟 [완벽 방어 적용] GPS로 현재 위치를 잡아 한글 주소로 변환하는 로직
+    private fun fetchCurrentLocationAndAddress() {
+        // 💡 1. 수정 모드일 때는 기존에 썼던 주소를 유지해야 하므로 GPS를 새로 잡지 않음!
+        if (isEditMode) return
+
+        // 💡 2. 위치 권한 확인 (권한이 없으면 사용자에게 안내)
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "위치 권한이 없어 주소를 자동으로 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        // 힌트 텍스트 임시 변경
+        binding.etLocation.setText("📍 현재 위치를 찾는 중...")
+
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
+        // 💡 3. 더 빠르고 안정적인 위치 가져오기 (최근 위치를 먼저 확인하고, 없으면 새로 요청)
+        fusedLocationClient.lastLocation.addOnSuccessListener { lastLoc ->
+            if (lastLoc != null) {
+                convertLocationToAddress(lastLoc.latitude, lastLoc.longitude)
+            } else {
+                // 최근 위치가 없으면 강제로 현재 위치 새로고침
+                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                    .addOnSuccessListener { currentLoc ->
+                        if (currentLoc != null) {
+                            convertLocationToAddress(currentLoc.latitude, currentLoc.longitude)
+                        } else {
+                            binding.etLocation.setText("") // 실내/지하 등 아예 못 잡는 경우
+                            Toast.makeText(this, "GPS 신호가 약해 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    .addOnFailureListener { binding.etLocation.setText("") }
+            }
+        }.addOnFailureListener { binding.etLocation.setText("") }
+    }
+
+    // 💡 [분리된 함수] 위도/경도를 한글 주소로 바꿔주는 역할만 전담
+    private fun convertLocationToAddress(lat: Double, lng: Double) {
+        val geocoder = Geocoder(this, Locale.KOREAN)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                geocoder.getFromLocation(lat, lng, 1, object : Geocoder.GeocodeListener {
+                    override fun onGeocode(addresses: MutableList<android.location.Address>) {
+                        if (addresses.isNotEmpty()) {
+                            val cleanAddress = addresses[0].getAddressLine(0).replace("대한민국 ", "")
+                            runOnUiThread { binding.etLocation.setText(cleanAddress) }
+                        } else {
+                            runOnUiThread { binding.etLocation.setText("") }
+                        }
+                    }
+                    override fun onError(errorMessage: String?) {
+                        runOnUiThread { binding.etLocation.setText("") }
+                    }
+                })
+            } else {
+                val addresses = geocoder.getFromLocation(lat, lng, 1)
+                if (!addresses.isNullOrEmpty()) {
+                    val cleanAddress = addresses[0].getAddressLine(0).replace("대한민국 ", "")
+                    binding.etLocation.setText(cleanAddress)
+                } else {
+                    binding.etLocation.setText("")
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SubActivity", "주소 변환 실패", e)
+            runOnUiThread { binding.etLocation.setText("") }
+        }
+    }
+
     private fun saveBitmapToGallery(bitmap: Bitmap, titleText: String): Uri? {
         val fileName = "${titleText}_${System.currentTimeMillis()}.jpg"
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/KOOLSAFE_Docs") // 폴더명 변경
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/SITEBOARD") // 폴더명 변경
         }
         val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         uri?.let { contentResolver.openOutputStream(it)?.use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out) } }
