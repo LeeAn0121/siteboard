@@ -33,12 +33,12 @@ val autoVersionName = "1.0.$autoVersionCode"
 
 android {
     namespace = "com.jongwook.siteboard"
-    compileSdk = 34 // 에러 9번 줄 수정: 블록{}이 아니라 대입(=)입니다.
+    compileSdk = 35 // 에러 9번 줄 수정: 블록{}이 아니라 대입(=)입니다.
 
     defaultConfig {
         applicationId = "com.jongwook.siteboard"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
 
         // 💡 [적용 완료!] 고정된 숫자 대신 위에서 만든 자동 변수를 넣습니다.
         versionCode = autoVersionCode
