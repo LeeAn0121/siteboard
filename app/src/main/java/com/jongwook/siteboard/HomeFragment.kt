@@ -101,7 +101,7 @@ class HomeFragment : Fragment() {
 
         binding.btnExportPdf.setOnClickListener {
             if (allPosts.isEmpty()) {
-                android.widget.Toast.makeText(requireContext(), "추출할 데이터가 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
+                android.widget.Toast.makeText(requireContext(), "추출할 현장 기록이 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
             } else {
                 exportToPdf()
             }

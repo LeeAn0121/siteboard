@@ -75,7 +75,7 @@ class MainActivity : AppCompatActivity() {
         if (ghostPosts.isNotEmpty()) {
             db.postDao().deleteList(ghostPosts)
             withContext(Dispatchers.Main) {
-                Toast.makeText(this@MainActivity, "앨범에 없는 유령 데이터 ${ghostPosts.size}개를 정리했습니다.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@MainActivity, "앨범에 없는 현장 기록을 ${ghostPosts.size}개를 정리했습니다.", Toast.LENGTH_SHORT).show()
             }
         }
     }

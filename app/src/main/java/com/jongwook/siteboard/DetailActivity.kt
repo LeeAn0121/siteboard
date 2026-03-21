@@ -115,7 +115,7 @@ class DetailActivity : AppCompatActivity() {
                 }
 
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@DetailActivity, "기록과 갤러리 원본 사진이 모두 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@DetailActivity, "기록과 원본 사진이 모두 삭제되었습니다.", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             }

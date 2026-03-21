@@ -2,10 +2,9 @@ package com.jongwook.siteboard
 
 import android.Manifest
 import android.content.ContentValues
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.*
-import android.location.Geocoder
-import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -13,7 +12,6 @@ import android.provider.MediaStore
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.jongwook.siteboard.databinding.ActivitySubBinding
@@ -29,7 +27,6 @@ class SubActivity : AppCompatActivity() {
     private var currentPhotoUri: Uri? = null
     private val db by lazy { AppDatabase.getDatabase(this) }
 
-    // [추가] 수정 모드 판별 변수
     private var isEditMode = false
     private var editPostId = 0
 
@@ -37,7 +34,6 @@ class SubActivity : AppCompatActivity() {
         if (granted) launchCamera() else Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
     }
 
-    // [변경] 사진을 찍거나 고르면 바로 processAndSaveImage() 호출하여 자동 저장!
     private val takePictureLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { isSuccess ->
         if (isSuccess) currentPhotoUri?.let { processAndSaveImage(it) }
     }
@@ -54,18 +50,13 @@ class SubActivity : AppCompatActivity() {
         binding = ActivitySubBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // (주의: GPS 권한 요청 및 fetchLocation 관련 코드는 삭제되었습니다.)
-
-        // [수정] 수정(Edit) 모드 진입 시 데이터만 채워넣음 (UI 숨기지 않음)
         if (intent.hasExtra("edit_id")) {
             isEditMode = true
             editPostId = intent.getIntExtra("edit_id", 0)
             binding.etTitle.setText(intent.getStringExtra("edit_title"))
             binding.etDesc.setText(intent.getStringExtra("edit_desc"))
             binding.etLocation.setText(intent.getStringExtra("edit_loc"))
-
-            // 🚨 안내 Toast 변경 (사용자에게 사진을 다시 선택하라고 알림)
-            Toast.makeText(this, "내용 고친 후 사진을 다시 촬영/선택하면 워터마크가 바뀝니다.", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "내용을 수정한 후 사진을 다시 촬영/선택하면 워터마크가 변경됩니다.", Toast.LENGTH_LONG).show()
         }
 
         binding.btnCamera.setOnClickListener {
@@ -77,54 +68,6 @@ class SubActivity : AppCompatActivity() {
 
         binding.btnGallery.setOnClickListener {
             if (validateInputs()) pickImageLauncher.launch(arrayOf("image/*"))
-        }
-
-        // (주의: updateTextOnly 전용 버튼 이벤트는 삭제되었습니다.)
-    }
-
-    // [추가됨] 사진 변경 없이 DB의 텍스트 정보만 업데이트하는 함수
-    private fun updateTextOnly() {
-        // 1. 먼저 저장할 데이터를 객체로 만듭니다.
-        val title = binding.etTitle.text.toString()
-        val desc = binding.etDesc.text.toString()
-        val loc = binding.etLocation.text.toString()
-        val date = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
-// imageUri는 이미 전역 변수로 가지고 계신 값을 사용하면 됩니다. (예: currentPhotoUri.toString())
-
-        val postToSave = PostEntity(
-            title = title,
-            description = desc,
-            location = loc,
-            imageUri = currentPhotoUri.toString(), // 촬영된 사진의 경로
-            date = date
-        )
-
-// 2. 이제 비동기(IO 스레드)에서 저장합니다.
-        lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                // [수정 포인트] 위에서 만든 postToSave를 여기에 넣습니다!
-                db.postDao().insert(postToSave)
-
-                withContext(Dispatchers.Main) {
-                    // 로딩 화면 끄기
-                    binding.layoutLoading.visibility = View.GONE
-                    Toast.makeText(this@SubActivity, "현장 기록이 저장되었습니다.", Toast.LENGTH_SHORT).show()
-
-                    // [연속 촬영 모드 체크]
-                    if (binding.switchContinuous.isChecked) {
-                        // 연속 촬영 중이면 사진 경로만 초기화하고 화면은 유지
-                        currentPhotoUri = null
-                        Toast.makeText(this@SubActivity, "글씨는 유지됩니다. 다음 사진을 찍으세요!", Toast.LENGTH_SHORT).show()
-                    } else {
-                        // 일반 모드면 화면 닫기
-                        finish()
-                    }
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(this@SubActivity, "저장 중 오류 발생: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
         }
     }
 
@@ -146,27 +89,22 @@ class SubActivity : AppCompatActivity() {
         }
     }
 
-    // 이미지 합성 및 자동 저장 로직 (로딩 스피너 적용 및 테마 값 전달)
     private fun processAndSaveImage(uri: Uri) {
         val title = binding.etTitle.text.toString().trim()
         val desc = binding.etDesc.text.toString().trim()
         val loc = binding.etLocation.text.toString().trim()
 
-        // 라디오 버튼 상태 확인 (어두운 테마인지?)
-        // 설정 화면(WatermarkSettingsActivity)에서 저장해둔 테마 값을 몰래 꺼내옵니다!
-        val prefs = getSharedPreferences("WatermarkPrefs", android.content.Context.MODE_PRIVATE)
-        val isDarkTheme = prefs.getBoolean("wm_is_theme_dark", false)
-
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                // UI 스레드에서 로딩 창 띄우기
                 withContext(Dispatchers.Main) {
-                    binding.layoutLoading.visibility = android.view.View.VISIBLE
+                    binding.layoutLoading.visibility = View.VISIBLE
                 }
 
                 val originalBitmap = loadBitmapFromUri(uri) ?: throw Exception("이미지 로드 실패")
-                // 테마 변수(isDarkTheme) 추가 전달
-                val stampedBitmap = stampTextOnBitmap(originalBitmap, title, desc, loc, isDarkTheme)
+
+                // 💡 [핵심] 이제 환경 설정값을 stampTextOnBitmap 내부에서 직접 불러옵니다!
+                val stampedBitmap = stampTextOnBitmap(originalBitmap, title, desc, loc)
+
                 val newSavedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
 
                 val currentDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
@@ -178,27 +116,14 @@ class SubActivity : AppCompatActivity() {
 
                 if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
 
-//                withContext(Dispatchers.Main) {
-//                    Toast.makeText(this@SubActivity, if(isEditMode) "수정 완료!" else "저장 완료!", Toast.LENGTH_SHORT).show()
-//                    setResult(RESULT_OK)
-//                    finish()
-//                }
-
                 withContext(Dispatchers.Main) {
-                    binding.layoutLoading.visibility = View.GONE // 로딩 끄기
+                    binding.layoutLoading.visibility = View.GONE
                     Toast.makeText(this@SubActivity, "현장 기록이 저장되었습니다.", Toast.LENGTH_SHORT).show()
 
-                    // 💡 [연속 촬영 모드 체크 로직]
                     if (binding.switchContinuous.isChecked) {
-                        // 연속 촬영 On: 액티비티를 끄지 않고, 메모리의 사진 경로만 지워줌 (글씨는 남김)
                         currentPhotoUri = null
-
-                        // UX 극대화: 토스트 띄우고 바로 카메라 앱을 다시 켜주면 진짜 편함!
                         Toast.makeText(this@SubActivity, "다음 사진을 촬영하세요", Toast.LENGTH_SHORT).show()
-                        // launchCamera() // 원한다면 주석을 풀어서 저장 직후 카메라 자동 실행되게 할 수 있음
-
                     } else {
-                        // 연속 촬영 Off: 기존처럼 단일 저장 후 화면 닫기
                         setResult(RESULT_OK)
                         finish()
                     }
@@ -206,7 +131,7 @@ class SubActivity : AppCompatActivity() {
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@SubActivity, "오류: ${e.message}", Toast.LENGTH_SHORT).show()
-                    binding.layoutLoading.visibility = android.view.View.GONE // 에러 시 로딩 숨김
+                    binding.layoutLoading.visibility = View.GONE
                 }
             }
         }
@@ -220,62 +145,95 @@ class SubActivity : AppCompatActivity() {
         } finally { inputStream?.close() }
     }
 
-    // 🌟 수정됨: 완전 좌측 끝, 최하단에 붙는 배경 박스와 텍스트 로직 (테마에 따른 색상 반전)
-    private fun stampTextOnBitmap(bitmap: Bitmap, title: String, desc: String, loc: String, isDarkTheme: Boolean): Bitmap {
+    // 🌟 100% 싱크로율 보장: 미리보기와 완벽히 똑같은 여백과 비율로 도장 찍기
+    private fun stampTextOnBitmap(bitmap: Bitmap, title: String, desc: String, loc: String): Bitmap {
         val resultBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(resultBitmap)
 
-        val calcSize = (resultBitmap.height * 0.035f).coerceAtLeast(30f)
+        // 1. 설정값 불러오기
+        val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
+        val isTop = prefs.getBoolean("wm_is_top", false)
+        val isLeft = prefs.getBoolean("wm_is_left", true)
+        val baseMarginX = prefs.getInt("wm_margin_x", 50)
+        val baseMarginY = prefs.getInt("wm_margin_y", 50)
+        val baseFontSize = prefs.getFloat("wm_font_size", 40f)
+        val useBgBox = prefs.getBoolean("wm_use_bg", true)
+        val textColorCode = prefs.getInt("wm_color",  Color.YELLOW)
+        val fontType = prefs.getString("wm_font", "DEFAULT")
 
-        // ✨ 테마에 따른 글자색/배경색 결정
-        val textColor = if (isDarkTheme) Color.WHITE else Color.BLACK
-        val bgColor = if (isDarkTheme) Color.argb(160, 0, 0, 0) else Color.argb(160, 255, 255, 255)
+        // 2. 가로/세로 각각의 해상도 스케일링 (1000x800 기준)
+        // 이 계산법이 들어가야 사진 해상도가 달라도 여백이 정확하게 맞습니다!
+        val scaleX = resultBitmap.width / 1000f
+        val scaleY = resultBitmap.height / 800f
+
+        val actualFontSize = baseFontSize * scaleX
+        val actualMarginX = baseMarginX * scaleX
+        val actualMarginY = baseMarginY * scaleY
+
+        // 3. 텍스트 세팅
+        val lines = mutableListOf("제목 : $title")
+        if (loc.isNotEmpty()) lines.add("위치 : $loc")
+        if (desc.isNotEmpty()) lines.add("작업내용 : ${desc.replace("\n", " ")}")
+        lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())) // 초 단위까지 추가!
+
+        val typefaceSelection = when (fontType) {
+            "SERIF" -> Typeface.create(Typeface.SERIF, Typeface.BOLD)
+            "MONOSPACE" -> Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            "SANS_SERIF_LIGHT" -> Typeface.create("sans-serif-light", Typeface.BOLD)
+            "SANS_SERIF_BLACK" -> Typeface.create("sans-serif-black", Typeface.BOLD)
+            "CURSIVE" -> Typeface.create("cursive", Typeface.BOLD)
+            else -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
 
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = textColor
-            textSize = calcSize
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            color = textColorCode
+            textSize = actualFontSize
+            typeface = typefaceSelection
+            setShadowLayer(5f, 3f, 3f, Color.BLACK)
         }
 
-        val lines = mutableListOf("제목: $title")
-        if (desc.isNotEmpty()) lines.add("작업 내용: $desc")
-        if (loc.isNotEmpty()) lines.add("위치: $loc")
-        lines.add("일시: " + SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date()))
+        // 4. 오차 없는 블록 높이/너비 계산 (미리보기와 동일 공식)
+        val fm = textPaint.fontMetrics
+        val singleTextHeight = fm.descent - fm.ascent
+        val lineSpacing = actualFontSize * 0.5f
+        val totalHeight = (lines.size * singleTextHeight) + ((lines.size - 1) * lineSpacing)
+        val maxTextWidth = lines.maxOf { textPaint.measureText(it) }
 
-        var maxTextWidth = 0f
-        for (line in lines) {
-            val width = textPaint.measureText(line)
-            if (width > maxTextWidth) maxTextWidth = width
+        // 5. 시작점 X, Y 지정
+        val startX = if (isLeft) actualMarginX else resultBitmap.width - actualMarginX - maxTextWidth
+        val startY = if (isTop) actualMarginY else resultBitmap.height - actualMarginY - totalHeight
+
+        val padding = actualFontSize * 0.4f
+
+        // 6. 박스 그리기
+        if (useBgBox) {
+            val bgPaint = Paint().apply { color = Color.parseColor("#66000000") }
+            val bgRect = RectF(
+                startX - padding,
+                startY - padding,
+                startX + maxTextWidth + padding,
+                startY + totalHeight + padding
+            )
+            canvas.drawRoundRect(bgRect, 10f * scaleX, 10f * scaleX, bgPaint)
         }
 
-        val paddingX = calcSize * 0.8f
-        val paddingY = calcSize * 0.8f
-        val lineSpacing = calcSize * 1.4f
-        val totalTextHeight = (lines.size - 1) * lineSpacing + calcSize
-
-        val bgBottom = resultBitmap.height.toFloat()
-        val bgTop = bgBottom - totalTextHeight - (paddingY * 2)
-        val bgRight = maxTextWidth + (paddingX * 2)
-
-        val bgPaint = Paint().apply { color = bgColor }
-        val bgRect = RectF(-30f, bgTop, bgRight, bgBottom + 30f)
-        canvas.drawRoundRect(bgRect, 20f, 20f, bgPaint)
-
-        var textY = bgTop + paddingY + (calcSize * 0.85f)
+        // 7. 텍스트 그리기
+        var textDrawY = startY - fm.ascent
         for (line in lines) {
-            canvas.drawText(line, paddingX, textY, textPaint)
-            textY += lineSpacing
+            canvas.drawText(line, startX, textDrawY, textPaint)
+            textDrawY += (singleTextHeight + lineSpacing)
         }
 
         return resultBitmap
     }
+
 
     private fun saveBitmapToGallery(bitmap: Bitmap, titleText: String): Uri? {
         val fileName = "${titleText}_${System.currentTimeMillis()}.jpg"
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/SITEBOARD_Docs")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/KOOLSAFE_Docs") // 폴더명 변경
         }
         val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         uri?.let { contentResolver.openOutputStream(it)?.use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out) } }
