@@ -1,11 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Base.Theme.Siteboard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="colorPrimary">#FF6F00</item>
-        <item name="android:colorBackground">#16161A</item>
-        <item name="colorSurface">#1E2023</item>
-        <item name="colorOnSurface">#EBEBEB</item>
-        <item name="android:textColorPrimary">#EBEBEB</item>
-        <item name="android:textColorSecondary">#A0A0A5</item>
+        <item name="android:colorBackground">@color/bg_dark</item>
+        <item name="colorSurface">@color/surface_dark</item>
         <item name="android:statusBarColor">#16161A</item>
         <item name="android:navigationBarColor">#16161A</item>
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
