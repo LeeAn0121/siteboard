@@ -1,20 +1,32 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.Siteboard" parent="Theme.MaterialComponents.DayNight.NoActionBar">
 
-        <item name="colorPrimary">#7C4DFF</item>
-        <item name="colorPrimaryVariant">#3700B3</item>
+        <item name="colorPrimary">#FF6F00</item>
+        <item name="colorPrimaryVariant">#16161A</item>
         <item name="colorOnPrimary">#FFFFFF</item>
 
         <item name="colorSecondary">#FF6F00</item>
         <item name="colorSecondaryVariant">#FF6F00</item>
         <item name="colorOnSecondary">#FFFFFF</item>
 
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+        <!-- 배경 및 서피스를 다크로 고정 -->
+        <item name="android:colorBackground">#16161A</item>
+        <item name="colorSurface">#1E2023</item>
+        <item name="colorOnSurface">#EBEBEB</item>
+        <item name="colorOnBackground">#EBEBEB</item>
 
-        <item name="android:windowSplashScreenBackground" tools:targetApi="s">?android:attr/windowBackground</item>
+        <item name="android:textColorPrimary">#EBEBEB</item>
+        <item name="android:textColorSecondary">#A0A0A5</item>
+        <item name="android:textColorHint">#404045</item>
 
+        <item name="colorError">#E05567</item>
+
+        <item name="android:statusBarColor">#16161A</item>
+        <item name="android:navigationBarColor">#16161A</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+
+        <item name="android:windowSplashScreenBackground" tools:targetApi="s">#16161A</item>
         <item name="android:windowSplashScreenAnimatedIcon" tools:targetApi="s">@android:color/transparent</item>
-
         <item name="android:windowSplashScreenAnimationDuration" tools:targetApi="s">0</item>
     </style>
 </resources>

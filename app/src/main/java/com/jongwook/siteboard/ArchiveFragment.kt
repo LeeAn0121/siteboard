@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.jongwook.siteboard.databinding.FragmentArchiveBinding
@@ -25,35 +25,36 @@ class ArchiveFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         db = AppDatabase.getDatabase(requireContext())
 
-        // DB 변화 감지하여 자동으로 그룹 묶기
         viewLifecycleOwner.lifecycleScope.launch {
             db.postDao().getAllPosts().collect { postList ->
 
-                // 제목(title)을 기준으로 리스트 그룹화
                 val groupedPosts = postList.groupBy { it.title }
-
-                // 💡 [핵심 추가] 제목들만 따로 뽑아서 리스트로 만들기 (클릭 시 몇 번째 제목인지 알기 위해)
                 val titles = groupedPosts.keys.toList()
 
-                // 화면에 뿌려줄 문자열 세팅
-                val displayList = titles.map { title ->
-                    "📁 $title \n   └ 총 ${groupedPosts[title]?.size}장의 현장 기록"
+                if (titles.isEmpty()) {
+                    binding.layoutEmpty.visibility = View.VISIBLE
+                    binding.lvProjects.visibility = View.GONE
+                } else {
+                    binding.layoutEmpty.visibility = View.GONE
+                    binding.lvProjects.visibility = View.VISIBLE
                 }
 
-                // 어댑터 연결
-                val adapter = android.widget.ArrayAdapter(
-                    requireContext(),
-                    android.R.layout.simple_list_item_1,
-                    displayList
-                )
+                // 커스텀 어댑터
+                val adapter = object : android.widget.ArrayAdapter<String>(
+                    requireContext(), R.layout.item_project_list, R.id.tvProjectItem, titles
+                ) {
+                    override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+                        val v = super.getView(position, convertView, parent)
+                        val count = groupedPosts[titles[position]]?.size ?: 0
+                        v.findViewById<TextView>(R.id.tvProjectCount)?.text = "사진 ${count}장"
+                        return v
+                    }
+                }
+
                 binding.lvProjects.adapter = adapter
 
-                // 💡 [핵심 추가] 리스트 항목을 눌렀을 때의 동작
                 binding.lvProjects.setOnItemClickListener { _, _, position, _ ->
-                    // 사용자가 누른 위치(position)의 진짜 제목 가져오기
                     val selectedTitle = titles[position]
-
-                    // 해당 프로젝트의 사진들을 모아보는 새 화면(ProjectDetailActivity)으로 이동!
                     val intent = android.content.Intent(requireContext(), ProjectDetailActivity::class.java)
                     intent.putExtra("PROJECT_TITLE", selectedTitle)
                     startActivity(intent)
