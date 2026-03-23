@@ -128,21 +128,32 @@ class SubActivity : AppCompatActivity() {
                 // 1. 방향이 바로 잡힌 원본 비트맵 로드
                 val orientedBitmap = loadOrientedBitmapFromUri(uri) ?: throw Exception("이미지 로드 실패")
 
-                // 🛡️ 2. [추가된 핵심 로직] 워터마크 찍기 전에 개인정보 자동 블러 처리 실행
-                val privacyBlurredBitmap = detectAndBlurPrivacy(orientedBitmap)
+                // ===================================================================
+                // 🛡️ 2. [수정됨] 설정에서 스위치가 켜져 있는지 확인 후 블러 처리
+                // ===================================================================
+                val sharedPref = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+                val isPrivacyBlurEnabled = sharedPref.getBoolean("privacy_blur_mode", true)
 
-                // 메모리 아끼기 위해 블러 처리 후 필요 없어진 원본 삭제
-                if (orientedBitmap != privacyBlurredBitmap && !orientedBitmap.isRecycled) {
-                    orientedBitmap.recycle()
+                val bitmapToStamp = if (isPrivacyBlurEnabled) {
+                    // 스위치가 켜져 있으면 블러 처리 실행
+                    val blurred = detectAndBlurPrivacy(orientedBitmap)
+                    if (orientedBitmap != blurred && !orientedBitmap.isRecycled) {
+                        orientedBitmap.recycle()
+                    }
+                    blurred
+                } else {
+                    // 스위치가 꺼져 있으면 원본 그대로 사용
+                    orientedBitmap
                 }
 
-                // 3. [수정됨] 블러 처리가 완료된 비트맵 위에 워터마크를 새깁니다.
-                val stampedBitmap = stampTextOnBitmap(privacyBlurredBitmap, title, desc, loc)
+                // 3. (블러 처리 되었거나 안 된) 비트맵 위에 최종 워터마크 새기기
+                val stampedBitmap = stampTextOnBitmap(bitmapToStamp, title, desc, loc)
 
-                // 워터마크 처리 후 필요 없어진 블러 이미지 삭제
-                if (privacyBlurredBitmap != stampedBitmap && !privacyBlurredBitmap.isRecycled) {
-                    privacyBlurredBitmap.recycle()
+                // 워터마크 처리 후 필요 없어진 중간 이미지 삭제
+                if (bitmapToStamp != stampedBitmap && !bitmapToStamp.isRecycled) {
+                    bitmapToStamp.recycle()
                 }
+                // ===================================================================
 
                 // 4. 갤러리에 저장
                 val newSavedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
@@ -443,7 +454,7 @@ class SubActivity : AppCompatActivity() {
     }
 
     /**
-     * 옵션 1: 형체를 알아볼 수 없도록 아주 강한 모자이크(픽셀화) 처리
+     * 옵션 1: 형체를 알아볼 수 없도록 아주 강한 거대 모자이크(픽셀화) 처리
      */
     private fun blurBitmapArea(bitmap: Bitmap, canvas: Canvas, bounds: Rect?) {
         if (bounds == null) return
@@ -457,14 +468,18 @@ class SubActivity : AppCompatActivity() {
 
         val croppedBitmap = Bitmap.createBitmap(bitmap, safeLeft, safeTop, safeWidth, safeHeight)
 
-        // 🚀 [수정됨] 흐림 강도 대폭 증가 (숫자가 클수록 입자가 커지고 형체를 알아볼 수 없게 됨)
-        // 기존 8 -> 25 로 변경. (더 강하게 원하시면 30~40으로 올리셔도 됩니다)
-        val blurScale = 25
+        // 🚀 1. 흐림 강도를 50으로 대폭 상향 (입자 크기가 엄청나게 커짐)
+        val blurScale = 50
         val scaledWidth = Math.max(1, safeWidth / blurScale)
         val scaledHeight = Math.max(1, safeHeight / blurScale)
 
+        // 이미지를 50분의 1로 아주 작게 축소
         val smallBitmap = Bitmap.createScaledBitmap(croppedBitmap, scaledWidth, scaledHeight, false)
-        val finalBlurredChunk = Bitmap.createScaledBitmap(smallBitmap, safeWidth, safeHeight, true)
+
+        // 🚀 2. [핵심] 다시 키울 때 마지막 파라미터를 'false'로 변경!
+        // true: 부드럽게 뭉개짐 (수채화 느낌)
+        // false: 픽셀이 그대로 커짐 (거대한 네모 모자이크 블록 느낌)
+        val finalBlurredChunk = Bitmap.createScaledBitmap(smallBitmap, safeWidth, safeHeight, false)
 
         canvas.drawBitmap(finalBlurredChunk, safeLeft.toFloat(), safeTop.toFloat(), null)
 

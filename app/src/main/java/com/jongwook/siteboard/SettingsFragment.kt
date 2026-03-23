@@ -42,6 +42,16 @@ class SettingsFragment : Fragment() {
             sharedPref.edit().putBoolean("pdf_multi_mode", isChecked).apply()
         }
 
+        // ==========================================
+        // 🚀 [추가] 개인정보 마스킹 스위치 상태 저장/불러오기
+        // ==========================================
+        binding.switchPrivacyBlur.isChecked = sharedPref.getBoolean("privacy_blur_mode", true) // 기본값은 안전하게 true
+
+        binding.switchPrivacyBlur.setOnCheckedChangeListener { _, isChecked ->
+            sharedPref.edit().putBoolean("privacy_blur_mode", isChecked).apply()
+        }
+        // ==========================================
+
         // 엑셀(CSV) 내보내기 기능
         binding.btnExportCsv.setOnClickListener {
             exportDataToCsv()

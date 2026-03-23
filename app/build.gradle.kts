@@ -90,6 +90,7 @@ dependencies {
 
     // 🚀 [추가] Task를 코루틴에서 await()로 쓸 수 있게 해주는 라이브러리
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.4")
+    implementation(libs.play.services.location)
 
     // Room DB 설정
     val roomVersion = "2.6.1"
