@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -19,6 +20,7 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
+import com.google.android.material.card.MaterialCardView
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -39,6 +41,10 @@ class SubActivity : AppCompatActivity() {
 
     private var isEditMode = false
     private var editPostId = 0
+    private var selectedTheme = 0
+
+    private var previewBitmap: Bitmap? = null
+    private lateinit var themePreviewViews: List<ImageView>
 
     private val requestCameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) launchCamera() else Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
@@ -52,6 +58,19 @@ class SubActivity : AppCompatActivity() {
         uri?.let {
             contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             processAndSaveImage(it)
+        }
+    }
+
+    private val previewImagePickerLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            lifecycleScope.launch(Dispatchers.IO) {
+                val bmp = loadOrientedBitmapFromUri(it)
+                withContext(Dispatchers.Main) {
+                    previewBitmap = bmp
+                    updatePreview()
+                }
+            }
         }
     }
 
@@ -79,6 +98,19 @@ class SubActivity : AppCompatActivity() {
             Toast.makeText(this, "내용을 수정한 후 사진을 다시 촬영/선택하면 워터마크가 변경됩니다.", Toast.LENGTH_LONG).show()
         }
 
+        setupThemeSelector()
+        updatePreview()
+
+        binding.cardPreview.setOnClickListener {
+            previewImagePickerLauncher.launch(arrayOf("image/*"))
+        }
+
+        binding.btnDetailSettings.setOnClickListener {
+            startActivity(android.content.Intent(this, WatermarkSettingsActivity::class.java))
+        }
+
+        binding.tvDate.text = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+
         binding.btnCamera.setOnClickListener {
             if (validateInputs()) {
                 if (checkSelfPermission(Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) launchCamera()
@@ -92,6 +124,228 @@ class SubActivity : AppCompatActivity() {
 
         // 화면이 켜지자마자 위치를 가져오도록 호출
         fetchCurrentLocationAndAddress()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 상세 설정(WatermarkSettingsActivity)에서 돌아왔을 때 preview 갱신
+        updatePreview()
+    }
+
+    private fun setupThemeSelector() {
+        val themeLayouts = listOf(
+            binding.layoutTheme0, binding.layoutTheme1,
+            binding.layoutTheme2, binding.layoutTheme3
+        )
+        val themeViews = listOf(
+            binding.viewTheme0, binding.viewTheme1,
+            binding.viewTheme2, binding.viewTheme3
+        )
+        val themeLabels = listOf(
+            binding.tvThemeLabel0, binding.tvThemeLabel1,
+            binding.tvThemeLabel2, binding.tvThemeLabel3
+        )
+        themePreviewViews = listOf(
+            binding.ivThemePreview0, binding.ivThemePreview1,
+            binding.ivThemePreview2, binding.ivThemePreview3
+        )
+
+        // 저장된 테마 불러오기
+        val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
+        selectedTheme = prefs.getInt("wm_theme_index", 0)
+        updateAllThemePreviews()
+        updateThemeSelection(themeViews, themeLabels, selectedTheme)
+
+        themeLayouts.forEachIndexed { index, layout ->
+            layout.setOnClickListener {
+                selectedTheme = index
+                updateThemeSelection(themeViews, themeLabels, index)
+                applyThemePreset(index)
+                updatePreview()
+            }
+        }
+    }
+
+    private fun updateThemeSelection(views: List<android.view.View>, labels: List<android.widget.TextView>, selectedIndex: Int) {
+        val strokePx = (2 * resources.displayMetrics.density).toInt()
+        views.forEachIndexed { index, view ->
+            val card = view as MaterialCardView
+            card.strokeWidth = if (index == selectedIndex) strokePx else 0
+        }
+        labels.forEachIndexed { index, label ->
+            label.setTextColor(
+                if (index == selectedIndex) getColor(R.color.orange_primary)
+                else Color.parseColor("#A0A0A5")
+            )
+        }
+    }
+
+    private fun updateAllThemePreviews() {
+        if (!::themePreviewViews.isInitialized) return
+        themePreviewViews.forEachIndexed { index, imageView ->
+            imageView.setImageBitmap(createThemePreviewBitmap(index))
+        }
+    }
+
+    private fun createThemePreviewBitmap(themeIndex: Int): Bitmap {
+        val w = 270; val h = 270
+        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(Color.parseColor("#1A1A1E"))
+
+        data class ThemeCfg(val color: Int, val font: String, val size: Float, val bg: Boolean)
+        val themes = arrayOf(
+            ThemeCfg(Color.WHITE,  "SANS_SERIF_LIGHT",  22f, false),
+            ThemeCfg(Color.YELLOW, "MONOSPACE",          26f, true),
+            ThemeCfg(Color.WHITE,  "SERIF",              24f, true),
+            ThemeCfg(Color.YELLOW, "SANS_SERIF_BLACK",   30f, true)
+        )
+        val cfg = themes[themeIndex]
+
+        val typeface = when (cfg.font) {
+            "SERIF"           -> Typeface.create(Typeface.SERIF, Typeface.BOLD)
+            "MONOSPACE"       -> Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            "SANS_SERIF_LIGHT"-> Typeface.create("sans-serif-light", Typeface.BOLD)
+            "SANS_SERIF_BLACK"-> Typeface.create("sans-serif-black", Typeface.BOLD)
+            else              -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = cfg.color; textSize = cfg.size; this.typeface = typeface
+            setShadowLayer(2f, 1f, 1f, Color.BLACK)
+        }
+
+        val lines = listOf("프로젝트명", "2026-03-23")
+        val fm = paint.fontMetrics
+        val lineH = fm.descent - fm.ascent
+        val spacing = cfg.size * 0.4f
+        val totalH = lines.size * lineH + (lines.size - 1) * spacing
+        val maxW = lines.maxOf { paint.measureText(it) }
+        val startX = 16f
+        val startY = h - 16f - totalH
+
+        if (cfg.bg) {
+            val bgPaint = Paint().apply { color = Color.parseColor("#88000000") }
+            val pad = cfg.size * 0.3f
+            canvas.drawRoundRect(RectF(startX - pad, startY - pad, startX + maxW + pad, startY + totalH + pad), 6f, 6f, bgPaint)
+        }
+
+        var y = startY - fm.ascent
+        for (line in lines) { canvas.drawText(line, startX, y, paint); y += lineH + spacing }
+
+        return bitmap
+    }
+
+    private fun updatePreview() {
+        val title = binding.etTitle.text.toString().trim().let { if (it.isEmpty()) "프로젝트명" else it }
+        val loc   = binding.etLocation.text.toString().trim().let { if (it.isEmpty()) "현재 위치" else it }
+        val desc  = binding.etDesc.text.toString().trim()
+
+        val width = 1000; val height = 800
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+
+        if (previewBitmap != null) {
+            val scaled = scaleBitmapCenterCrop(previewBitmap!!, width, height)
+            canvas.drawBitmap(scaled, 0f, 0f, null)
+            if (scaled != previewBitmap) scaled.recycle()
+        } else {
+            canvas.drawColor(Color.parseColor("#252529"))
+        }
+
+        val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
+        val isTop      = prefs.getBoolean("wm_is_top", false)
+        val isLeft     = prefs.getBoolean("wm_is_left", true)
+        val marginX    = prefs.getInt("wm_margin_x", 50)
+        val marginY    = prefs.getInt("wm_margin_y", 50)
+        val fontSize   = prefs.getFloat("wm_font_size", 40f)
+        val useBgBox   = prefs.getBoolean("wm_use_bg", true)
+        val textColor  = prefs.getInt("wm_color", Color.YELLOW)
+        val fontType   = prefs.getString("wm_font", "DEFAULT") ?: "DEFAULT"
+
+        val typeface = when (fontType) {
+            "SERIF"           -> Typeface.create(Typeface.SERIF, Typeface.BOLD)
+            "MONOSPACE"       -> Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            "SANS_SERIF_LIGHT"-> Typeface.create("sans-serif-light", Typeface.BOLD)
+            "SANS_SERIF_BLACK"-> Typeface.create("sans-serif-black", Typeface.BOLD)
+            "CURSIVE"         -> Typeface.create("cursive", Typeface.BOLD)
+            else              -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+
+        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = textColor; textSize = fontSize; this.typeface = typeface
+            setShadowLayer(3f, 2f, 2f, Color.BLACK)
+        }
+
+        val lines = mutableListOf("제목 : $title", "위치 : $loc")
+        if (desc.isNotEmpty()) lines.add("작업내용 : $desc")
+        lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
+
+        val fm = textPaint.fontMetrics
+        val lineH = fm.descent - fm.ascent
+        val spacing = fontSize * 0.5f
+        val totalH = lines.size * lineH + (lines.size - 1) * spacing
+        val maxW = lines.maxOf { textPaint.measureText(it) }
+
+        val startX = if (isLeft) marginX.toFloat() else width - marginX.toFloat() - maxW
+        val startY = if (isTop) marginY.toFloat() else height - marginY.toFloat() - totalH
+        val padding = fontSize * 0.4f
+
+        if (useBgBox) {
+            val bgPaint = Paint().apply { color = Color.parseColor("#66000000") }
+            canvas.drawRoundRect(RectF(startX - padding, startY - padding, startX + maxW + padding, startY + totalH + padding), 8f, 8f, bgPaint)
+        }
+
+        var drawY = startY - fm.ascent
+        for (line in lines) { canvas.drawText(line, startX, drawY, textPaint); drawY += lineH + spacing }
+
+        binding.ivPreview.imageTintList = null
+        binding.ivPreview.setImageBitmap(bitmap)
+    }
+
+    private fun scaleBitmapCenterCrop(src: Bitmap, targetW: Int, targetH: Int): Bitmap {
+        val srcRatio = src.width.toFloat() / src.height.toFloat()
+        val dstRatio = targetW.toFloat() / targetH.toFloat()
+        val scaledW: Int; val scaledH: Int
+        if (srcRatio > dstRatio) { scaledH = targetH; scaledW = (targetH * srcRatio).toInt() }
+        else { scaledW = targetW; scaledH = (targetW / srcRatio).toInt() }
+        val scaled = Bitmap.createScaledBitmap(src, scaledW, scaledH, true)
+        val x = (scaledW - targetW) / 2; val y = (scaledH - targetH) / 2
+        val cropped = Bitmap.createBitmap(scaled, x, y, targetW, targetH)
+        if (scaled != cropped) scaled.recycle()
+        return cropped
+    }
+
+    private fun applyThemePreset(index: Int) {
+        val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE).edit()
+        prefs.putInt("wm_theme_index", index)
+        when (index) {
+            0 -> { // 미니멀: 심플, 배경 없음, 흰색, 작은 글씨
+                prefs.putBoolean("wm_use_bg", false)
+                prefs.putInt("wm_color", Color.WHITE)
+                prefs.putString("wm_font", "SANS_SERIF_LIGHT")
+                prefs.putFloat("wm_font_size", 28f)
+            }
+            1 -> { // 기술: 모노스페이스, 노란색, 배경 박스
+                prefs.putBoolean("wm_use_bg", true)
+                prefs.putInt("wm_color", Color.YELLOW)
+                prefs.putString("wm_font", "MONOSPACE")
+                prefs.putFloat("wm_font_size", 40f)
+            }
+            2 -> { // 전문: 세리프, 흰색, 배경 박스
+                prefs.putBoolean("wm_use_bg", true)
+                prefs.putInt("wm_color", Color.WHITE)
+                prefs.putString("wm_font", "SERIF")
+                prefs.putFloat("wm_font_size", 36f)
+            }
+            3 -> { // 강조: 두꺼운 글씨, 노란색, 배경 박스, 큰 글씨
+                prefs.putBoolean("wm_use_bg", true)
+                prefs.putInt("wm_color", Color.YELLOW)
+                prefs.putString("wm_font", "SANS_SERIF_BLACK")
+                prefs.putFloat("wm_font_size", 50f)
+            }
+        }
+        prefs.apply()
     }
 
     private fun validateInputs(): Boolean {

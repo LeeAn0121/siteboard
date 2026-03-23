@@ -262,7 +262,7 @@ class WatermarkSettingsActivity : AppCompatActivity() {
             setShadowLayer(3f, 2f, 2f, Color.BLACK) // 글자 가독성 확보용 그림자
         }
 
-        val lines = listOf("Project : 지하 2층 전기실", "Date : 2026-03-20 16:34:21")
+        val lines = listOf("제목 : 지하 2층 전기실", "위치 : 서울시 강남구 역삼동", "날짜 : 2026-03-23 10:00:00")
 
         // 💡 [오차 0%] 안드로이드 FontMetrics를 이용한 정확한 글씨 높이 측정
         val fm = textPaint.fontMetrics

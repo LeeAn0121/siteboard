@@ -57,11 +57,6 @@ class SettingsFragment : Fragment() {
             exportDataToCsv()
         }
 
-        // 워터마크 설정 화면으로 이동
-        binding.btnWatermarkSettings.setOnClickListener {
-            val intent = android.content.Intent(requireContext(), WatermarkSettingsActivity::class.java)
-            startActivity(intent)
-        }
     }
 
     private fun exportDataToCsv() {
