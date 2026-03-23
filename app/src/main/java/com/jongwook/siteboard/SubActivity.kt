@@ -61,6 +61,20 @@ class SubActivity : AppCompatActivity() {
         }
     }
 
+    private val pickMultipleImagesLauncher = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
+        if (uris.isNotEmpty()) {
+            uris.forEach { uri ->
+                try { contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (e: Exception) { /* ignore */ }
+            }
+            val intent = android.content.Intent(this, BatchEditActivity::class.java)
+            intent.putParcelableArrayListExtra("selected_uris", ArrayList(uris))
+            intent.putExtra("edit_title", binding.etTitle.text.toString().trim())
+            intent.putExtra("edit_desc", binding.etDesc.text.toString().trim())
+            intent.putExtra("edit_loc", binding.etLocation.text.toString().trim())
+            startActivity(intent)
+        }
+    }
+
     private val previewImagePickerLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -120,6 +134,10 @@ class SubActivity : AppCompatActivity() {
 
         binding.btnGallery.setOnClickListener {
             if (validateInputs()) pickImageLauncher.launch(arrayOf("image/*"))
+        }
+
+        binding.btnBatch.setOnClickListener {
+            if (validateInputs()) pickMultipleImagesLauncher.launch(arrayOf("image/*"))
         }
 
         // 화면이 켜지자마자 위치를 가져오도록 호출

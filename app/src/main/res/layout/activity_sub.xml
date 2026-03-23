@@ -321,43 +321,66 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Bottom Buttons: both outline purple style -->
+    <!-- Bottom Buttons -->
     <LinearLayout
         android:id="@+id/layoutBottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:paddingHorizontal="20dp"
-        android:paddingVertical="16dp"
+        android:paddingVertical="12dp"
         android:background="#16161A"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnGallery"
-            android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_weight="1"
-            android:text="갤러리"
-            android:textColor="#FF6F00"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:background="@drawable/btn_outline_purple"
-            android:layout_marginEnd="12dp"
-            android:textAllCaps="false" />
+        <!-- 상단: 갤러리(단일) + 카메라 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp">
 
-        <androidx.appcompat.widget.AppCompatButton
-            android:id="@+id/btnCamera"
-            android:layout_width="0dp"
-            android:layout_height="60dp"
-            android:layout_weight="1"
-            android:text="사진 촬영"
-            android:textColor="#FF6F00"
-            android:textSize="18sp"
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnGallery"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="갤러리 (1장)"
+                android:textColor="#FF6F00"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_outline_purple"
+                android:layout_marginEnd="10dp"
+                android:textAllCaps="false" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/btnCamera"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="사진 촬영"
+                android:textColor="#FF6F00"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:background="@drawable/btn_outline_purple"
+                android:textAllCaps="false" />
+        </LinearLayout>
+
+        <!-- 하단: 배치 처리 (여러장) -->
+        <Button
+            android:id="@+id/btnBatch"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:text="여러 장 선택 (배치 처리)"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp"
             android:textStyle="bold"
-            android:background="@drawable/btn_outline_purple"
-            android:textAllCaps="false" />
+            android:backgroundTint="#FF6F00"
+            android:textAllCaps="false"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp" />
     </LinearLayout>
 
     <!-- Loading overlay -->

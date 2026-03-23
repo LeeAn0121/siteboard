@@ -60,6 +60,10 @@
             android:screenOrientation="portrait"
             android:exported="false" />
 
+        <activity android:name=".BatchEditActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="com.jongwook.siteboard.fileprovider"
