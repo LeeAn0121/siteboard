@@ -125,6 +125,22 @@
             android:layout_marginStart="12dp" />
 
         <Button
+            android:id="@+id/btnSelectAll"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="전체"
+            android:textColor="#EBEBEB"
+            android:textStyle="bold"
+            android:backgroundTint="@android:color/transparent"
+            app:strokeColor="#555560"
+            app:strokeWidth="1dp"
+            app:cornerRadius="10dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:paddingHorizontal="14dp"
+            android:layout_marginEnd="8dp" />
+
+        <Button
             android:id="@+id/btnDeleteSelected"
             android:layout_width="wrap_content"
             android:layout_height="36dp"

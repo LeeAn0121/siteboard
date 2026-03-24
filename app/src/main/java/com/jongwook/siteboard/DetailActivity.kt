@@ -1,11 +1,16 @@
 package com.jongwook.siteboard
 
 import android.content.Intent
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
+import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.jongwook.siteboard.databinding.ActivityDetailBinding
 import kotlinx.coroutines.Dispatchers
@@ -14,132 +19,188 @@ import kotlinx.coroutines.withContext
 
 class DetailActivity : AppCompatActivity() {
     private lateinit var binding: ActivityDetailBinding
-    // 💡 by lazy를 활용한 깔끔한 DB 초기화 (종욱님 코드 반영)
     private val db by lazy { AppDatabase.getDatabase(this) }
+
+    private val imgMatrix = Matrix()
+    private var curScale = 1f
+    private var lastX = 0f
+    private var lastY = 0f
+    private var pointerId = MotionEvent.INVALID_POINTER_ID
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 💡 1. UI 텍스트 데이터 매핑 (기존 코드)
-        val id = intent.getIntExtra("id", -1)
-        val title = intent.getStringExtra("title") ?: "제목 없음"
-        val desc = intent.getStringExtra("desc") ?: "내용 없음"
-        val loc = intent.getStringExtra("loc") ?: ""
+        // 시스템바 인셋 처리
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutHeader) { v, insets ->
+            val sb = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = sb.top + (8 * resources.displayMetrics.density).toInt())
+            insets
+        }
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutBottom) { v, insets ->
+            val nb = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.updatePadding(bottom = nb.bottom + (14 * resources.displayMetrics.density).toInt())
+            insets
+        }
+
+        val id       = intent.getIntExtra("id", -1)
+        val title    = intent.getStringExtra("title") ?: "제목 없음"
+        val desc     = intent.getStringExtra("desc") ?: ""
+        val loc      = intent.getStringExtra("loc") ?: ""
         val imageUri = intent.getStringExtra("imageUri") ?: ""
-        val date = intent.getStringExtra("date") ?: "날짜 없음"
+        val date     = intent.getStringExtra("date") ?: ""
 
-        // 💡 1. UI 텍스트 데이터 매핑 (새로 만든 다크 UI 레이아웃에 데이터 입히기)
-        binding.tvDetailTitle.text = title
-        binding.tvDetailDate.text = "📅 $date"
+        binding.tvDetailTitle.text    = title
+        binding.tvDetailDate.text     = "📅 $date"
         binding.tvDetailLocation.text = if (loc.isBlank()) "📍 위치 미입력" else "📍 $loc"
-        binding.tvDetailDesc.text = desc
+        binding.tvDetailDesc.text     = desc
 
-        // ==========================================
-        // 🚀 추가된 부분: 위치 텍스트 클릭 시 지도 앱 실행
-        // ==========================================
         binding.tvDetailLocation.setOnClickListener {
-            if (loc.isNotBlank() && loc != "위치 미입력") {
-                // geo:0,0?q=주소 형식으로 Intent 생성 (OS가 알아서 지도 앱 목록을 띄워줌)
+            if (loc.isNotBlank()) {
                 val geoUri = Uri.parse("geo:0,0?q=${Uri.encode(loc)}")
-                val mapIntent = Intent(Intent.ACTION_VIEW, geoUri)
-
-                try {
-                    startActivity(mapIntent)
-                } catch (e: Exception) {
-                    Toast.makeText(this@DetailActivity, "실행할 수 있는 지도 앱이 없습니다.", Toast.LENGTH_SHORT).show()
-                }
+                try { startActivity(Intent(Intent.ACTION_VIEW, geoUri)) }
+                catch (e: Exception) { Toast.makeText(this, "실행할 수 있는 지도 앱이 없습니다.", Toast.LENGTH_SHORT).show() }
             } else {
-                Toast.makeText(this@DetailActivity, "저장된 위치 정보가 없습니다.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "저장된 위치 정보가 없습니다.", Toast.LENGTH_SHORT).show()
             }
         }
-        // ==========================================
 
-        // 💡 2. 사진 띄우기
         if (imageUri.isNotEmpty()) {
-            try {
-                binding.ivDetailImage.setImageURI(Uri.parse(imageUri))
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            try { binding.ivDetailImage.setImageURI(Uri.parse(imageUri)) }
+            catch (e: Exception) { e.printStackTrace() }
         }
 
-        // 💡 3. 상단 뒤로 가기 버튼 (새 UI 요소)
+        // 이미지가 레이아웃에 배치된 후 초기 fitCenter matrix 적용
+        binding.ivDetailImage.post { initMatrix() }
+
         binding.btnBack.setOnClickListener { finish() }
 
-        // 💡 4. --- 핀치 줌(확대/축소) 로직 (종욱님 코드 완벽 반영) ---
-        var scaleFactor = 1.0f
-        val scaleGestureDetector = ScaleGestureDetector(this, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
-            override fun onScale(detector: ScaleGestureDetector): Boolean {
-                scaleFactor *= detector.scaleFactor
-                scaleFactor = Math.max(1.0f, Math.min(scaleFactor, 5.0f)) // 1배 ~ 5배까지 확대 제한
-                binding.ivDetailImage.scaleX = scaleFactor
-                binding.ivDetailImage.scaleY = scaleFactor
-                return true
-            }
-        })
-        binding.ivDetailImage.setOnTouchListener { _, event ->
-            scaleGestureDetector.onTouchEvent(event)
-            true
-        }
+        setupZoom()
 
-        // 💡 5. 카톡/문자 공유 기능 (이미지 파일 자체 공유)
         binding.btnShare.setOnClickListener {
-            if (imageUri.isNotEmpty()) {
-                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                    type = "image/jpeg"
-                    putExtra(Intent.EXTRA_STREAM, Uri.parse(imageUri))
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION) // 읽기 권한 필수!
-                }
-                startActivity(Intent.createChooser(shareIntent, "SITEBOARD 현장 기록 공유"))
-            } else {
+            if (imageUri.isEmpty()) {
                 Toast.makeText(this, "공유할 이미지가 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
             }
+            val intent = Intent(Intent.ACTION_SEND).apply {
+                type = "image/jpeg"
+                putExtra(Intent.EXTRA_STREAM, Uri.parse(imageUri))
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(intent, "SITEBOARD 현장 기록 공유"))
         }
 
-        // 💡 6. 수정 기능 (SubActivity로 기존 데이터 넘기기)
         binding.btnEdit.setOnClickListener {
-            val editIntent = Intent(this, SubActivity::class.java).apply {
+            startActivity(Intent(this, SubActivity::class.java).apply {
                 putExtra("edit_id", id)
                 putExtra("edit_title", title)
                 putExtra("edit_desc", desc)
                 putExtra("edit_loc", loc)
-                putExtra("edit_imageUri", imageUri) // 기존 사진 경로 보존
-                putExtra("edit_date", date)         // 기존 날짜 보존
-            }
-            startActivity(editIntent)
-            finish() // 수정 화면으로 넘어가면 현재 디테일 화면은 깔끔하게 닫기
+                putExtra("edit_imageUri", imageUri)
+                putExtra("edit_date", date)
+            })
+            finish()
         }
 
-        // 💡 7. 삭제 기능 (DB + 앨범 실제 파일 동시 삭제)
         binding.btnDelete.setOnClickListener {
             if (id == -1) return@setOnClickListener
-
-            val postToDelete = PostEntity(id, title, desc, loc, imageUri, date)
-
             lifecycleScope.launch(Dispatchers.IO) {
-                try {
-                    // 스마트폰 앨범(MediaStore)에서 실제 사진 파일 완전히 날리기
-                    if (imageUri.isNotEmpty()) {
-                        contentResolver.delete(Uri.parse(imageUri), null, null)
-                    }
-                } catch (e: Exception) {
-                    e.printStackTrace() // 파일이 이미 지워졌거나 권한 문제가 있어도 앱 튕김 방지
-                }
-
-                try {
-                    // DB에서 데이터 삭제
-                    db.postDao().delete(postToDelete)
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-
+                try { if (imageUri.isNotEmpty()) contentResolver.delete(Uri.parse(imageUri), null, null) }
+                catch (e: Exception) { e.printStackTrace() }
+                try { db.postDao().delete(PostEntity(id, title, desc, loc, imageUri, date)) }
+                catch (e: Exception) { e.printStackTrace() }
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@DetailActivity, "기록과 원본 사진이 모두 삭제되었습니다.", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             }
+        }
+    }
+
+    /** 이미지를 고정 영역(fitCenter)에 맞게 초기 matrix 세팅 */
+    private fun initMatrix() {
+        val iv = binding.ivDetailImage
+        val drawable = iv.drawable ?: return
+        val dW = drawable.intrinsicWidth.toFloat()
+        val dH = drawable.intrinsicHeight.toFloat()
+        val vW = iv.width.toFloat()
+        val vH = iv.height.toFloat()
+        if (dW <= 0 || dH <= 0 || vW <= 0 || vH <= 0) return
+
+        val scale = minOf(vW / dW, vH / dH)
+        imgMatrix.setScale(scale, scale)
+        imgMatrix.postTranslate((vW - dW * scale) / 2f, (vH - dH * scale) / 2f)
+        curScale = scale
+        iv.imageMatrix = imgMatrix
+    }
+
+    private fun setupZoom() {
+        val iv = binding.ivDetailImage
+
+        val scaleDetector = ScaleGestureDetector(this,
+            object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+                override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
+                    // 스크롤뷰가 터치를 가로채지 못하도록
+                    binding.scrollAll.requestDisallowInterceptTouchEvent(true)
+                    return true
+                }
+                override fun onScale(detector: ScaleGestureDetector): Boolean {
+                    val drawable = iv.drawable ?: return true
+                    val dW = drawable.intrinsicWidth.toFloat()
+                    val dH = drawable.intrinsicHeight.toFloat()
+                    val vW = iv.width.toFloat()
+                    val vH = iv.height.toFloat()
+                    val minScale = minOf(vW / dW, vH / dH)   // fitCenter 기준 최소 배율
+                    val maxScale = minScale * 5f
+
+                    val newScale = (curScale * detector.scaleFactor).coerceIn(minScale, maxScale)
+                    val ratio = newScale / curScale
+                    imgMatrix.postScale(ratio, ratio, detector.focusX, detector.focusY)
+                    curScale = newScale
+                    iv.imageMatrix = imgMatrix
+                    return true
+                }
+                override fun onScaleEnd(detector: ScaleGestureDetector) {
+                    // 최소 배율이면 중앙으로 복귀
+                    val drawable = iv.drawable ?: return
+                    val dW = drawable.intrinsicWidth.toFloat()
+                    val dH = drawable.intrinsicHeight.toFloat()
+                    val minScale = minOf(iv.width / dW, iv.height / dH)
+                    if (curScale <= minScale * 1.05f) initMatrix()
+                }
+            })
+
+        iv.setOnTouchListener { _, event ->
+            scaleDetector.onTouchEvent(event)
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    lastX = event.x
+                    lastY = event.y
+                    pointerId = event.getPointerId(0)
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    // 확대 상태에서만 패닝, 단일 터치일 때
+                    if (!scaleDetector.isInProgress && event.pointerCount == 1) {
+                        val idx = event.findPointerIndex(pointerId)
+                        if (idx >= 0) {
+                            imgMatrix.postTranslate(event.getX(idx) - lastX, event.getY(idx) - lastY)
+                            iv.imageMatrix = imgMatrix
+                            lastX = event.getX(idx)
+                            lastY = event.getY(idx)
+                        }
+                    }
+                }
+                MotionEvent.ACTION_POINTER_DOWN -> {
+                    // 두 번째 손가락이 닿으면 스크롤 막기
+                    binding.scrollAll.requestDisallowInterceptTouchEvent(true)
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    pointerId = MotionEvent.INVALID_POINTER_ID
+                    binding.scrollAll.requestDisallowInterceptTouchEvent(false)
+                }
+            }
+            true
         }
     }
 }

@@ -30,6 +30,7 @@ class BatchEditActivity : AppCompatActivity() {
     private var selectedTheme = 0
     private var anchorPosition = 6 // default: bottom-left
     private var bgOpacity = 40     // 0-100
+    private var savedLocation: String = ""
 
     private lateinit var themePreviewViews: List<ImageView>
     private lateinit var anchorViews: List<View>
@@ -56,7 +57,7 @@ class BatchEditActivity : AppCompatActivity() {
 
         // 이전 화면에서 전달된 정보 채우기
         binding.etTitle.setText(intent.getStringExtra("edit_title") ?: "")
-        binding.etLocation.setText(intent.getStringExtra("edit_loc") ?: "")
+        savedLocation = intent.getStringExtra("edit_loc") ?: ""
         binding.etDesc.setText(intent.getStringExtra("edit_desc") ?: "")
 
         binding.tvPhotoCount.text = "${selectedUris.size}장 선택"
@@ -75,7 +76,7 @@ class BatchEditActivity : AppCompatActivity() {
         binding.btnApplyAll.setOnClickListener {
             val title = binding.etTitle.text.toString().trim()
             if (title.isEmpty()) {
-                Toast.makeText(this, "프로젝트명을 입력해주세요.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "현장명을 입력해주세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             applyToAllPhotos()
@@ -207,7 +208,7 @@ class BatchEditActivity : AppCompatActivity() {
             color = cfg.color; textSize = cfg.size; this.typeface = typeface
             setShadowLayer(2f, 1f, 1f, Color.BLACK)
         }
-        val lines = listOf("프로젝트명", "2026-03-23")
+        val lines = listOf("현장명", "2026-03-23")
         val fm = paint.fontMetrics
         val lineH = fm.descent - fm.ascent
         val spacing = cfg.size * 0.4f
@@ -286,7 +287,7 @@ class BatchEditActivity : AppCompatActivity() {
     private fun applyToAllPhotos() {
         val title = binding.etTitle.text.toString().trim()
         val desc = binding.etDesc.text.toString().trim()
-        val loc = binding.etLocation.text.toString().trim()
+        val loc = savedLocation
 
         // 앵커 위치와 투명도 저장
         val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE).edit()

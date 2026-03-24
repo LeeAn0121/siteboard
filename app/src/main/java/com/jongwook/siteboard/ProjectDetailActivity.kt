@@ -2,6 +2,9 @@ package com.jongwook.siteboard
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import com.jongwook.siteboard.databinding.ActivityProjectDetailBinding
@@ -17,8 +20,14 @@ class ProjectDetailActivity : AppCompatActivity() {
         binding = ActivityProjectDetailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // 1. ArchiveFragment에서 넘겨준 '프로젝트명(제목)' 받기
-        val projectTitle = intent.getStringExtra("PROJECT_TITLE") ?: "알 수 없는 프로젝트"
+        // 시스템 상단바 간격 처리
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutTop) { v, insets ->
+            val sb = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = sb.top + (8 * resources.displayMetrics.density).toInt())
+            insets
+        }
+
+        val projectTitle = intent.getStringExtra("PROJECT_TITLE") ?: "알 수 없는 현장"
         binding.tvProjectTitle.text = projectTitle
 
         // 2. 뒤로가기 버튼 동작

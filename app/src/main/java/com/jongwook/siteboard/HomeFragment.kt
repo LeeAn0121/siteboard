@@ -6,6 +6,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -31,21 +34,28 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // 시스템 상단바 간격 처리
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutTop) { v, insets ->
+            val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = statusBars.top + (20 * resources.displayMetrics.density).toInt())
+            insets
+        }
+
         db = AppDatabase.getDatabase(requireContext())
 
         // 💡 1. 어댑터 초기화 및 선택 모드 상태 관리
         postAdapter = PostAdapter { selectedCount ->
             if (selectedCount > 0) {
-                // 선택 모드 ON: 추가 버튼 숨기고 삭제 메뉴 노출
                 binding.layoutSelectionMode.visibility = View.VISIBLE
                 binding.layoutTop.visibility = View.GONE
-                binding.btnOpenSub.hide() // FAB 숨기기 (로직 충돌 방지)
+                binding.btnOpenSub.hide()
                 binding.tvSelectedCount.text = "${selectedCount}개 선택됨"
+                // 전체 선택 여부에 따라 버튼 텍스트 전환
+                binding.btnSelectAll.text = if (selectedCount == allPosts.size) "해제" else "전체"
             } else {
-                // 선택 모드 OFF: 추가 버튼 다시 보이고 일반 메뉴 노출
                 binding.layoutSelectionMode.visibility = View.GONE
                 binding.layoutTop.visibility = View.VISIBLE
-                binding.btnOpenSub.show() // FAB 다시 보이기
+                binding.btnOpenSub.show()
             }
         }
 
@@ -63,6 +73,10 @@ class HomeFragment : Fragment() {
         // 💡 4. 선택 모드 취소/삭제 버튼 리스너
         binding.btnCancelSelection.setOnClickListener {
             postAdapter.exitSelectionMode()
+        }
+
+        binding.btnSelectAll.setOnClickListener {
+            postAdapter.toggleSelectAll(allPosts)
         }
 
         binding.btnDeleteSelected.setOnClickListener {

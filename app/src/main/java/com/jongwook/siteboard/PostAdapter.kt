@@ -92,6 +92,22 @@ class PostAdapter(
         onSelectionChanged(0)
     }
 
+    // 전체 선택 / 전체 해제 토글
+    fun toggleSelectAll(currentList: List<PostEntity>) {
+        if (selectedItems.size == currentList.size) {
+            // 이미 전체 선택 → 전체 해제
+            selectedItems.clear()
+            isSelectionMode = false
+        } else {
+            // 전체 선택
+            isSelectionMode = true
+            selectedItems.clear()
+            selectedItems.addAll(currentList)
+        }
+        notifyDataSetChanged()
+        onSelectionChanged(selectedItems.size)
+    }
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ItemPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)

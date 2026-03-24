@@ -7,6 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.jongwook.siteboard.databinding.FragmentSettingsBinding
@@ -32,6 +35,14 @@ class SettingsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // 시스템 상단바 간격 처리
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutTop) { v, insets ->
+            val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = statusBars.top + (20 * resources.displayMetrics.density).toInt())
+            insets
+        }
+
         db = AppDatabase.getDatabase(requireContext())
 
         // SharedPreferences를 이용해 스위치 상태 저장/불러오기
@@ -69,7 +80,7 @@ class SettingsFragment : Fragment() {
 
                 // CSV 헤더 작성
                 val csvData = StringBuilder()
-                csvData.append("ID,프로젝트명(제목),작업내용,위치,날짜\n")
+                csvData.append("ID,현장명,작업내용,위치,날짜\n")
 
                 // 데이터 조립
                 for (post in postList) {

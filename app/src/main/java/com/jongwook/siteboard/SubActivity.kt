@@ -17,6 +17,9 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
@@ -45,6 +48,7 @@ class SubActivity : AppCompatActivity() {
 
     private var previewBitmap: Bitmap? = null
     private lateinit var themePreviewViews: List<ImageView>
+    private var currentLocation: String = ""
 
     private val requestCameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) launchCamera() else Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
@@ -70,7 +74,7 @@ class SubActivity : AppCompatActivity() {
             intent.putParcelableArrayListExtra("selected_uris", ArrayList(uris))
             intent.putExtra("edit_title", binding.etTitle.text.toString().trim())
             intent.putExtra("edit_desc", binding.etDesc.text.toString().trim())
-            intent.putExtra("edit_loc", binding.etLocation.text.toString().trim())
+            intent.putExtra("edit_loc", currentLocation)
             startActivity(intent)
         }
     }
@@ -96,11 +100,11 @@ class SubActivity : AppCompatActivity() {
         // ==========================================
         // 🚀 위치 입력칸 강제 수정 불가 처리 (터치 및 키보드 입력 차단)
         // ==========================================
-        binding.etLocation.isFocusable = false
-        binding.etLocation.isFocusableInTouchMode = false
-        binding.etLocation.isCursorVisible = false
-        binding.etLocation.setOnClickListener {
-            Toast.makeText(this, "위치는 GPS에 의해 자동 기록되며 임의로 수정할 수 없습니다.", Toast.LENGTH_SHORT).show()
+        // 시스템바 간격 처리
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.updatePadding(top = bars.top, bottom = bars.bottom)
+            insets
         }
 
         if (intent.hasExtra("edit_id")) {
@@ -108,8 +112,15 @@ class SubActivity : AppCompatActivity() {
             editPostId = intent.getIntExtra("edit_id", 0)
             binding.etTitle.setText(intent.getStringExtra("edit_title"))
             binding.etDesc.setText(intent.getStringExtra("edit_desc"))
-            binding.etLocation.setText(intent.getStringExtra("edit_loc"))
+            currentLocation = intent.getStringExtra("edit_loc") ?: ""
             Toast.makeText(this, "내용을 수정한 후 사진을 다시 촬영/선택하면 워터마크가 변경됩니다.", Toast.LENGTH_LONG).show()
+        } else {
+            // 마지막으로 입력한 현장명 불러오기
+            val siteboardPrefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+            val savedSiteName = siteboardPrefs.getString("last_site_name", "")
+            if (!savedSiteName.isNullOrEmpty()) {
+                binding.etTitle.setText(savedSiteName)
+            }
         }
 
         setupThemeSelector()
@@ -122,8 +133,6 @@ class SubActivity : AppCompatActivity() {
         binding.btnDetailSettings.setOnClickListener {
             startActivity(android.content.Intent(this, WatermarkSettingsActivity::class.java))
         }
-
-        binding.tvDate.text = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
 
         binding.btnCamera.setOnClickListener {
             if (validateInputs()) {
@@ -138,6 +147,13 @@ class SubActivity : AppCompatActivity() {
 
         binding.btnBatch.setOnClickListener {
             if (validateInputs()) pickMultipleImagesLauncher.launch(arrayOf("image/*"))
+        }
+
+        // 연속 촬영 모드 저장/복원
+        val siteboardPrefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+        binding.switchContinuous.isChecked = siteboardPrefs.getBoolean("continuous_mode", false)
+        binding.switchContinuous.setOnCheckedChangeListener { _, isChecked ->
+            siteboardPrefs.edit().putBoolean("continuous_mode", isChecked).apply()
         }
 
         // 화면이 켜지자마자 위치를 가져오도록 호출
@@ -233,7 +249,7 @@ class SubActivity : AppCompatActivity() {
             setShadowLayer(2f, 1f, 1f, Color.BLACK)
         }
 
-        val lines = listOf("프로젝트명", "2026-03-23")
+        val lines = listOf("현장명", "2026-03-23")
         val fm = paint.fontMetrics
         val lineH = fm.descent - fm.ascent
         val spacing = cfg.size * 0.4f
@@ -255,8 +271,8 @@ class SubActivity : AppCompatActivity() {
     }
 
     private fun updatePreview() {
-        val title = binding.etTitle.text.toString().trim().let { if (it.isEmpty()) "프로젝트명" else it }
-        val loc   = binding.etLocation.text.toString().trim().let { if (it.isEmpty()) "현재 위치" else it }
+        val title = binding.etTitle.text.toString().trim().let { if (it.isEmpty()) "현장명" else it }
+        val loc   = currentLocation.let { if (it.isEmpty()) "현재 위치" else it }
         val desc  = binding.etDesc.text.toString().trim()
 
         val width = 1000; val height = 800
@@ -368,7 +384,7 @@ class SubActivity : AppCompatActivity() {
 
     private fun validateInputs(): Boolean {
         if (binding.etTitle.text.toString().trim().isEmpty()) {
-            Toast.makeText(this, "제목을 입력해주세요.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "현장명을 입력해주세요.", Toast.LENGTH_SHORT).show()
             return false
         }
         return true
@@ -387,7 +403,7 @@ class SubActivity : AppCompatActivity() {
     private fun processAndSaveImage(uri: Uri) {
         val title = binding.etTitle.text.toString().trim()
         val desc = binding.etDesc.text.toString().trim()
-        val loc = binding.etLocation.text.toString().trim()
+        val loc = currentLocation
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -438,6 +454,10 @@ class SubActivity : AppCompatActivity() {
                 )
 
                 if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
+
+                // 마지막으로 입력한 현장명 저장 (초기화 없이 유지)
+                getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+                    .edit().putString("last_site_name", title).apply()
 
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
@@ -593,15 +613,13 @@ class SubActivity : AppCompatActivity() {
             return
         }
 
-        binding.etLocation.setText("📍 현재 위치를 찾는 중...")
-
         val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
         fusedLocationClient.lastLocation.addOnSuccessListener { lastLoc ->
             if (lastLoc != null) {
                 if (isMockLocation(lastLoc)) {
                     Toast.makeText(this, "가짜 위치(Fake GPS) 앱 사용이 감지되었습니다.", Toast.LENGTH_LONG).show()
-                    binding.etLocation.setText("위치 조작 감지됨")
+                    currentLocation = "위치 조작 감지됨"
                 } else {
                     convertLocationToAddress(lastLoc.latitude, lastLoc.longitude)
                 }
@@ -611,18 +629,17 @@ class SubActivity : AppCompatActivity() {
                         if (currentLoc != null) {
                             if (isMockLocation(currentLoc)) {
                                 Toast.makeText(this, "가짜 위치(Fake GPS) 앱 사용이 감지되었습니다.", Toast.LENGTH_LONG).show()
-                                binding.etLocation.setText("위치 조작 감지됨")
+                                currentLocation = "위치 조작 감지됨"
                             } else {
                                 convertLocationToAddress(currentLoc.latitude, currentLoc.longitude)
                             }
                         } else {
-                            binding.etLocation.setText("")
                             Toast.makeText(this, "GPS 신호가 약해 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    .addOnFailureListener { binding.etLocation.setText("") }
+                    .addOnFailureListener { }
             }
-        }.addOnFailureListener { binding.etLocation.setText("") }
+        }.addOnFailureListener { }
     }
 
     private fun convertLocationToAddress(lat: Double, lng: Double) {
@@ -633,27 +650,21 @@ class SubActivity : AppCompatActivity() {
                     override fun onGeocode(addresses: MutableList<android.location.Address>) {
                         if (addresses.isNotEmpty()) {
                             val cleanAddress = addresses[0].getAddressLine(0).replace("대한민국 ", "")
-                            runOnUiThread { binding.etLocation.setText(cleanAddress) }
-                        } else {
-                            runOnUiThread { binding.etLocation.setText("") }
+                            runOnUiThread { currentLocation = cleanAddress; updatePreview() }
                         }
                     }
-                    override fun onError(errorMessage: String?) {
-                        runOnUiThread { binding.etLocation.setText("") }
-                    }
+                    override fun onError(errorMessage: String?) { }
                 })
             } else {
                 val addresses = geocoder.getFromLocation(lat, lng, 1)
                 if (!addresses.isNullOrEmpty()) {
                     val cleanAddress = addresses[0].getAddressLine(0).replace("대한민국 ", "")
-                    binding.etLocation.setText(cleanAddress)
-                } else {
-                    binding.etLocation.setText("")
+                    currentLocation = cleanAddress
+                    updatePreview()
                 }
             }
         } catch (e: Exception) {
             Log.e("SubActivity", "주소 변환 실패", e)
-            runOnUiThread { binding.etLocation.setText("") }
         }
     }
 

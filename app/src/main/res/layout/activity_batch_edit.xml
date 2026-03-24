@@ -127,7 +127,7 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="프로젝트명"
+                        android:text="현장명"
                         android:textColor="#606060"
                         android:textSize="11sp" />
 
@@ -136,7 +136,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:background="@null"
-                        android:hint="프로젝트명 입력"
+                        android:hint="현장명 입력"
                         android:textColorHint="#404045"
                         android:textColor="#EBEBEB"
                         android:textSize="15sp"
@@ -146,37 +146,6 @@
                 </LinearLayout>
 
                 <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#0EFFFFFF" />
-
-                <!-- Location / Zone -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:background="#1E2023"
-                    android:paddingHorizontal="16dp"
-                    android:paddingVertical="12dp"
-                    android:layout_marginBottom="8dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="위치 / 구역"
-                        android:textColor="#606060"
-                        android:textSize="11sp" />
-
-                    <EditText
-                        android:id="@+id/etLocation"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:background="@null"
-                        android:hint="위치 또는 구역 입력"
-                        android:textColorHint="#404045"
-                        android:textColor="#EBEBEB"
-                        android:textSize="15sp"
-                        android:layout_marginTop="2dp"
-                        android:inputType="text"
-                        android:maxLines="1" />
-                </LinearLayout>
 
                 <!-- Description -->
                 <LinearLayout

@@ -6,14 +6,16 @@
     android:layout_height="match_parent"
     android:background="#16161A">
 
-    <!-- 헤더 -->
+    <!-- 헤더 (고정) -->
     <LinearLayout
         android:id="@+id/layoutHeader"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="8dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         android:background="#16161A"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -38,8 +40,9 @@
         <View android:layout_width="44dp" android:layout_height="44dp" />
     </LinearLayout>
 
-    <!-- 스크롤 영역 -->
-    <ScrollView
+    <!-- 이미지 + 정보 함께 스크롤 -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollAll"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:fillViewport="true"
@@ -51,24 +54,29 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- 이미지 -->
-            <ImageView
-                android:id="@+id/ivDetailImage"
+            <!-- 이미지 고정 영역 (핀치줌 클립 경계) -->
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="280dp"
-                android:scaleType="centerCrop"
-                android:background="#0E0E12" />
+                android:layout_height="300dp"
+                android:background="#0E0E12"
+                android:clipChildren="true">
 
-            <!-- 정보 섹션 -->
+                <ImageView
+                    android:id="@+id/ivDetailImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="matrix" />
+            </FrameLayout>
+
+            <!-- 정보 섹션 (이미지 바로 아래, 함께 스크롤) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:paddingHorizontal="20dp"
                 android:paddingTop="20dp"
-                android:paddingBottom="12dp">
+                android:paddingBottom="24dp">
 
-                <!-- 프로젝트명 -->
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -83,7 +91,6 @@
                     android:id="@+id/tvDetailTitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="프로젝트명"
                     android:textColor="#EBEBEB"
                     android:textSize="22sp"
                     android:textStyle="bold"
@@ -114,7 +121,6 @@
                             android:id="@+id/tvDetailDate"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="날짜 정보"
                             android:textColor="#A0A0A5"
                             android:textSize="13sp"
                             android:layout_marginTop="2dp" />
@@ -137,7 +143,6 @@
                             android:id="@+id/tvDetailLocation"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="위치 정보"
                             android:textColor="#A0A0A5"
                             android:textSize="13sp"
                             android:layout_marginTop="2dp" />
@@ -169,11 +174,12 @@
                     android:textColor="#EBEBEB"
                     android:textSize="15sp"
                     android:lineSpacingExtra="6dp" />
+
             </LinearLayout>
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
-    <!-- 하단 버튼 -->
+    <!-- 하단 버튼 (고정) -->
     <LinearLayout
         android:id="@+id/layoutBottom"
         android:layout_width="match_parent"
