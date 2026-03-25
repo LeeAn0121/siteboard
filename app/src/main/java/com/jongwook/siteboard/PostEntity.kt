@@ -227,33 +227,18 @@ abstract class AppDatabase : RoomDatabase() {
                 put(MediaStore.MediaColumns.MIME_TYPE, guessMimeType(photoFile.name))
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
-                    put(MediaStore.MediaColumns.IS_PENDING, 1)
                 }
             }
 
             val newUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return null
 
             return try {
-                val writeSucceeded = contentResolver.openOutputStream(newUri)?.use { out ->
+                val written = contentResolver.openOutputStream(newUri)?.use { out ->
                     photoFile.inputStream().use { input -> input.copyTo(out) }
                     true
                 } ?: false
 
-                if (!writeSucceeded) {
-                    contentResolver.delete(newUri, null, null)
-                    return null
-                }
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    val publishValues = ContentValues().apply {
-                        put(MediaStore.MediaColumns.IS_PENDING, 0)
-                    }
-                    contentResolver.update(newUri, publishValues, null, null)
-                }
-
-                // 실제로 읽을 수 있는 URI만 DB에 반영
-                val readable = contentResolver.openInputStream(newUri)?.use { true } ?: false
-                if (!readable) {
+                if (!written) {
                     contentResolver.delete(newUri, null, null)
                     null
                 } else {
@@ -339,20 +324,29 @@ abstract class AppDatabase : RoomDatabase() {
                 if (tmpDir.exists()) tmpDir.deleteRecursively()
                 tmpDir.mkdirs()
 
-                // 1. ZIP 압축 해제
+                // 1-a. ZIP을 먼저 로컬 캐시로 복사 (클라우드/스트림 URI 호환성 보장)
+                val localZip = java.io.File(ctx.cacheDir, "siteboard_import.zip")
+                localZip.delete()
                 ctx.contentResolver.openInputStream(sourceUri)?.use { input ->
-                    java.util.zip.ZipInputStream(java.io.BufferedInputStream(input)).use { zip ->
-                        var entry = zip.nextEntry
-                        while (entry != null) {
+                    localZip.outputStream().buffered().use { out -> input.copyTo(out) }
+                } ?: run { tmpDir.deleteRecursively(); return null }
+
+                // 1-b. ZipFile로 압축 해제 (ZipInputStream보다 안정적, 엔트리별 오류 처리 가능)
+                try {
+                    java.util.zip.ZipFile(localZip).use { zipFile ->
+                        zipFile.entries().asSequence().forEach { entry ->
                             if (!entry.isDirectory) {
-                                val outFile = java.io.File(tmpDir, entry.name)
+                                val entryPath = entry.name.replace('\\', '/')
+                                val outFile = java.io.File(tmpDir, entryPath)
                                 outFile.parentFile?.mkdirs()
-                                outFile.outputStream().buffered().use { out -> zip.copyTo(out) }
+                                zipFile.getInputStream(entry).use { input ->
+                                    outFile.outputStream().buffered().use { out -> input.copyTo(out) }
+                                }
                             }
-                            zip.closeEntry()
-                            entry = zip.nextEntry
                         }
                     }
+                } finally {
+                    localZip.delete()
                 }
 
                 val extractedDb = java.io.File(tmpDir, "siteboard.db")
@@ -361,6 +355,7 @@ abstract class AppDatabase : RoomDatabase() {
                 // 2. 사진을 갤러리에 재저장하고 새 URI 수집
                 val photosDir = java.io.File(tmpDir, "photos")
                 val uriMap = mutableMapOf<String, String>() // "42_w" → new content:// URI
+                val zipHasOriginalFor = mutableSetOf<Int>() // zip에 _o 파일이 있던 post ID
                 var expectedDisplayPhotoCount = 0
                 var restoredDisplayPhotoCount = 0
                 if (photosDir.exists()) {
@@ -369,14 +364,14 @@ abstract class AppDatabase : RoomDatabase() {
                             val baseName = photoFile.nameWithoutExtension
                             val lastUnder = baseName.lastIndexOf('_')
                             if (lastUnder < 0) continue
+                            val idStr = baseName.substring(0, lastUnder)
                             val type = baseName.substring(lastUnder + 1)
-                            if (type == "w") expectedDisplayPhotoCount++
-                            val relativePath = if (type == "o") {
-                                "Pictures/SITEBOARD_ORIGINALS/"
-                            } else {
-                                "Pictures/SITEBOARD/"
-                            }
+                            val photoId = idStr.toIntOrNull() ?: continue
 
+                            if (type == "w") expectedDisplayPhotoCount++
+                            if (type == "o") zipHasOriginalFor.add(photoId)
+
+                            val relativePath = if (type == "o") "Pictures/SITEBOARD_ORIGINALS/" else "Pictures/SITEBOARD/"
                             val newUri = restorePhotoToMediaStore(ctx, photoFile, relativePath)
                             if (newUri != null) {
                                 uriMap[baseName] = newUri.toString()
@@ -386,42 +381,52 @@ abstract class AppDatabase : RoomDatabase() {
                     }
                 }
 
-                if (expectedDisplayPhotoCount > 0 && restoredDisplayPhotoCount != expectedDisplayPhotoCount) {
+                android.util.Log.d("SiteboardImport",
+                    "photos: expected=$expectedDisplayPhotoCount, restored=$restoredDisplayPhotoCount, uriMap=${uriMap.size}")
+
+                // 사진이 있는 ZIP인데 하나도 복원 못 한 경우만 실패 처리
+                if (expectedDisplayPhotoCount > 0 && restoredDisplayPhotoCount == 0) {
                     tmpDir.deleteRecursively()
                     return null
                 }
 
                 // 3. 추출된 DB의 URI를 새 URI로 교체 (직접 SQLite)
+                //    PRAGMA journal_mode=DELETE → WAL 대신 동기 쓰기, 복사 전 누락 방지
                 val sqliteDb = android.database.sqlite.SQLiteDatabase.openDatabase(
                     extractedDb.absolutePath, null,
                     android.database.sqlite.SQLiteDatabase.OPEN_READWRITE
                 )
                 var importedPostCount = 0
                 try {
+                    sqliteDb.execSQL("PRAGMA journal_mode=DELETE")
                     sqliteDb.rawQuery("SELECT COUNT(*) FROM site_posts", null).use { c ->
-                        if (c.moveToFirst()) {
-                            importedPostCount = c.getInt(0)
-                        }
+                        if (c.moveToFirst()) importedPostCount = c.getInt(0)
                     }
-                    val cursor = sqliteDb.rawQuery("SELECT id FROM site_posts", null)
-                    cursor.use { c ->
-                        while (c.moveToNext()) {
-                            val id = c.getInt(0)
-                            val newImage = uriMap["${id}_w"] ?: ""
-                            sqliteDb.execSQL(
-                                "UPDATE site_posts SET imageUri = ? WHERE id = ?",
-                                arrayOf(newImage, id)
-                            )
-                            if (uriMap.containsKey("${id}_o")) {
-                                sqliteDb.execSQL(
-                                    "UPDATE site_posts SET originalUri = ? WHERE id = ?",
-                                    arrayOf(uriMap["${id}_o"], id)
-                                )
-                            } else {
-                                sqliteDb.execSQL(
-                                    "UPDATE site_posts SET originalUri = NULL WHERE id = ?",
-                                    arrayOf(id)
-                                )
+                    if (uriMap.isNotEmpty()) {
+                        sqliteDb.rawQuery("SELECT id FROM site_posts", null).use { c ->
+                            while (c.moveToNext()) {
+                                val id = c.getInt(0)
+                                // 복원된 URI가 있을 때만 업데이트 (없으면 zip DB의 원본 URI 유지)
+                                val newImage = uriMap["${id}_w"]
+                                if (newImage != null) {
+                                    sqliteDb.execSQL(
+                                        "UPDATE site_posts SET imageUri = ? WHERE id = ?",
+                                        arrayOf(newImage, id)
+                                    )
+                                }
+                                val newOriginal = uriMap["${id}_o"]
+                                if (newOriginal != null) {
+                                    sqliteDb.execSQL(
+                                        "UPDATE site_posts SET originalUri = ? WHERE id = ?",
+                                        arrayOf(newOriginal, id)
+                                    )
+                                } else if (!zipHasOriginalFor.contains(id)) {
+                                    // zip에 원본이 없었던 레코드만 null 처리
+                                    sqliteDb.execSQL(
+                                        "UPDATE site_posts SET originalUri = NULL WHERE id = ?",
+                                        arrayOf(id)
+                                    )
+                                }
                             }
                         }
                     }

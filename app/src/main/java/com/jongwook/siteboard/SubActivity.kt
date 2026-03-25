@@ -11,8 +11,11 @@ import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.MotionEvent
 import android.view.View
+import android.widget.EditText
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -140,6 +143,11 @@ class SubActivity : AppCompatActivity() {
             val savedDetailLoc = prefs.getString("last_detail_loc", "")
             if (!savedDetailLoc.isNullOrEmpty()) binding.etDetailLocation.setText(savedDetailLoc)
         }
+
+        setupClearButton(binding.etTitle)
+        setupClearButton(binding.etDesc)
+        setupClearButton(binding.etDetailLocation)
+        setupClearButton(binding.etMemo)
 
         updatePreview()
 
@@ -549,6 +557,33 @@ class SubActivity : AppCompatActivity() {
             return@withContext originalBitmap
         } finally { faceDetector.close(); textRecognizer.close() }
         blurredBitmap
+    }
+
+    private fun setupClearButton(et: EditText) {
+        val clearIcon = ContextCompat.getDrawable(this, R.drawable.ic_clear_text)
+        et.compoundDrawablePadding = (8 * resources.displayMetrics.density).toInt()
+
+        fun sync() {
+            val icon = if (et.hasFocus() && et.text.isNotEmpty()) clearIcon else null
+            et.setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, icon, null)
+        }
+
+        et.setOnFocusChangeListener { _, _ -> sync() }
+        et.addTextChangedListener(object : android.text.TextWatcher {
+            override fun afterTextChanged(s: android.text.Editable?) = sync()
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        })
+        et.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                val d = (v as EditText).compoundDrawablesRelative[2]
+                if (d != null && event.x >= v.width - v.paddingEnd - d.intrinsicWidth) {
+                    v.text.clear()
+                    return@setOnTouchListener true
+                }
+            }
+            false
+        }
     }
 
     private fun blurBitmapArea(bitmap: Bitmap, canvas: Canvas, bounds: Rect?) {
