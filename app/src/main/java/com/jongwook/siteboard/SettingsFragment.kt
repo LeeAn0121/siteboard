@@ -44,10 +44,10 @@ class SettingsFragment : Fragment() {
     ) { uri ->
         if (uri == null) return@registerForActivityResult
         lifecycleScope.launch(Dispatchers.IO) {
-            val success = AppDatabase.exportToZip(requireContext(), uri)
+            val exportedCount = AppDatabase.exportToZip(requireContext(), uri)
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(),
-                    if (success) "백업 ZIP이 저장되었습니다." else "백업 내보내기 실패.",
+                    if (exportedCount != null) "${exportedCount}건의 내보내기 작업이 완료되었습니다." else "백업 내보내기 실패.",
                     Toast.LENGTH_SHORT).show()
             }
         }
@@ -62,10 +62,10 @@ class SettingsFragment : Fragment() {
             .setMessage("기존 모든 데이터와 사진이 백업 파일로 대체됩니다.\n계속하시겠습니까?")
             .setPositiveButton("불러오기") { _, _ ->
                 lifecycleScope.launch(Dispatchers.IO) {
-                    val success = AppDatabase.importFromZip(requireContext(), uri)
+                    val importedCount = AppDatabase.importFromZip(requireContext(), uri)
                     withContext(Dispatchers.Main) {
-                        if (success) {
-                            Toast.makeText(requireContext(), "백업을 복원했습니다. 앱을 재시작합니다.", Toast.LENGTH_LONG).show()
+                        if (importedCount != null) {
+                            Toast.makeText(requireContext(), "${importedCount}건의 불러오기 작업이 완료되었습니다.", Toast.LENGTH_LONG).show()
                             val intent = requireContext().packageManager
                                 .getLaunchIntentForPackage(requireContext().packageName)
                             intent?.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -86,10 +86,10 @@ class SettingsFragment : Fragment() {
     ) { uri ->
         if (uri == null) return@registerForActivityResult
         lifecycleScope.launch(Dispatchers.IO) {
-            val success = AppDatabase.exportToZip(requireContext(), uri)
+            val exportedCount = AppDatabase.exportToZip(requireContext(), uri)
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(),
-                    if (success) "클라우드에 백업이 저장되었습니다." else "클라우드 저장 실패.",
+                    if (exportedCount != null) "${exportedCount}건의 내보내기 작업이 완료되었습니다." else "클라우드 저장 실패.",
                     Toast.LENGTH_SHORT).show()
             }
         }

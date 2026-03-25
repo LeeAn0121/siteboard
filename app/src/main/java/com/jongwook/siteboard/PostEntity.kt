@@ -2,8 +2,10 @@ package com.jongwook.siteboard
 
 import android.content.ContentUris
 import android.content.ContentValues
+import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
+import android.webkit.MimeTypeMap
 import androidx.annotation.RequiresApi
 import androidx.room.*
 import androidx.room.migration.Migration
@@ -209,6 +211,60 @@ abstract class AppDatabase : RoomDatabase() {
             } catch (e: Exception) { /* ignore */ }
         }
 
+        private fun guessMimeType(fileName: String): String {
+            val extension = fileName.substringAfterLast('.', "").lowercase()
+            return MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension) ?: "image/jpeg"
+        }
+
+        private fun restorePhotoToMediaStore(
+            context: android.content.Context,
+            photoFile: java.io.File,
+            relativePath: String
+        ): Uri? {
+            val contentResolver = context.contentResolver
+            val values = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, photoFile.name)
+                put(MediaStore.MediaColumns.MIME_TYPE, guessMimeType(photoFile.name))
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
+                    put(MediaStore.MediaColumns.IS_PENDING, 1)
+                }
+            }
+
+            val newUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values) ?: return null
+
+            return try {
+                val writeSucceeded = contentResolver.openOutputStream(newUri)?.use { out ->
+                    photoFile.inputStream().use { input -> input.copyTo(out) }
+                    true
+                } ?: false
+
+                if (!writeSucceeded) {
+                    contentResolver.delete(newUri, null, null)
+                    return null
+                }
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    val publishValues = ContentValues().apply {
+                        put(MediaStore.MediaColumns.IS_PENDING, 0)
+                    }
+                    contentResolver.update(newUri, publishValues, null, null)
+                }
+
+                // 실제로 읽을 수 있는 URI만 DB에 반영
+                val readable = contentResolver.openInputStream(newUri)?.use { true } ?: false
+                if (!readable) {
+                    contentResolver.delete(newUri, null, null)
+                    null
+                } else {
+                    newUri
+                }
+            } catch (e: Exception) {
+                try { contentResolver.delete(newUri, null, null) } catch (_: Exception) { }
+                throw e
+            }
+        }
+
         // MainActivity.onStop() 에서 호출 — 자동 백업 (API별 분기)
         fun backup(context: android.content.Context) {
             try {
@@ -228,11 +284,11 @@ abstract class AppDatabase : RoomDatabase() {
         }
 
         // ─── ZIP 내보내기 (DB + 사진 전체) ────────────────────────────────
-        suspend fun exportToZip(context: android.content.Context, targetUri: android.net.Uri): Boolean {
+        suspend fun exportToZip(context: android.content.Context, targetUri: android.net.Uri): Int? {
             return try {
                 val ctx = context.applicationContext
                 val primary = primaryDbFile(ctx)
-                if (!primary.exists()) return false
+                if (!primary.exists()) return null
 
                 val db = getDatabase(ctx)
                 walCheckpoint()
@@ -271,12 +327,12 @@ abstract class AppDatabase : RoomDatabase() {
                     tmpZip.inputStream().use { it.copyTo(out) }
                 }
                 tmpZip.delete()
-                true
-            } catch (e: Exception) { e.printStackTrace(); false }
+                posts.size
+            } catch (e: Exception) { e.printStackTrace(); null }
         }
 
         // ─── ZIP 불러오기 (DB + 사진 전체 복원) ──────────────────────────
-        fun importFromZip(context: android.content.Context, sourceUri: android.net.Uri): Boolean {
+        fun importFromZip(context: android.content.Context, sourceUri: android.net.Uri): Int? {
             return try {
                 val ctx = context.applicationContext
                 val tmpDir = java.io.File(ctx.cacheDir, "siteboard_import_tmp")
@@ -300,11 +356,13 @@ abstract class AppDatabase : RoomDatabase() {
                 }
 
                 val extractedDb = java.io.File(tmpDir, "siteboard.db")
-                if (!extractedDb.exists()) { tmpDir.deleteRecursively(); return false }
+                if (!extractedDb.exists()) { tmpDir.deleteRecursively(); return null }
 
                 // 2. 사진을 갤러리에 재저장하고 새 URI 수집
                 val photosDir = java.io.File(tmpDir, "photos")
                 val uriMap = mutableMapOf<String, String>() // "42_w" → new content:// URI
+                var expectedDisplayPhotoCount = 0
+                var restoredDisplayPhotoCount = 0
                 if (photosDir.exists()) {
                     for (photoFile in (photosDir.listFiles() ?: emptyArray()).sortedBy { it.name }) {
                         try {
@@ -312,23 +370,25 @@ abstract class AppDatabase : RoomDatabase() {
                             val lastUnder = baseName.lastIndexOf('_')
                             if (lastUnder < 0) continue
                             val type = baseName.substring(lastUnder + 1)
-                            val relativePath = if (type == "o") "Pictures/SITEBOARD_ORIGINALS" else "Pictures/SITEBOARD"
-
-                            val cv = ContentValues().apply {
-                                put(MediaStore.MediaColumns.DISPLAY_NAME, photoFile.name)
-                                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-                                    put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
+                            if (type == "w") expectedDisplayPhotoCount++
+                            val relativePath = if (type == "o") {
+                                "Pictures/SITEBOARD_ORIGINALS/"
+                            } else {
+                                "Pictures/SITEBOARD/"
                             }
-                            val newUri = ctx.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv)
+
+                            val newUri = restorePhotoToMediaStore(ctx, photoFile, relativePath)
                             if (newUri != null) {
-                                ctx.contentResolver.openOutputStream(newUri)?.use { out ->
-                                    photoFile.inputStream().use { it.copyTo(out) }
-                                }
                                 uriMap[baseName] = newUri.toString()
+                                if (type == "w") restoredDisplayPhotoCount++
                             }
                         } catch (e: Exception) { e.printStackTrace() }
                     }
+                }
+
+                if (expectedDisplayPhotoCount > 0 && restoredDisplayPhotoCount != expectedDisplayPhotoCount) {
+                    tmpDir.deleteRecursively()
+                    return null
                 }
 
                 // 3. 추출된 DB의 URI를 새 URI로 교체 (직접 SQLite)
@@ -336,7 +396,13 @@ abstract class AppDatabase : RoomDatabase() {
                     extractedDb.absolutePath, null,
                     android.database.sqlite.SQLiteDatabase.OPEN_READWRITE
                 )
+                var importedPostCount = 0
                 try {
+                    sqliteDb.rawQuery("SELECT COUNT(*) FROM site_posts", null).use { c ->
+                        if (c.moveToFirst()) {
+                            importedPostCount = c.getInt(0)
+                        }
+                    }
                     val cursor = sqliteDb.rawQuery("SELECT id FROM site_posts", null)
                     cursor.use { c ->
                         while (c.moveToNext()) {
@@ -370,8 +436,8 @@ abstract class AppDatabase : RoomDatabase() {
                     .edit().putBoolean("db_just_restored", true).apply()
 
                 tmpDir.deleteRecursively()
-                true
-            } catch (e: Exception) { e.printStackTrace(); false }
+                importedPostCount
+            } catch (e: Exception) { e.printStackTrace(); null }
         }
     }
 }
