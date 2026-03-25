@@ -6,24 +6,45 @@
     android:layout_height="match_parent"
     android:background="#16161A">
 
-    <TextView
-        android:id="@+id/tvHeader"
-        android:layout_width="wrap_content"
+    <!-- 헤더 -->
+    <LinearLayout
+        android:id="@+id/layoutSubHeader"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="워터마크 테마 및 정보 입력"
-        android:textColor="#FFFFFF"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:layout_marginTop="24dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/tvHeader"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="현장 기록 정보 입력"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnDetailSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="워터마크 설정 ›"
+            android:textColor="#FF6F00"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:padding="4dp"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="24dp"
-        app:layout_constraintTop_toBottomOf="@id/tvHeader"
+        app:layout_constraintTop_toBottomOf="@id/layoutSubHeader"
         app:layout_constraintBottom_toTopOf="@id/layoutBottom"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -40,10 +61,10 @@
             <androidx.cardview.widget.CardView
                 android:id="@+id/cardPreview"
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
+                android:layout_height="200dp"
                 android:clickable="true"
                 android:focusable="true"
-                app:cardCornerRadius="20dp"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
                 app:cardBackgroundColor="#252529">
                 <ImageView
@@ -58,160 +79,15 @@
                     android:layout_gravity="bottom|end"
                     android:background="#66000000"
                     android:paddingHorizontal="10dp"
-                    android:paddingVertical="6dp"
-                    android:text="📷 탭하여 미리보기 사진 선택"
+                    android:paddingVertical="5dp"
+                    android:text="탭하여 미리보기 사진 선택"
                     android:textColor="#AAFFFFFF"
                     android:textSize="11sp" />
             </androidx.cardview.widget.CardView>
 
-            <!-- Theme section label -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="28dp"
-                android:layout_marginBottom="12dp">
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="워터마크 테마"
-                    android:textColor="#EBEBEB"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
-                <TextView
-                    android:id="@+id/btnDetailSettings"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="상세 설정 ›"
-                    android:textColor="#FF6F00"
-                    android:textSize="14sp"
-                    android:textStyle="bold"
-                    android:padding="4dp"
-                    android:clickable="true"
-                    android:focusable="true" />
-            </LinearLayout>
+            <Space android:layout_width="match_parent" android:layout_height="20dp" />
 
-            <!-- Theme selector with labels -->
-            <HorizontalScrollView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:scrollbars="none">
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
-
-                    <LinearLayout
-                        android:id="@+id/layoutTheme0"
-                        android:layout_width="90dp"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginEnd="12dp"
-                        android:clickable="true"
-                        android:focusable="true">
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/viewTheme0"
-                            android:layout_width="match_parent"
-                            android:layout_height="90dp"
-                            app:cardCornerRadius="16dp"
-                            app:cardElevation="0dp"
-                            app:cardBackgroundColor="#252529"
-                            app:strokeWidth="0dp"
-                            app:strokeColor="#FF6F00">
-                            <ImageView
-                                android:id="@+id/ivThemePreview0"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop" />
-                        </com.google.android.material.card.MaterialCardView>
-                        <TextView android:id="@+id/tvThemeLabel0" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="미니멀" android:textColor="#A0A0A5" android:textSize="12sp" android:gravity="center" android:layout_marginTop="6dp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/layoutTheme1"
-                        android:layout_width="90dp"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginEnd="12dp"
-                        android:clickable="true"
-                        android:focusable="true">
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/viewTheme1"
-                            android:layout_width="match_parent"
-                            android:layout_height="90dp"
-                            app:cardCornerRadius="16dp"
-                            app:cardElevation="0dp"
-                            app:cardBackgroundColor="#252529"
-                            app:strokeWidth="0dp"
-                            app:strokeColor="#FF6F00">
-                            <ImageView
-                                android:id="@+id/ivThemePreview1"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop" />
-                        </com.google.android.material.card.MaterialCardView>
-                        <TextView android:id="@+id/tvThemeLabel1" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="기술" android:textColor="#A0A0A5" android:textSize="12sp" android:gravity="center" android:layout_marginTop="6dp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/layoutTheme2"
-                        android:layout_width="90dp"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:layout_marginEnd="12dp"
-                        android:clickable="true"
-                        android:focusable="true">
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/viewTheme2"
-                            android:layout_width="match_parent"
-                            android:layout_height="90dp"
-                            app:cardCornerRadius="16dp"
-                            app:cardElevation="0dp"
-                            app:cardBackgroundColor="#252529"
-                            app:strokeWidth="0dp"
-                            app:strokeColor="#FF6F00">
-                            <ImageView
-                                android:id="@+id/ivThemePreview2"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop" />
-                        </com.google.android.material.card.MaterialCardView>
-                        <TextView android:id="@+id/tvThemeLabel2" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="전문" android:textColor="#A0A0A5" android:textSize="12sp" android:gravity="center" android:layout_marginTop="6dp" />
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:id="@+id/layoutTheme3"
-                        android:layout_width="90dp"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical"
-                        android:clickable="true"
-                        android:focusable="true">
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/viewTheme3"
-                            android:layout_width="match_parent"
-                            android:layout_height="90dp"
-                            app:cardCornerRadius="16dp"
-                            app:cardElevation="0dp"
-                            app:cardBackgroundColor="#252529"
-                            app:strokeWidth="0dp"
-                            app:strokeColor="#FF6F00">
-                            <ImageView
-                                android:id="@+id/ivThemePreview3"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:scaleType="centerCrop" />
-                        </com.google.android.material.card.MaterialCardView>
-                        <TextView android:id="@+id/tvThemeLabel3" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="강조" android:textColor="#A0A0A5" android:textSize="12sp" android:gravity="center" android:layout_marginTop="6dp" />
-                    </LinearLayout>
-
-                </LinearLayout>
-            </HorizontalScrollView>
-
-            <Space android:layout_width="match_parent" android:layout_height="28dp" />
-
-            <!-- Input: Project Name -->
+            <!-- Input: 현장명 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -229,10 +105,10 @@
                     android:textSize="17sp"
                     android:layout_marginTop="4dp"
                     android:inputType="text" />
-                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A2A30" android:layout_marginTop="12dp" />
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A2A30" android:layout_marginTop="10dp" />
             </LinearLayout>
 
-            <!-- Input: Work Content -->
+            <!-- Input: 작업 내용 -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -251,97 +127,157 @@
                     android:layout_marginTop="4dp"
                     android:inputType="textMultiLine"
                     android:maxLines="3" />
-                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A2A30" android:layout_marginTop="12dp" />
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A2A30" android:layout_marginTop="10dp" />
             </LinearLayout>
 
-            <!-- Continuous mode switch -->
+            <!-- GPS 위치 표시 (자동, 읽기 전용) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:paddingVertical="16dp"
-                android:gravity="center_vertical">
-
+                android:orientation="vertical"
+                android:paddingVertical="14dp">
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="연속 촬영 모드" android:textColor="#FFFFFF" android:textSize="16sp" android:textStyle="bold" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="저장 후 화면을 닫지 않고 다음 사진을 찍습니다." android:textColor="#A0A0A5" android:textSize="12sp" android:layout_marginTop="4dp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="위치 (GPS 자동)"
+                        android:textColor="#A0A0A5"
+                        android:textSize="13sp" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="자동 수집"
+                        android:textColor="#FF6F00"
+                        android:textSize="11sp"
+                        android:background="#1AFF6F00"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="3dp" />
                 </LinearLayout>
-
-                <com.google.android.material.switchmaterial.SwitchMaterial
-                    android:id="@+id/switchContinuous"
-                    android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/tvGpsLocation"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:thumbTint="#FFFFFF"
-                    app:trackTint="#FF6F00" />
+                    android:text="위치를 가져오는 중..."
+                    android:textColor="#808085"
+                    android:textSize="13sp"
+                    android:layout_marginTop="6dp"
+                    android:fontFamily="monospace" />
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A2A30" android:layout_marginTop="10dp" />
+            </LinearLayout>
+
+            <!-- Input: 상세 위치 (수기) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingVertical="14dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="상세 위치 기록 (수기)" android:textColor="#A0A0A5" android:textSize="13sp" />
+                <EditText
+                    android:id="@+id/etDetailLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:hint="동/호수, 층, 구역 등 상세 위치"
+                    android:textColorHint="#55555A"
+                    android:textColor="#FFFFFF"
+                    android:textSize="17sp"
+                    android:layout_marginTop="4dp"
+                    android:inputType="text" />
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A2A30" android:layout_marginTop="10dp" />
+            </LinearLayout>
+
+            <!-- Input: 메모 (비고) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingVertical="14dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="메모 (비고)" android:textColor="#A0A0A5" android:textSize="13sp" />
+                <EditText
+                    android:id="@+id/etMemo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:hint="특이사항, 참고내용 등"
+                    android:textColorHint="#55555A"
+                    android:textColor="#FFFFFF"
+                    android:textSize="17sp"
+                    android:layout_marginTop="4dp"
+                    android:inputType="textMultiLine"
+                    android:maxLines="4" />
+                <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#2A2A30" android:layout_marginTop="10dp" />
             </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-    <!-- Bottom Buttons -->
+    <!-- 하단 버튼 영역 -->
     <LinearLayout
         android:id="@+id/layoutBottom"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
-        android:paddingVertical="12dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="16dp"
         android:background="#16161A"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- 상단: 갤러리(단일) + 카메라 -->
+        <!-- 사진 촬영 (가장 주요 기능 — 크게) -->
+        <Button
+            android:id="@+id/btnCamera"
+            android:layout_width="match_parent"
+            android:layout_height="58dp"
+            android:text="사진 촬영"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:backgroundTint="#FF6F00"
+            android:textAllCaps="false"
+            app:cornerRadius="14dp"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:layout_marginBottom="10dp" />
+
+        <!-- 갤러리 1장 | 여러 장 배치 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="10dp">
+            android:orientation="horizontal">
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/btnGallery"
                 android:layout_width="0dp"
-                android:layout_height="56dp"
+                android:layout_height="52dp"
                 android:layout_weight="1"
-                android:text="갤러리 (1장)"
+                android:text="갤러리 (단일)"
                 android:textColor="#FF6F00"
-                android:textSize="15sp"
+                android:textSize="14sp"
                 android:textStyle="bold"
                 android:background="@drawable/btn_outline_purple"
                 android:layout_marginEnd="10dp"
                 android:textAllCaps="false" />
 
             <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnCamera"
+                android:id="@+id/btnBatch"
                 android:layout_width="0dp"
-                android:layout_height="56dp"
+                android:layout_height="52dp"
                 android:layout_weight="1"
-                android:text="사진 촬영"
+                android:text="갤러리 (다수)"
                 android:textColor="#FF6F00"
-                android:textSize="15sp"
+                android:textSize="14sp"
                 android:textStyle="bold"
                 android:background="@drawable/btn_outline_purple"
                 android:textAllCaps="false" />
         </LinearLayout>
 
-        <!-- 하단: 배치 처리 (여러장) -->
-        <Button
-            android:id="@+id/btnBatch"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:text="여러 장 선택 (배치 처리)"
-            android:textColor="#FFFFFF"
-            android:textSize="15sp"
-            android:textStyle="bold"
-            android:backgroundTint="#FF6F00"
-            android:textAllCaps="false"
-            app:cornerRadius="14dp"
-            android:insetTop="0dp"
-            android:insetBottom="0dp" />
     </LinearLayout>
 
     <!-- Loading overlay -->

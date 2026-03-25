@@ -143,7 +143,14 @@ class ArchiveFragment : Fragment() {
                     var y = margin + 90f
                     canvas.drawText("• 위치 : ${post.location ?: "미입력"}", margin, y, textPaint); y += 25f
                     canvas.drawText("• 일시 : ${post.date}", margin, y, textPaint); y += 25f
-                    canvas.drawText("• 작업 내용 : ${post.description.replace("\n", " ")}", margin, y, textPaint); y += 40f
+                    canvas.drawText("• 작업 내용 : ${post.description.replace("\n", " ")}", margin, y, textPaint); y += 25f
+                    if (!post.detailLocation.isNullOrBlank()) {
+                        canvas.drawText("• 상세 위치 : ${post.detailLocation}", margin, y, textPaint); y += 25f
+                    }
+                    if (!post.memo.isNullOrBlank()) {
+                        canvas.drawText("• 메모 : ${post.memo.replace("\n", " ")}", margin, y, textPaint); y += 25f
+                    }
+                    y += 15f
 
                     try {
                         val uri = android.net.Uri.parse(post.imageUri)

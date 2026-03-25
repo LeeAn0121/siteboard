@@ -9,6 +9,10 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.jongwook.siteboard.databinding.ActivityPermissionBinding
 
 class PermissionActivity : AppCompatActivity() {
@@ -53,8 +57,16 @@ class PermissionActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ActivityPermissionBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // 상단 시스템 바 높이만큼 패딩 추가
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val sb = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = sb.top)
+            insets
+        }
 
         binding.btnAgree.setOnClickListener {
             if (checkMandatoryPermissions()) {

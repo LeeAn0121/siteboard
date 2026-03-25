@@ -44,17 +44,38 @@ class DetailActivity : AppCompatActivity() {
             insets
         }
 
-        val id       = intent.getIntExtra("id", -1)
-        val title    = intent.getStringExtra("title") ?: "제목 없음"
-        val desc     = intent.getStringExtra("desc") ?: ""
-        val loc      = intent.getStringExtra("loc") ?: ""
-        val imageUri = intent.getStringExtra("imageUri") ?: ""
-        val date     = intent.getStringExtra("date") ?: ""
+        val id              = intent.getIntExtra("id", -1)
+        val title           = intent.getStringExtra("title") ?: "제목 없음"
+        val desc            = intent.getStringExtra("desc") ?: ""
+        val loc             = intent.getStringExtra("loc") ?: ""
+        val imageUri        = intent.getStringExtra("imageUri") ?: ""
+        val date            = intent.getStringExtra("date") ?: ""
+        val detailLoc       = intent.getStringExtra("detailLoc") ?: ""
+        val memo            = intent.getStringExtra("memo") ?: ""
+        val originalFileName = intent.getStringExtra("originalFileName") ?: ""
 
         binding.tvDetailTitle.text    = title
         binding.tvDetailDate.text     = "📅 $date"
         binding.tvDetailLocation.text = if (loc.isBlank()) "📍 위치 미입력" else "📍 $loc"
-        binding.tvDetailDesc.text     = desc
+        binding.tvDetailDesc.text     = if (desc.isBlank()) "작업 내용 없음" else desc
+
+        // 상세 위치 표시
+        if (detailLoc.isNotBlank()) {
+            binding.layoutDetailLocation.visibility = android.view.View.VISIBLE
+            binding.tvDetailDetailLocation.text = "📌 $detailLoc"
+        }
+
+        // 메모 표시
+        if (memo.isNotBlank()) {
+            binding.layoutMemo.visibility = android.view.View.VISIBLE
+            binding.tvDetailMemo.text = memo
+        }
+
+        // 원본 파일명 표시
+        if (originalFileName.isNotBlank()) {
+            binding.layoutOriginalInfo.visibility = android.view.View.VISIBLE
+            binding.tvOriginalFileName.text = originalFileName
+        }
 
         binding.tvDetailLocation.setOnClickListener {
             if (loc.isNotBlank()) {
@@ -71,7 +92,6 @@ class DetailActivity : AppCompatActivity() {
             catch (e: Exception) { e.printStackTrace() }
         }
 
-        // 이미지가 레이아웃에 배치된 후 초기 fitCenter matrix 적용
         binding.ivDetailImage.post { initMatrix() }
 
         binding.btnBack.setOnClickListener { finish() }
@@ -83,12 +103,12 @@ class DetailActivity : AppCompatActivity() {
                 Toast.makeText(this, "공유할 이미지가 없습니다.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            val intent = Intent(Intent.ACTION_SEND).apply {
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
                 type = "image/jpeg"
                 putExtra(Intent.EXTRA_STREAM, Uri.parse(imageUri))
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            startActivity(Intent.createChooser(intent, "SITEBOARD 현장 기록 공유"))
+            startActivity(Intent.createChooser(shareIntent, "SITEBOARD 현장 기록 공유"))
         }
 
         binding.btnEdit.setOnClickListener {
@@ -97,6 +117,8 @@ class DetailActivity : AppCompatActivity() {
                 putExtra("edit_title", title)
                 putExtra("edit_desc", desc)
                 putExtra("edit_loc", loc)
+                putExtra("edit_detail_loc", detailLoc)
+                putExtra("edit_memo", memo)
                 putExtra("edit_imageUri", imageUri)
                 putExtra("edit_date", date)
             })
@@ -106,12 +128,16 @@ class DetailActivity : AppCompatActivity() {
         binding.btnDelete.setOnClickListener {
             if (id == -1) return@setOnClickListener
             lifecycleScope.launch(Dispatchers.IO) {
+                // 워터마크 이미지 삭제
                 try { if (imageUri.isNotEmpty()) contentResolver.delete(Uri.parse(imageUri), null, null) }
                 catch (e: Exception) { e.printStackTrace() }
-                try { db.postDao().delete(PostEntity(id, title, desc, loc, imageUri, date)) }
-                catch (e: Exception) { e.printStackTrace() }
+                // DB에서 레코드 삭제 (getById로 전체 엔티티 조회 후 삭제)
+                try {
+                    val post = db.postDao().getById(id)
+                    if (post != null) db.postDao().delete(post)
+                } catch (e: Exception) { e.printStackTrace() }
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@DetailActivity, "기록과 원본 사진이 모두 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@DetailActivity, "워터마크 기록이 삭제되었습니다. 원본은 갤러리에 유지됩니다.", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             }

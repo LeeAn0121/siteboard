@@ -48,6 +48,108 @@
             android:orientation="vertical"
             android:paddingHorizontal="20dp">
 
+            <!-- 섹션: 워터마크 테마 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="WATERMARK"
+                android:textColor="#A0A0A5"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12"
+                android:layout_marginTop="24dp"
+                android:layout_marginBottom="12dp"
+                android:layout_marginStart="4dp" />
+
+            <!-- 테마 썸네일 선택 -->
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginBottom="12dp">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <LinearLayout android:id="@+id/layoutTheme0" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="10dp" android:clickable="true" android:focusable="true">
+                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme0" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                            <ImageView android:id="@+id/ivThemePreview0" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
+                        </com.google.android.material.card.MaterialCardView>
+                        <TextView android:id="@+id/tvThemeLabel0" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="미니멀" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/layoutTheme1" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="10dp" android:clickable="true" android:focusable="true">
+                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme1" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                            <ImageView android:id="@+id/ivThemePreview1" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
+                        </com.google.android.material.card.MaterialCardView>
+                        <TextView android:id="@+id/tvThemeLabel1" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="기술" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/layoutTheme2" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="10dp" android:clickable="true" android:focusable="true">
+                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme2" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                            <ImageView android:id="@+id/ivThemePreview2" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
+                        </com.google.android.material.card.MaterialCardView>
+                        <TextView android:id="@+id/tvThemeLabel2" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="전문" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
+                    </LinearLayout>
+
+                    <LinearLayout android:id="@+id/layoutTheme3" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:clickable="true" android:focusable="true">
+                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme3" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                            <ImageView android:id="@+id/ivThemePreview3" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
+                        </com.google.android.material.card.MaterialCardView>
+                        <TextView android:id="@+id/tvThemeLabel3" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="강조" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </HorizontalScrollView>
+
+            <!-- 워터마크 상세 설정 링크 -->
+            <LinearLayout
+                android:id="@+id/btnWatermarkDetail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="14dp"
+                android:background="#1E2023"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="12dp">
+                <LinearLayout android:layout_width="40dp" android:layout_height="40dp" android:gravity="center" android:background="#1AFF6F00">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="✏️" android:textSize="18sp" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="14dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="워터마크 상세 설정" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="글자 크기, 위치, 폰트, 색상, 여백 등 세부 조정" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
+                </LinearLayout>
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
+            </LinearLayout>
+
+            <!-- 원본 삭제 옵션 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="16dp"
+                android:background="#1E2023">
+                <LinearLayout android:layout_width="40dp" android:layout_height="40dp" android:gravity="center" android:background="#1AE05567">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🗑️" android:textSize="18sp" />
+                </LinearLayout>
+                <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:layout_marginStart="14dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="워터마크 후 원본 삭제" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="OFF 권장 — ON 시 워터마크 생성 후 원본 자동 삭제" android:textColor="#E05567" android:textSize="12sp" android:layout_marginTop="2dp" />
+                </LinearLayout>
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchDeleteOriginal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:thumbTint="#FFFFFF"
+                    app:trackTint="#E05567" />
+            </LinearLayout>
+
             <!-- 섹션: 데이터 관리 -->
             <TextView
                 android:layout_width="wrap_content"
@@ -90,6 +192,76 @@
                     android:layout_marginStart="14dp">
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="엑셀(CSV) 전체 데이터 추출" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
                     <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="저장된 모든 현장 기록을 엑셀 파일로 내보냅니다" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
+            </LinearLayout>
+
+            <!-- DB 내보내기 -->
+            <LinearLayout
+                android:id="@+id/btnExportDb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="16dp"
+                android:background="#1E2023"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginTop="2dp">
+
+                <LinearLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:background="#1A2196F3">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💾" android:textSize="18sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="14dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DB 파일 내보내기 (.db)" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="설정·기록 전체를 .db 파일로 저장 (Google Drive·OneDrive 등 가능)" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
+            </LinearLayout>
+
+            <!-- DB 불러오기 -->
+            <LinearLayout
+                android:id="@+id/btnImportDb"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="16dp"
+                android:background="#1E2023"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginTop="2dp">
+
+                <LinearLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:background="#1AFF9800">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📥" android:textSize="18sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="14dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DB 파일 불러오기 (.db)" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="기존 저장된 .db 파일로 복원합니다 (기존 데이터 대체)" android:textColor="#E05567" android:textSize="12sp" android:layout_marginTop="2dp" />
                 </LinearLayout>
 
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
@@ -191,11 +363,139 @@
                     app:trackTint="#FF6F00" />
             </LinearLayout>
 
+            <!-- GPS 위치 수집 토글 -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="16dp"
+                android:background="#1E2023"
+                android:layout_marginTop="2dp">
+
+                <LinearLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:background="#1A4CAF50">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📍" android:textSize="18sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="14dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="GPS 위치 수집" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="OFF 시 워터마크에 위치 정보를 포함하지 않습니다" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/switchGpsEnabled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:thumbTint="#FFFFFF"
+                    app:trackTint="#FF6F00" />
+            </LinearLayout>
+
+            <!-- 섹션: 클라우드 동기화 -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="CLOUD SYNC"
+                android:textColor="#A0A0A5"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.12"
+                android:layout_marginTop="28dp"
+                android:layout_marginBottom="6dp"
+                android:layout_marginStart="4dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="기기에 Google Drive / OneDrive 앱이 설치되어 로그인되어 있으면, DB 내보내기/불러오기 시 클라우드 저장소를 선택할 수 있습니다."
+                android:textColor="#606065"
+                android:textSize="12sp"
+                android:layout_marginBottom="12dp"
+                android:lineSpacingExtra="3dp" />
+
+            <!-- Google Drive 연동 -->
+            <LinearLayout
+                android:id="@+id/btnCloudGoogleDrive"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="14dp"
+                android:background="#1E2023"
+                android:clickable="true"
+                android:focusable="true">
+
+                <LinearLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:background="#1A4285F4">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="☁" android:textSize="20sp" android:textColor="#4285F4" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="14dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Google Drive로 저장" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Google Drive 앱 로그인 필요" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
+            </LinearLayout>
+
+            <!-- OneDrive 연동 -->
+            <LinearLayout
+                android:id="@+id/btnCloudOneDrive"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="14dp"
+                android:background="#1E2023"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginTop="2dp">
+
+                <LinearLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:background="#1A0078D4">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="☁" android:textSize="20sp" android:textColor="#0078D4" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="14dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="OneDrive로 저장" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Microsoft OneDrive 앱 로그인 필요" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
+            </LinearLayout>
+
             <!-- 앱 버전 -->
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="SITEBOARD  v1.0"
+                android:text="SITEBOARD  v2.0"
                 android:textColor="#404045"
                 android:textSize="12sp"
                 android:gravity="center"

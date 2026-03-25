@@ -149,6 +149,31 @@
                     </LinearLayout>
                 </LinearLayout>
 
+                <!-- 상세 위치 (수기) -->
+                <LinearLayout
+                    android:id="@+id/layoutDetailLocation"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:background="#1E2023"
+                    android:padding="12dp"
+                    android:layout_marginBottom="12dp"
+                    android:visibility="gone">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="상세 위치 (수기)"
+                        android:textSize="10sp"
+                        android:textColor="#606065" />
+                    <TextView
+                        android:id="@+id/tvDetailDetailLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="#A0A0A5"
+                        android:textSize="13sp"
+                        android:layout_marginTop="2dp" />
+                </LinearLayout>
+
                 <!-- 구분선 -->
                 <View
                     android:layout_width="match_parent"
@@ -174,6 +199,58 @@
                     android:textColor="#EBEBEB"
                     android:textSize="15sp"
                     android:lineSpacingExtra="6dp" />
+
+                <!-- 메모 (비고) -->
+                <LinearLayout
+                    android:id="@+id/layoutMemo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="16dp"
+                    android:background="#1E2023"
+                    android:padding="12dp"
+                    android:visibility="gone">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="메모 (비고)"
+                        android:textSize="10sp"
+                        android:textColor="#606065" />
+                    <TextView
+                        android:id="@+id/tvDetailMemo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#EBEBEB"
+                        android:textSize="14sp"
+                        android:layout_marginTop="4dp"
+                        android:lineSpacingExtra="4dp" />
+                </LinearLayout>
+
+                <!-- 원본 사진 정보 -->
+                <LinearLayout
+                    android:id="@+id/layoutOriginalInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="12dp"
+                    android:background="#0FFF6F00"
+                    android:padding="12dp"
+                    android:visibility="gone">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="원본 파일"
+                        android:textSize="10sp"
+                        android:textColor="#FF6F00" />
+                    <TextView
+                        android:id="@+id/tvOriginalFileName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="#808085"
+                        android:textSize="12sp"
+                        android:layout_marginTop="2dp"
+                        android:fontFamily="monospace" />
+                </LinearLayout>
 
             </LinearLayout>
         </LinearLayout>

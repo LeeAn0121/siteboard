@@ -197,7 +197,17 @@ class HomeFragment : Fragment() {
 
                     val safeDesc = post.description.replace("\n", " ")
                     canvas.drawText("• 작업 내용 : $safeDesc", margin, currentY, textPaint)
-                    currentY += 40f
+                    currentY += 25f
+                    if (!post.detailLocation.isNullOrBlank()) {
+                        canvas.drawText("• 상세 위치 : ${post.detailLocation}", margin, currentY, textPaint)
+                        currentY += 25f
+                    }
+                    if (!post.memo.isNullOrBlank()) {
+                        val safeMemo = post.memo.replace("\n", " ")
+                        canvas.drawText("• 메모 : $safeMemo", margin, currentY, textPaint)
+                        currentY += 25f
+                    }
+                    currentY += 15f
 
                     try {
                         val imageString = post.imageUri

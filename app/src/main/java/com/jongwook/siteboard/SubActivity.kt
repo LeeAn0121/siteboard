@@ -12,18 +12,17 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
 import android.view.View
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.lifecycle.lifecycleScope
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.google.android.material.card.MaterialCardView
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
@@ -32,7 +31,7 @@ import com.jongwook.siteboard.databinding.ActivitySubBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.tasks.await // 💡 주의: 이 import가 빨간불이면 아래 가이드를 참고하세요!
+import kotlinx.coroutines.tasks.await
 import java.io.InputStream
 import java.text.SimpleDateFormat
 import java.util.*
@@ -44,10 +43,9 @@ class SubActivity : AppCompatActivity() {
 
     private var isEditMode = false
     private var editPostId = 0
-    private var selectedTheme = 0
+    private var isCameraPhoto = false
 
     private var previewBitmap: Bitmap? = null
-    private lateinit var themePreviewViews: List<ImageView>
     private var currentLocation: String = ""
 
     private val requestCameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -61,6 +59,7 @@ class SubActivity : AppCompatActivity() {
     private val pickImageLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            isCameraPhoto = false
             processAndSaveImage(it)
         }
     }
@@ -68,13 +67,15 @@ class SubActivity : AppCompatActivity() {
     private val pickMultipleImagesLauncher = registerForActivityResult(ActivityResultContracts.OpenMultipleDocuments()) { uris ->
         if (uris.isNotEmpty()) {
             uris.forEach { uri ->
-                try { contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (e: Exception) { /* ignore */ }
+                try { contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (e: Exception) { }
             }
             val intent = android.content.Intent(this, BatchEditActivity::class.java)
             intent.putParcelableArrayListExtra("selected_uris", ArrayList(uris))
             intent.putExtra("edit_title", binding.etTitle.text.toString().trim())
             intent.putExtra("edit_desc", binding.etDesc.text.toString().trim())
             intent.putExtra("edit_loc", currentLocation)
+            intent.putExtra("edit_detail_loc", binding.etDetailLocation.text.toString().trim())
+            intent.putExtra("edit_memo", binding.etMemo.text.toString().trim())
             startActivity(intent)
         }
     }
@@ -84,26 +85,27 @@ class SubActivity : AppCompatActivity() {
             contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
             lifecycleScope.launch(Dispatchers.IO) {
                 val bmp = loadOrientedBitmapFromUri(it)
-                withContext(Dispatchers.Main) {
-                    previewBitmap = bmp
-                    updatePreview()
-                }
+                withContext(Dispatchers.Main) { previewBitmap = bmp; updatePreview() }
             }
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ActivitySubBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // ==========================================
-        // 🚀 위치 입력칸 강제 수정 불가 처리 (터치 및 키보드 입력 차단)
-        // ==========================================
-        // 시스템바 간격 처리
-        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.updatePadding(top = bars.top, bottom = bars.bottom)
+        // 상단 시스템바 높이만큼 헤더에 패딩 추가
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutSubHeader) { v, insets ->
+            val sb = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = sb.top + (16 * resources.displayMetrics.density).toInt())
+            insets
+        }
+        // 하단 네비게이션바 패딩
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutBottom) { v, insets ->
+            val nb = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.updatePadding(bottom = nb.bottom + (16 * resources.displayMetrics.density).toInt())
             insets
         }
 
@@ -112,23 +114,45 @@ class SubActivity : AppCompatActivity() {
             editPostId = intent.getIntExtra("edit_id", 0)
             binding.etTitle.setText(intent.getStringExtra("edit_title"))
             binding.etDesc.setText(intent.getStringExtra("edit_desc"))
+            binding.etDetailLocation.setText(intent.getStringExtra("edit_detail_loc") ?: "")
+            binding.etMemo.setText(intent.getStringExtra("edit_memo") ?: "")
             currentLocation = intent.getStringExtra("edit_loc") ?: ""
+            binding.tvGpsLocation.text = if (currentLocation.isEmpty()) "위치 정보 없음" else currentLocation
+
+            // 기존 사진을 미리보기에 불러오기
+            val editImageUri = intent.getStringExtra("edit_imageUri") ?: ""
+            if (editImageUri.isNotEmpty()) {
+                lifecycleScope.launch(Dispatchers.IO) {
+                    val bmp = try { loadOrientedBitmapFromUri(android.net.Uri.parse(editImageUri)) } catch (e: Exception) { null }
+                    withContext(Dispatchers.Main) {
+                        if (bmp != null) { previewBitmap = bmp; updatePreview() }
+                    }
+                }
+            }
+
             Toast.makeText(this, "내용을 수정한 후 사진을 다시 촬영/선택하면 워터마크가 변경됩니다.", Toast.LENGTH_LONG).show()
         } else {
-            // 마지막으로 입력한 현장명/작업내용 불러오기
-            val siteboardPrefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-            val savedSiteName = siteboardPrefs.getString("last_site_name", "")
-            if (!savedSiteName.isNullOrEmpty()) {
-                binding.etTitle.setText(savedSiteName)
-            }
-            val savedWorkContent = siteboardPrefs.getString("last_work_content", "")
-            if (!savedWorkContent.isNullOrEmpty()) {
-                binding.etDesc.setText(savedWorkContent)
-            }
+            val prefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+            val savedSiteName = prefs.getString("last_site_name", "")
+            if (!savedSiteName.isNullOrEmpty()) binding.etTitle.setText(savedSiteName)
+            val savedWorkContent = prefs.getString("last_work_content", "")
+            if (!savedWorkContent.isNullOrEmpty()) binding.etDesc.setText(savedWorkContent)
+            val savedDetailLoc = prefs.getString("last_detail_loc", "")
+            if (!savedDetailLoc.isNullOrEmpty()) binding.etDetailLocation.setText(savedDetailLoc)
         }
 
-        setupThemeSelector()
         updatePreview()
+
+        // 입력 변경 시 미리보기 실시간 갱신
+        val watcher = object : android.text.TextWatcher {
+            override fun afterTextChanged(s: android.text.Editable?) = updatePreview()
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        }
+        binding.etTitle.addTextChangedListener(watcher)
+        binding.etDesc.addTextChangedListener(watcher)
+        binding.etDetailLocation.addTextChangedListener(watcher)
+        binding.etMemo.addTextChangedListener(watcher)
 
         binding.cardPreview.setOnClickListener {
             previewImagePickerLauncher.launch(arrayOf("image/*"))
@@ -146,138 +170,30 @@ class SubActivity : AppCompatActivity() {
         }
 
         binding.btnGallery.setOnClickListener {
-            if (validateInputs()) pickImageLauncher.launch(arrayOf("image/*"))
+            if (validateInputs()) {
+                isCameraPhoto = false
+                pickImageLauncher.launch(arrayOf("image/*"))
+            }
         }
 
         binding.btnBatch.setOnClickListener {
             if (validateInputs()) pickMultipleImagesLauncher.launch(arrayOf("image/*"))
         }
 
-        // 연속 촬영 모드 저장/복원
-        val siteboardPrefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-        binding.switchContinuous.isChecked = siteboardPrefs.getBoolean("continuous_mode", false)
-        binding.switchContinuous.setOnCheckedChangeListener { _, isChecked ->
-            siteboardPrefs.edit().putBoolean("continuous_mode", isChecked).apply()
-        }
-
-        // 화면이 켜지자마자 위치를 가져오도록 호출
         fetchCurrentLocationAndAddress()
     }
 
     override fun onResume() {
         super.onResume()
-        // 상세 설정(WatermarkSettingsActivity)에서 돌아왔을 때 preview 갱신
         updatePreview()
     }
 
-    private fun setupThemeSelector() {
-        val themeLayouts = listOf(
-            binding.layoutTheme0, binding.layoutTheme1,
-            binding.layoutTheme2, binding.layoutTheme3
-        )
-        val themeViews = listOf(
-            binding.viewTheme0, binding.viewTheme1,
-            binding.viewTheme2, binding.viewTheme3
-        )
-        val themeLabels = listOf(
-            binding.tvThemeLabel0, binding.tvThemeLabel1,
-            binding.tvThemeLabel2, binding.tvThemeLabel3
-        )
-        themePreviewViews = listOf(
-            binding.ivThemePreview0, binding.ivThemePreview1,
-            binding.ivThemePreview2, binding.ivThemePreview3
-        )
-
-        // 저장된 테마 불러오기
-        val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
-        selectedTheme = prefs.getInt("wm_theme_index", 0)
-        updateAllThemePreviews()
-        updateThemeSelection(themeViews, themeLabels, selectedTheme)
-
-        themeLayouts.forEachIndexed { index, layout ->
-            layout.setOnClickListener {
-                selectedTheme = index
-                updateThemeSelection(themeViews, themeLabels, index)
-                applyThemePreset(index)
-                updatePreview()
-            }
-        }
-    }
-
-    private fun updateThemeSelection(views: List<android.view.View>, labels: List<android.widget.TextView>, selectedIndex: Int) {
-        val strokePx = (2 * resources.displayMetrics.density).toInt()
-        views.forEachIndexed { index, view ->
-            val card = view as MaterialCardView
-            card.strokeWidth = if (index == selectedIndex) strokePx else 0
-        }
-        labels.forEachIndexed { index, label ->
-            label.setTextColor(
-                if (index == selectedIndex) getColor(R.color.orange_primary)
-                else Color.parseColor("#A0A0A5")
-            )
-        }
-    }
-
-    private fun updateAllThemePreviews() {
-        if (!::themePreviewViews.isInitialized) return
-        themePreviewViews.forEachIndexed { index, imageView ->
-            imageView.setImageBitmap(createThemePreviewBitmap(index))
-        }
-    }
-
-    private fun createThemePreviewBitmap(themeIndex: Int): Bitmap {
-        val w = 270; val h = 270
-        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-        canvas.drawColor(Color.parseColor("#1A1A1E"))
-
-        data class ThemeCfg(val color: Int, val font: String, val size: Float, val bg: Boolean)
-        val themes = arrayOf(
-            ThemeCfg(Color.WHITE,  "SANS_SERIF_LIGHT",  22f, false),
-            ThemeCfg(Color.YELLOW, "MONOSPACE",          26f, true),
-            ThemeCfg(Color.WHITE,  "SERIF",              24f, true),
-            ThemeCfg(Color.YELLOW, "SANS_SERIF_BLACK",   30f, true)
-        )
-        val cfg = themes[themeIndex]
-
-        val typeface = when (cfg.font) {
-            "SERIF"           -> Typeface.create(Typeface.SERIF, Typeface.BOLD)
-            "MONOSPACE"       -> Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-            "SANS_SERIF_LIGHT"-> Typeface.create("sans-serif-light", Typeface.BOLD)
-            "SANS_SERIF_BLACK"-> Typeface.create("sans-serif-black", Typeface.BOLD)
-            else              -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        }
-
-        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = cfg.color; textSize = cfg.size; this.typeface = typeface
-            setShadowLayer(2f, 1f, 1f, Color.BLACK)
-        }
-
-        val lines = listOf("현장명", "2026-03-23")
-        val fm = paint.fontMetrics
-        val lineH = fm.descent - fm.ascent
-        val spacing = cfg.size * 0.4f
-        val totalH = lines.size * lineH + (lines.size - 1) * spacing
-        val maxW = lines.maxOf { paint.measureText(it) }
-        val startX = 16f
-        val startY = h - 16f - totalH
-
-        if (cfg.bg) {
-            val bgPaint = Paint().apply { color = Color.parseColor("#88000000") }
-            val pad = cfg.size * 0.3f
-            canvas.drawRoundRect(RectF(startX - pad, startY - pad, startX + maxW + pad, startY + totalH + pad), 6f, 6f, bgPaint)
-        }
-
-        var y = startY - fm.ascent
-        for (line in lines) { canvas.drawText(line, startX, y, paint); y += lineH + spacing }
-
-        return bitmap
-    }
-
     private fun updatePreview() {
-        val title = binding.etTitle.text.toString().trim().let { if (it.isEmpty()) "현장명" else it }
-        val loc   = currentLocation.let { if (it.isEmpty()) "현재 위치" else it }
-        val desc  = binding.etDesc.text.toString().trim()
+        val title     = binding.etTitle.text.toString().trim().let { if (it.isEmpty()) "현장명" else it }
+        val gpsLoc    = currentLocation.let { if (it.isEmpty()) "현재 위치" else it }
+        val desc      = binding.etDesc.text.toString().trim()
+        val detailLoc = binding.etDetailLocation.text.toString().trim()
+        val memo      = binding.etMemo.text.toString().trim()
 
         val width = 1000; val height = 800
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -292,31 +208,25 @@ class SubActivity : AppCompatActivity() {
         }
 
         val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
-        val isTop      = prefs.getBoolean("wm_is_top", false)
-        val isLeft     = prefs.getBoolean("wm_is_left", true)
-        val marginX    = prefs.getInt("wm_margin_x", 50)
-        val marginY    = prefs.getInt("wm_margin_y", 50)
-        val fontSize   = prefs.getFloat("wm_font_size", 40f)
-        val useBgBox   = prefs.getBoolean("wm_use_bg", true)
-        val textColor  = prefs.getInt("wm_color", Color.YELLOW)
-        val fontType   = prefs.getString("wm_font", "DEFAULT") ?: "DEFAULT"
+        val isTop     = prefs.getBoolean("wm_is_top", false)
+        val isLeft    = prefs.getBoolean("wm_is_left", true)
+        val marginX   = prefs.getInt("wm_margin_x", 50)
+        val marginY   = prefs.getInt("wm_margin_y", 50)
+        val fontSize  = prefs.getFloat("wm_font_size", 40f)
+        val useBgBox  = prefs.getBoolean("wm_use_bg", true)
+        val textColor = prefs.getInt("wm_color", Color.YELLOW)
+        val fontType  = prefs.getString("wm_font", "DEFAULT") ?: "DEFAULT"
 
-        val typeface = when (fontType) {
-            "SERIF"           -> Typeface.create(Typeface.SERIF, Typeface.BOLD)
-            "MONOSPACE"       -> Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-            "SANS_SERIF_LIGHT"-> Typeface.create("sans-serif-light", Typeface.BOLD)
-            "SANS_SERIF_BLACK"-> Typeface.create("sans-serif-black", Typeface.BOLD)
-            "CURSIVE"         -> Typeface.create("cursive", Typeface.BOLD)
-            else              -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        }
-
+        val typeface = resolveTypeface(fontType)
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = textColor; textSize = fontSize; this.typeface = typeface
             setShadowLayer(3f, 2f, 2f, Color.BLACK)
         }
 
-        val lines = mutableListOf("제목 : $title", "위치 : $loc")
+        val lines = mutableListOf("제목 : $title", "위치(GPS) : $gpsLoc")
+        if (detailLoc.isNotEmpty()) lines.add("상세위치 : $detailLoc")
         if (desc.isNotEmpty()) lines.add("작업내용 : $desc")
+        if (memo.isNotEmpty()) lines.add("메모 : $memo")
         lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
 
         val fm = textPaint.fontMetrics
@@ -324,7 +234,6 @@ class SubActivity : AppCompatActivity() {
         val spacing = fontSize * 0.5f
         val totalH = lines.size * lineH + (lines.size - 1) * spacing
         val maxW = lines.maxOf { textPaint.measureText(it) }
-
         val startX = if (isLeft) marginX.toFloat() else width - marginX.toFloat() - maxW
         val startY = if (isTop) marginY.toFloat() else height - marginY.toFloat() - totalH
         val padding = fontSize * 0.4f
@@ -333,12 +242,20 @@ class SubActivity : AppCompatActivity() {
             val bgPaint = Paint().apply { color = Color.parseColor("#66000000") }
             canvas.drawRoundRect(RectF(startX - padding, startY - padding, startX + maxW + padding, startY + totalH + padding), 8f, 8f, bgPaint)
         }
-
         var drawY = startY - fm.ascent
         for (line in lines) { canvas.drawText(line, startX, drawY, textPaint); drawY += lineH + spacing }
 
         binding.ivPreview.imageTintList = null
         binding.ivPreview.setImageBitmap(bitmap)
+    }
+
+    private fun resolveTypeface(fontType: String): Typeface = when (fontType) {
+        "SERIF"            -> Typeface.create(Typeface.SERIF, Typeface.BOLD)
+        "MONOSPACE"        -> Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+        "SANS_SERIF_LIGHT" -> Typeface.create("sans-serif-light", Typeface.BOLD)
+        "SANS_SERIF_BLACK" -> Typeface.create("sans-serif-black", Typeface.BOLD)
+        "CURSIVE"          -> Typeface.create("cursive", Typeface.BOLD)
+        else               -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
 
     private fun scaleBitmapCenterCrop(src: Bitmap, targetW: Int, targetH: Int): Bitmap {
@@ -354,38 +271,6 @@ class SubActivity : AppCompatActivity() {
         return cropped
     }
 
-    private fun applyThemePreset(index: Int) {
-        val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE).edit()
-        prefs.putInt("wm_theme_index", index)
-        when (index) {
-            0 -> { // 미니멀: 심플, 배경 없음, 흰색, 작은 글씨
-                prefs.putBoolean("wm_use_bg", false)
-                prefs.putInt("wm_color", Color.WHITE)
-                prefs.putString("wm_font", "SANS_SERIF_LIGHT")
-                prefs.putFloat("wm_font_size", 28f)
-            }
-            1 -> { // 기술: 모노스페이스, 노란색, 배경 박스
-                prefs.putBoolean("wm_use_bg", true)
-                prefs.putInt("wm_color", Color.YELLOW)
-                prefs.putString("wm_font", "MONOSPACE")
-                prefs.putFloat("wm_font_size", 40f)
-            }
-            2 -> { // 전문: 세리프, 흰색, 배경 박스
-                prefs.putBoolean("wm_use_bg", true)
-                prefs.putInt("wm_color", Color.WHITE)
-                prefs.putString("wm_font", "SERIF")
-                prefs.putFloat("wm_font_size", 36f)
-            }
-            3 -> { // 강조: 두꺼운 글씨, 노란색, 배경 박스, 큰 글씨
-                prefs.putBoolean("wm_use_bg", true)
-                prefs.putInt("wm_color", Color.YELLOW)
-                prefs.putString("wm_font", "SANS_SERIF_BLACK")
-                prefs.putFloat("wm_font_size", 50f)
-            }
-        }
-        prefs.apply()
-    }
-
     private fun validateInputs(): Boolean {
         if (binding.etTitle.text.toString().trim().isEmpty()) {
             Toast.makeText(this, "현장명을 입력해주세요.", Toast.LENGTH_SHORT).show()
@@ -396,6 +281,7 @@ class SubActivity : AppCompatActivity() {
 
     private fun launchCamera() {
         try {
+            isCameraPhoto = true
             val tempFile = java.io.File(cacheDir, "temp_camera.jpg")
             currentPhotoUri = androidx.core.content.FileProvider.getUriForFile(this, "com.jongwook.siteboard.fileprovider", tempFile)
             currentPhotoUri?.let { takePictureLauncher.launch(it) }
@@ -405,75 +291,83 @@ class SubActivity : AppCompatActivity() {
     }
 
     private fun processAndSaveImage(uri: Uri) {
-        val title = binding.etTitle.text.toString().trim()
-        val desc = binding.etDesc.text.toString().trim()
-        val loc = currentLocation
+        val title     = binding.etTitle.text.toString().trim()
+        val desc      = binding.etDesc.text.toString().trim()
+        val loc       = currentLocation
+        val detailLoc = binding.etDetailLocation.text.toString().trim()
+        val memo      = binding.etMemo.text.toString().trim()
+        // 원본 삭제 여부는 설정에서 읽어옴
+        val shouldDeleteOriginal = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+            .getBoolean("delete_original_mode", false)
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.VISIBLE
-                    // 데이터 처리 중임을 알림
                     Toast.makeText(this@SubActivity, "보안 처리 및 이미지 저장 중...", Toast.LENGTH_SHORT).show()
                 }
 
-                // 1. 방향이 바로 잡힌 원본 비트맵 로드
+                // 1. 원본 저장 (카메라 사진 → 갤러리 영구 보존)
+                val originalUri: Uri?
+                val originalFileName: String
+                if (isCameraPhoto) {
+                    originalUri = saveOriginalToGallery(uri, title)
+                    originalFileName = originalUri?.let { getFileNameFromUri(it) } ?: ""
+                } else {
+                    originalUri = uri
+                    originalFileName = getFileNameFromUri(uri)
+                }
+
+                // 2. 방향 보정 원본 비트맵 로드
                 val orientedBitmap = loadOrientedBitmapFromUri(uri) ?: throw Exception("이미지 로드 실패")
 
-                // ===================================================================
-                // 🛡️ 2. [수정됨] 설정에서 스위치가 켜져 있는지 확인 후 블러 처리
-                // ===================================================================
-                val sharedPref = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-                val isPrivacyBlurEnabled = sharedPref.getBoolean("privacy_blur_mode", true)
-
+                // 3. 개인정보 블러 처리
+                val isPrivacyBlurEnabled = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+                    .getBoolean("privacy_blur_mode", true)
                 val bitmapToStamp = if (isPrivacyBlurEnabled) {
-                    // 스위치가 켜져 있으면 블러 처리 실행
                     val blurred = detectAndBlurPrivacy(orientedBitmap)
-                    if (orientedBitmap != blurred && !orientedBitmap.isRecycled) {
-                        orientedBitmap.recycle()
-                    }
+                    if (orientedBitmap != blurred && !orientedBitmap.isRecycled) orientedBitmap.recycle()
                     blurred
-                } else {
-                    // 스위치가 꺼져 있으면 원본 그대로 사용
-                    orientedBitmap
-                }
+                } else orientedBitmap
 
-                // 3. (블러 처리 되었거나 안 된) 비트맵 위에 최종 워터마크 새기기
-                val stampedBitmap = stampTextOnBitmap(bitmapToStamp, title, desc, loc)
+                // 4. 워터마크 적용 (복사본에만)
+                val stampedBitmap = stampTextOnBitmap(bitmapToStamp, title, desc, loc, detailLoc, memo)
+                if (bitmapToStamp != stampedBitmap && !bitmapToStamp.isRecycled) bitmapToStamp.recycle()
 
-                // 워터마크 처리 후 필요 없어진 중간 이미지 삭제
-                if (bitmapToStamp != stampedBitmap && !bitmapToStamp.isRecycled) {
-                    bitmapToStamp.recycle()
-                }
-                // ===================================================================
-
-                // 4. 갤러리에 저장
+                // 5. 워터마크 복사본 갤러리 저장
                 val newSavedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
+                if (!stampedBitmap.isRecycled) stampedBitmap.recycle()
 
+                // 6. 원본 삭제 옵션 (사용자가 명시적 ON한 경우만)
+                if (shouldDeleteOriginal && originalUri != null) {
+                    try { contentResolver.delete(originalUri, null, null) } catch (e: Exception) { }
+                }
+
+                // 7. DB 저장
                 val currentDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
                 val post = PostEntity(
                     id = if (isEditMode) editPostId else 0,
-                    title = title, description = desc, location = loc,
-                    imageUri = newSavedUri.toString(), date = currentDate
+                    title = title, description = desc,
+                    location = loc.ifEmpty { null },
+                    imageUri = newSavedUri.toString(), date = currentDate,
+                    detailLocation = detailLoc.ifEmpty { null },
+                    memo = memo.ifEmpty { null },
+                    originalUri = if (shouldDeleteOriginal) null else originalUri?.toString(),
+                    originalFileName = originalFileName.ifEmpty { null }
                 )
-
                 if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
 
-                // 마지막으로 입력한 현장명/작업내용 저장 (초기화 없이 유지)
-                getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-                    .edit().putString("last_site_name", title).putString("last_work_content", desc).apply()
+                getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE).edit()
+                    .putString("last_site_name", title)
+                    .putString("last_work_content", desc)
+                    .putString("last_detail_loc", detailLoc)
+                    .apply()
 
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
                     Toast.makeText(this@SubActivity, "현장 기록이 안전하게 저장되었습니다.", Toast.LENGTH_SHORT).show()
-
-                    if (binding.switchContinuous.isChecked) {
-                        currentPhotoUri = null
-                        Toast.makeText(this@SubActivity, "다음 사진을 촬영하세요", Toast.LENGTH_SHORT).show()
-                    } else {
-                        setResult(RESULT_OK)
-                        finish()
-                    }
+                    setResult(RESULT_OK)
+                    finish()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -484,166 +378,165 @@ class SubActivity : AppCompatActivity() {
         }
     }
 
-    // 💡 꼬리표(EXIF) 정보를 읽어서, 필요하면 회전시켜서 똑바로 세워주는 함수
+    private fun saveOriginalToGallery(srcUri: Uri, titleText: String): Uri? {
+        return try {
+            val fileName = "ORIG_${titleText}_${System.currentTimeMillis()}.jpg"
+            val contentValues = ContentValues().apply {
+                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/SITEBOARD_ORIGINALS")
+            }
+            val destUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            destUri?.let { dest ->
+                contentResolver.openInputStream(srcUri)?.use { input ->
+                    contentResolver.openOutputStream(dest)?.use { out -> input.copyTo(out) }
+                }
+            }
+            destUri
+        } catch (e: Exception) { Log.e("SubActivity", "원본 저장 실패", e); null }
+    }
+
+    private fun getFileNameFromUri(uri: Uri): String {
+        return when (uri.scheme) {
+            "content" -> contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (idx >= 0) cursor.getString(idx) else ""
+                } else ""
+            } ?: ""
+            "file" -> java.io.File(uri.path ?: "").name
+            else -> ""
+        }
+    }
+
     private fun loadOrientedBitmapFromUri(uri: Uri): Bitmap? {
         var inputStream: InputStream? = null
         return try {
             inputStream = contentResolver.openInputStream(uri)
             val originalBitmap = BitmapFactory.decodeStream(inputStream)
             inputStream?.close()
-
             if (originalBitmap == null) return null
-
             inputStream = contentResolver.openInputStream(uri)
-            val exif = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                android.media.ExifInterface(inputStream!!)
-            } else null
+            val exif = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
+                android.media.ExifInterface(inputStream!!) else null
             inputStream?.close()
-
-            val orientation = exif?.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL)
-                ?: android.media.ExifInterface.ORIENTATION_NORMAL
-
+            val orientation = exif?.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION,
+                android.media.ExifInterface.ORIENTATION_NORMAL) ?: android.media.ExifInterface.ORIENTATION_NORMAL
             rotateBitmap(originalBitmap, orientation)
-        } catch (e: Exception) {
-            Log.e("SubActivity", "이미지 회전 실패", e)
-            null
-        } finally {
-            inputStream?.close()
-        }
+        } catch (e: Exception) { Log.e("SubActivity", "이미지 회전 실패", e); null }
+        finally { inputStream?.close() }
     }
 
     private fun rotateBitmap(bitmap: Bitmap, orientation: Int): Bitmap {
         val matrix = Matrix()
         when (orientation) {
-            android.media.ExifInterface.ORIENTATION_ROTATE_90 -> matrix.setRotate(90f)
+            android.media.ExifInterface.ORIENTATION_ROTATE_90  -> matrix.setRotate(90f)
             android.media.ExifInterface.ORIENTATION_ROTATE_180 -> matrix.setRotate(180f)
             android.media.ExifInterface.ORIENTATION_ROTATE_270 -> matrix.setRotate(270f)
             android.media.ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.setScale(-1f, 1f)
-            android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.setScale(1f, -1f)
+            android.media.ExifInterface.ORIENTATION_FLIP_VERTICAL   -> matrix.setScale(1f, -1f)
             else -> return bitmap
         }
-
         return try {
-            val rotatedBitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
-            if (bitmap != rotatedBitmap) bitmap.recycle()
-            rotatedBitmap
-        } catch (e: Exception) {
-            e.printStackTrace()
-            bitmap
-        }
+            val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
+            if (bitmap != rotated) bitmap.recycle()
+            rotated
+        } catch (e: Exception) { e.printStackTrace(); bitmap }
     }
 
-    // 🌟 100% 싱크로율 보장: 미리보기와 완벽히 똑같은 여백과 비율로 도장 찍기
-    private fun stampTextOnBitmap(bitmap: Bitmap, title: String, desc: String, loc: String): Bitmap {
+    private fun stampTextOnBitmap(
+        bitmap: Bitmap, title: String, desc: String, loc: String,
+        detailLoc: String = "", memo: String = ""
+    ): Bitmap {
         val resultBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(resultBitmap)
-
         val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
-        val isTop = prefs.getBoolean("wm_is_top", false)
-        val isLeft = prefs.getBoolean("wm_is_left", true)
-        val baseMarginX = prefs.getInt("wm_margin_x", 50)
-        val baseMarginY = prefs.getInt("wm_margin_y", 50)
+        val isTop        = prefs.getBoolean("wm_is_top", false)
+        val isLeft       = prefs.getBoolean("wm_is_left", true)
+        val baseMarginX  = prefs.getInt("wm_margin_x", 50)
+        val baseMarginY  = prefs.getInt("wm_margin_y", 50)
         val baseFontSize = prefs.getFloat("wm_font_size", 40f)
-        val useBgBox = prefs.getBoolean("wm_use_bg", true)
-        val textColorCode = prefs.getInt("wm_color",  Color.YELLOW)
-        val fontType = prefs.getString("wm_font", "DEFAULT")
+        val useBgBox     = prefs.getBoolean("wm_use_bg", true)
+        val textColorCode= prefs.getInt("wm_color", Color.YELLOW)
+        val fontType     = prefs.getString("wm_font", "DEFAULT") ?: "DEFAULT"
 
         val scaleX = resultBitmap.width / 1000f
         val scaleY = resultBitmap.height / 800f
-
         val actualFontSize = baseFontSize * scaleX
-        val actualMarginX = baseMarginX * scaleX
-        val actualMarginY = baseMarginY * scaleY
+        val actualMarginX  = baseMarginX * scaleX
+        val actualMarginY  = baseMarginY * scaleY
 
         val lines = mutableListOf("제목 : $title")
-        if (loc.isNotEmpty()) lines.add("위치 : $loc")
+        if (loc.isNotEmpty()) lines.add("위치(GPS) : $loc")
+        if (detailLoc.isNotEmpty()) lines.add("상세위치 : $detailLoc")
         if (desc.isNotEmpty()) lines.add("작업내용 : ${desc.replace("\n", " ")}")
+        if (memo.isNotEmpty()) lines.add("메모 : $memo")
         lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
 
-        val typefaceSelection = when (fontType) {
-            "SERIF" -> Typeface.create(Typeface.SERIF, Typeface.BOLD)
-            "MONOSPACE" -> Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
-            "SANS_SERIF_LIGHT" -> Typeface.create("sans-serif-light", Typeface.BOLD)
-            "SANS_SERIF_BLACK" -> Typeface.create("sans-serif-black", Typeface.BOLD)
-            "CURSIVE" -> Typeface.create("cursive", Typeface.BOLD)
-            else -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        }
-
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = textColorCode
-            textSize = actualFontSize
-            typeface = typefaceSelection
+            color = textColorCode; textSize = actualFontSize
+            typeface = resolveTypeface(fontType)
             setShadowLayer(5f, 3f, 3f, Color.BLACK)
         }
-
         val fm = textPaint.fontMetrics
-        val singleTextHeight = fm.descent - fm.ascent
-        val lineSpacing = actualFontSize * 0.5f
-        val totalHeight = (lines.size * singleTextHeight) + ((lines.size - 1) * lineSpacing)
-        val maxTextWidth = lines.maxOf { textPaint.measureText(it) }
-
-        val startX = if (isLeft) actualMarginX else resultBitmap.width - actualMarginX - maxTextWidth
-        val startY = if (isTop) actualMarginY else resultBitmap.height - actualMarginY - totalHeight
-
-        val padding = actualFontSize * 0.4f
+        val singleH   = fm.descent - fm.ascent
+        val spacing   = actualFontSize * 0.5f
+        val totalH    = lines.size * singleH + (lines.size - 1) * spacing
+        val maxW      = lines.maxOf { textPaint.measureText(it) }
+        val startX    = if (isLeft) actualMarginX else resultBitmap.width - actualMarginX - maxW
+        val startY    = if (isTop) actualMarginY else resultBitmap.height - actualMarginY - totalH
+        val padding   = actualFontSize * 0.4f
 
         if (useBgBox) {
             val bgPaint = Paint().apply { color = Color.parseColor("#66000000") }
-            val bgRect = RectF(
-                startX - padding,
-                startY - padding,
-                startX + maxTextWidth + padding,
-                startY + totalHeight + padding
-            )
-            canvas.drawRoundRect(bgRect, 10f * scaleX, 10f * scaleX, bgPaint)
+            canvas.drawRoundRect(RectF(startX - padding, startY - padding,
+                startX + maxW + padding, startY + totalH + padding), 10f * scaleX, 10f * scaleX, bgPaint)
         }
-
         var textDrawY = startY - fm.ascent
-        for (line in lines) {
-            canvas.drawText(line, startX, textDrawY, textPaint)
-            textDrawY += (singleTextHeight + lineSpacing)
-        }
-
+        for (line in lines) { canvas.drawText(line, startX, textDrawY, textPaint); textDrawY += singleH + spacing }
         return resultBitmap
     }
 
-    // 🌟 [완벽 방어 적용] GPS로 현재 위치를 잡아 한글 주소로 변환하는 로직
     private fun fetchCurrentLocationAndAddress() {
         if (isEditMode) return
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
-            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            Toast.makeText(this, "위치 권한이 없어 주소를 자동으로 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
+        // 설정에서 GPS 수집이 꺼져 있으면 스킵
+        val gpsEnabled = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+            .getBoolean("gps_enabled", true)
+        if (!gpsEnabled) {
+            binding.tvGpsLocation.text = "GPS 수집 꺼짐 (설정에서 켜기)"
+            currentLocation = ""
             return
         }
 
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
-        fusedLocationClient.lastLocation.addOnSuccessListener { lastLoc ->
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            binding.tvGpsLocation.text = "위치 권한 없음"
+            return
+        }
+        binding.tvGpsLocation.text = "위치를 가져오는 중..."
+        val fusedClient = LocationServices.getFusedLocationProviderClient(this)
+        fusedClient.lastLocation.addOnSuccessListener { lastLoc ->
             if (lastLoc != null) {
-                if (isMockLocation(lastLoc)) {
-                    Toast.makeText(this, "가짜 위치(Fake GPS) 앱 사용이 감지되었습니다.", Toast.LENGTH_LONG).show()
-                    currentLocation = "위치 조작 감지됨"
-                } else {
-                    convertLocationToAddress(lastLoc.latitude, lastLoc.longitude)
-                }
+                if (isMockLocation(lastLoc)) { setGpsLocation("위치 조작 감지됨"); Toast.makeText(this, "가짜 위치(Fake GPS) 앱 사용이 감지되었습니다.", Toast.LENGTH_LONG).show() }
+                else convertLocationToAddress(lastLoc.latitude, lastLoc.longitude)
             } else {
-                fusedLocationClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
-                    .addOnSuccessListener { currentLoc ->
-                        if (currentLoc != null) {
-                            if (isMockLocation(currentLoc)) {
-                                Toast.makeText(this, "가짜 위치(Fake GPS) 앱 사용이 감지되었습니다.", Toast.LENGTH_LONG).show()
-                                currentLocation = "위치 조작 감지됨"
-                            } else {
-                                convertLocationToAddress(currentLoc.latitude, currentLoc.longitude)
-                            }
-                        } else {
-                            Toast.makeText(this, "GPS 신호가 약해 주소를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    .addOnFailureListener { }
+                fusedClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
+                    .addOnSuccessListener { loc ->
+                        if (loc != null) {
+                            if (isMockLocation(loc)) setGpsLocation("위치 조작 감지됨")
+                            else convertLocationToAddress(loc.latitude, loc.longitude)
+                        } else setGpsLocation("GPS 신호 없음")
+                    }.addOnFailureListener { setGpsLocation("GPS 오류") }
             }
-        }.addOnFailureListener { }
+        }.addOnFailureListener { setGpsLocation("GPS 오류") }
+    }
+
+    private fun setGpsLocation(loc: String) {
+        currentLocation = loc
+        binding.tvGpsLocation.text = loc
+        updatePreview()
     }
 
     private fun convertLocationToAddress(lat: Double, lng: Double) {
@@ -653,23 +546,19 @@ class SubActivity : AppCompatActivity() {
                 geocoder.getFromLocation(lat, lng, 1, object : Geocoder.GeocodeListener {
                     override fun onGeocode(addresses: MutableList<android.location.Address>) {
                         if (addresses.isNotEmpty()) {
-                            val cleanAddress = addresses[0].getAddressLine(0).replace("대한민국 ", "")
-                            runOnUiThread { currentLocation = cleanAddress; updatePreview() }
+                            val clean = addresses[0].getAddressLine(0).replace("대한민국 ", "")
+                            runOnUiThread { setGpsLocation(clean) }
                         }
                     }
-                    override fun onError(errorMessage: String?) { }
+                    override fun onError(errorMessage: String?) { runOnUiThread { setGpsLocation("주소 변환 실패") } }
                 })
             } else {
                 val addresses = geocoder.getFromLocation(lat, lng, 1)
                 if (!addresses.isNullOrEmpty()) {
-                    val cleanAddress = addresses[0].getAddressLine(0).replace("대한민국 ", "")
-                    currentLocation = cleanAddress
-                    updatePreview()
+                    setGpsLocation(addresses[0].getAddressLine(0).replace("대한민국 ", ""))
                 }
             }
-        } catch (e: Exception) {
-            Log.e("SubActivity", "주소 변환 실패", e)
-        }
+        } catch (e: Exception) { Log.e("SubActivity", "주소 변환 실패", e) }
     }
 
     private fun saveBitmapToGallery(bitmap: Bitmap, titleText: String): Uri? {
@@ -677,101 +566,49 @@ class SubActivity : AppCompatActivity() {
         val contentValues = ContentValues().apply {
             put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/SITEBOARD")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/SITEBOARD")
         }
         val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
         uri?.let { contentResolver.openOutputStream(it)?.use { out -> bitmap.compress(Bitmap.CompressFormat.JPEG, 95, out) } }
         return uri
     }
 
-    private fun isMockLocation(location: android.location.Location): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            location.isMock
-        } else {
-            location.isFromMockProvider
-        }
-    }
-
-    // =============================================================================================
-    // 🛡️ [ML Kit 개인정보 보호] 핵심 이미지 처리 함수들
-    // =============================================================================================
+    private fun isMockLocation(location: android.location.Location): Boolean =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) location.isMock else location.isFromMockProvider
 
     private suspend fun detectAndBlurPrivacy(originalBitmap: Bitmap): Bitmap = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
         val blurredBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(blurredBitmap)
         val imageForMlKit = InputImage.fromBitmap(originalBitmap, 0)
-
-        val faceOptions = FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-            .build()
-        val faceDetector = FaceDetection.getClient(faceOptions)
-
+        val faceDetector = FaceDetection.getClient(FaceDetectorOptions.Builder().setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST).build())
         val textRecognizer = TextRecognition.getClient(com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions.Builder().build())
-
         try {
-            // 💡 await() 함수를 사용해 비동기 작업을 코루틴에서 기다립니다.
             val faces = faceDetector.process(imageForMlKit).await()
             val textResult = textRecognizer.process(imageForMlKit).await()
-
-            // 얼굴 블러
-            for (face in faces) {
-                blurBitmapArea(blurredBitmap, canvas, face.boundingBox)
-            }
-
-            // 번호판 블러
-            for (block in textResult.textBlocks) {
-                for (line in block.lines) {
-                    val text = line.text.replace(" ", "")
-                    val platePattern = "^(\\d{2,3}[가-힣]\\d{4})|([가-힣]{2}\\d{2}[가-힣]\\d{4})$".toRegex()
-
-                    if (text.matches(platePattern) || text.length in 7..9) {
-                        blurBitmapArea(blurredBitmap, canvas, line.boundingBox)
-                    }
-                }
+            for (face in faces) blurBitmapArea(blurredBitmap, canvas, face.boundingBox)
+            for (block in textResult.textBlocks) for (line in block.lines) {
+                val text = line.text.replace(" ", "")
+                val platePattern = "^(\\d{2,3}[가-힣]\\d{4})|([가-힣]{2}\\d{2}[가-힣]\\d{4})$".toRegex()
+                if (text.matches(platePattern) || text.length in 7..9) blurBitmapArea(blurredBitmap, canvas, line.boundingBox)
             }
         } catch (e: Exception) {
             Log.e("SubActivity", "개인정보 감지 실패: ${e.message}")
             return@withContext originalBitmap
-        } finally {
-            faceDetector.close()
-            textRecognizer.close()
-        }
-
-        return@withContext blurredBitmap
+        } finally { faceDetector.close(); textRecognizer.close() }
+        blurredBitmap
     }
 
-    /**
-     * 옵션 1: 형체를 알아볼 수 없도록 아주 강한 거대 모자이크(픽셀화) 처리
-     */
     private fun blurBitmapArea(bitmap: Bitmap, canvas: Canvas, bounds: Rect?) {
         if (bounds == null) return
-
-        val safeLeft = Math.max(0, bounds.left)
-        val safeTop = Math.max(0, bounds.top)
-        val safeWidth = Math.min(bounds.width(), bitmap.width - safeLeft)
-        val safeHeight = Math.min(bounds.height(), bitmap.height - safeTop)
-
-        if (safeWidth <= 0 || safeHeight <= 0) return
-
-        val croppedBitmap = Bitmap.createBitmap(bitmap, safeLeft, safeTop, safeWidth, safeHeight)
-
-        // 🚀 1. 흐림 강도를 50으로 대폭 상향 (입자 크기가 엄청나게 커짐)
-        val blurScale = 50
-        val scaledWidth = Math.max(1, safeWidth / blurScale)
-        val scaledHeight = Math.max(1, safeHeight / blurScale)
-
-        // 이미지를 50분의 1로 아주 작게 축소
-        val smallBitmap = Bitmap.createScaledBitmap(croppedBitmap, scaledWidth, scaledHeight, false)
-
-        // 🚀 2. [핵심] 다시 키울 때 마지막 파라미터를 'false'로 변경!
-        // true: 부드럽게 뭉개짐 (수채화 느낌)
-        // false: 픽셀이 그대로 커짐 (거대한 네모 모자이크 블록 느낌)
-        val finalBlurredChunk = Bitmap.createScaledBitmap(smallBitmap, safeWidth, safeHeight, false)
-
-        canvas.drawBitmap(finalBlurredChunk, safeLeft.toFloat(), safeTop.toFloat(), null)
-
-        croppedBitmap.recycle()
-        smallBitmap.recycle()
-        finalBlurredChunk.recycle()
+        val sl = maxOf(0, bounds.left); val st = maxOf(0, bounds.top)
+        val sw = minOf(bounds.width(), bitmap.width - sl); val sh = minOf(bounds.height(), bitmap.height - st)
+        if (sw <= 0 || sh <= 0) return
+        val cropped = Bitmap.createBitmap(bitmap, sl, st, sw, sh)
+        val scale = 50
+        val small = Bitmap.createScaledBitmap(cropped, maxOf(1, sw / scale), maxOf(1, sh / scale), false)
+        val final_ = Bitmap.createScaledBitmap(small, sw, sh, false)
+        canvas.drawBitmap(final_, sl.toFloat(), st.toFloat(), null)
+        cropped.recycle(); small.recycle(); final_.recycle()
     }
 }

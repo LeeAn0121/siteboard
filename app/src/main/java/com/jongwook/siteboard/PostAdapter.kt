@@ -54,6 +54,9 @@ class PostAdapter(
                         putExtra("loc", post.location)
                         putExtra("imageUri", post.imageUri)
                         putExtra("date", post.date)
+                        putExtra("detailLoc", post.detailLocation)
+                        putExtra("memo", post.memo)
+                        putExtra("originalFileName", post.originalFileName)
                     }
                     context.startActivity(intent)
                 }
