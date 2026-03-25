@@ -114,6 +114,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        // 앱이 백그라운드로 이동할 때마다 자동 백업
+        lifecycleScope.launch(Dispatchers.IO) {
+            AppDatabase.backup(this@MainActivity)
+        }
+    }
+
     // 프래그먼트를 교체하는 공통 함수
     private fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()

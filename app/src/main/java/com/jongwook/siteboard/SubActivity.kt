@@ -115,11 +115,15 @@ class SubActivity : AppCompatActivity() {
             currentLocation = intent.getStringExtra("edit_loc") ?: ""
             Toast.makeText(this, "내용을 수정한 후 사진을 다시 촬영/선택하면 워터마크가 변경됩니다.", Toast.LENGTH_LONG).show()
         } else {
-            // 마지막으로 입력한 현장명 불러오기
+            // 마지막으로 입력한 현장명/작업내용 불러오기
             val siteboardPrefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
             val savedSiteName = siteboardPrefs.getString("last_site_name", "")
             if (!savedSiteName.isNullOrEmpty()) {
                 binding.etTitle.setText(savedSiteName)
+            }
+            val savedWorkContent = siteboardPrefs.getString("last_work_content", "")
+            if (!savedWorkContent.isNullOrEmpty()) {
+                binding.etDesc.setText(savedWorkContent)
             }
         }
 
@@ -455,9 +459,9 @@ class SubActivity : AppCompatActivity() {
 
                 if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
 
-                // 마지막으로 입력한 현장명 저장 (초기화 없이 유지)
+                // 마지막으로 입력한 현장명/작업내용 저장 (초기화 없이 유지)
                 getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-                    .edit().putString("last_site_name", title).apply()
+                    .edit().putString("last_site_name", title).putString("last_work_content", desc).apply()
 
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
