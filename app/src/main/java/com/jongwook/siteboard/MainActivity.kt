@@ -60,6 +60,13 @@ class MainActivity : AppCompatActivity() {
 
     // 🔥 [미션 1] 실제 앨범에 사진이 없는 DB 데이터만 안전하게 삭제
     private suspend fun syncDatabaseWithGallery() {
+        // 재설치/데이터삭제 후 DB 복원 직후에는 MediaStore 스캔이 완료되지 않았을 수 있으므로 건너뜀
+        val prefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("db_just_restored", false)) {
+            prefs.edit().putBoolean("db_just_restored", false).apply()
+            return
+        }
+
         try {
             val allPosts = db.postDao().getAllPosts().first()
             val ghostPosts = mutableListOf<PostEntity>()

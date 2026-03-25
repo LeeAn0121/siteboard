@@ -143,17 +143,6 @@ class SubActivity : AppCompatActivity() {
 
         updatePreview()
 
-        // 입력 변경 시 미리보기 실시간 갱신
-        val watcher = object : android.text.TextWatcher {
-            override fun afterTextChanged(s: android.text.Editable?) = updatePreview()
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-        }
-        binding.etTitle.addTextChangedListener(watcher)
-        binding.etDesc.addTextChangedListener(watcher)
-        binding.etDetailLocation.addTextChangedListener(watcher)
-        binding.etMemo.addTextChangedListener(watcher)
-
         binding.cardPreview.setOnClickListener {
             previewImagePickerLauncher.launch(arrayOf("image/*"))
         }
@@ -180,7 +169,17 @@ class SubActivity : AppCompatActivity() {
             if (validateInputs()) pickMultipleImagesLauncher.launch(arrayOf("image/*"))
         }
 
+        applyGpsSetting()
         fetchCurrentLocationAndAddress()
+    }
+
+    private fun applyGpsSetting() {
+        val gpsEnabled = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+            .getBoolean("gps_enabled", true)
+        binding.layoutGpsSection.visibility = if (gpsEnabled) View.VISIBLE else View.GONE
+        if (!gpsEnabled) {
+            currentLocation = ""
+        }
     }
 
     override fun onResume() {
@@ -189,64 +188,14 @@ class SubActivity : AppCompatActivity() {
     }
 
     private fun updatePreview() {
-        val title     = binding.etTitle.text.toString().trim().let { if (it.isEmpty()) "현장명" else it }
-        val gpsLoc    = currentLocation.let { if (it.isEmpty()) "현재 위치" else it }
-        val desc      = binding.etDesc.text.toString().trim()
-        val detailLoc = binding.etDetailLocation.text.toString().trim()
-        val memo      = binding.etMemo.text.toString().trim()
-
-        val width = 1000; val height = 800
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
-
-        if (previewBitmap != null) {
-            val scaled = scaleBitmapCenterCrop(previewBitmap!!, width, height)
-            canvas.drawBitmap(scaled, 0f, 0f, null)
-            if (scaled != previewBitmap) scaled.recycle()
-        } else {
-            canvas.drawColor(Color.parseColor("#252529"))
-        }
-
-        val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
-        val isTop     = prefs.getBoolean("wm_is_top", false)
-        val isLeft    = prefs.getBoolean("wm_is_left", true)
-        val marginX   = prefs.getInt("wm_margin_x", 50)
-        val marginY   = prefs.getInt("wm_margin_y", 50)
-        val fontSize  = prefs.getFloat("wm_font_size", 40f)
-        val useBgBox  = prefs.getBoolean("wm_use_bg", true)
-        val textColor = prefs.getInt("wm_color", Color.YELLOW)
-        val fontType  = prefs.getString("wm_font", "DEFAULT") ?: "DEFAULT"
-
-        val typeface = resolveTypeface(fontType)
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = textColor; textSize = fontSize; this.typeface = typeface
-            setShadowLayer(3f, 2f, 2f, Color.BLACK)
-        }
-
-        val lines = mutableListOf("제목 : $title", "위치(GPS) : $gpsLoc")
-        if (detailLoc.isNotEmpty()) lines.add("상세위치 : $detailLoc")
-        if (desc.isNotEmpty()) lines.add("작업내용 : $desc")
-        if (memo.isNotEmpty()) lines.add("메모 : $memo")
-        lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
-
-        val fm = textPaint.fontMetrics
-        val lineH = fm.descent - fm.ascent
-        val spacing = fontSize * 0.5f
-        val totalH = lines.size * lineH + (lines.size - 1) * spacing
-        val maxW = lines.maxOf { textPaint.measureText(it) }
-        val startX = if (isLeft) marginX.toFloat() else width - marginX.toFloat() - maxW
-        val startY = if (isTop) marginY.toFloat() else height - marginY.toFloat() - totalH
-        val padding = fontSize * 0.4f
-
-        if (useBgBox) {
-            val bgPaint = Paint().apply { color = Color.parseColor("#66000000") }
-            canvas.drawRoundRect(RectF(startX - padding, startY - padding, startX + maxW + padding, startY + totalH + padding), 8f, 8f, bgPaint)
-        }
-        var drawY = startY - fm.ascent
-        for (line in lines) { canvas.drawText(line, startX, drawY, textPaint); drawY += lineH + spacing }
-
         binding.ivPreview.imageTintList = null
-        binding.ivPreview.setImageBitmap(bitmap)
+        if (previewBitmap != null) {
+            binding.ivPreview.setImageBitmap(previewBitmap)
+            binding.tvPreviewHint.visibility = View.GONE
+        } else {
+            binding.ivPreview.setImageDrawable(null)
+            binding.tvPreviewHint.visibility = View.VISIBLE
+        }
     }
 
     private fun resolveTypeface(fontType: String): Typeface = when (fontType) {
@@ -362,6 +311,9 @@ class SubActivity : AppCompatActivity() {
                     .putString("last_work_content", desc)
                     .putString("last_detail_loc", detailLoc)
                     .apply()
+
+                // 저장 직후 즉시 백업 (강제종료 대비)
+                AppDatabase.backup(this@SubActivity)
 
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE

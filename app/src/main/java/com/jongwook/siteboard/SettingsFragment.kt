@@ -36,40 +36,43 @@ class SettingsFragment : Fragment() {
     private var selectedTheme = 0
     private lateinit var themePreviewViews: List<ImageView>
 
-    private val exportDbLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/octet-stream")
+    private var adminTapCount = 0
+    private var adminTapLastTime = 0L
+
+    private val exportZipLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
         if (uri == null) return@registerForActivityResult
         lifecycleScope.launch(Dispatchers.IO) {
-            val success = AppDatabase.exportToUri(requireContext(), uri)
+            val success = AppDatabase.exportToZip(requireContext(), uri)
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(),
-                    if (success) "DB 파일이 저장되었습니다." else "DB 내보내기 실패.",
+                    if (success) "백업 ZIP이 저장되었습니다." else "백업 내보내기 실패.",
                     Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private val importDbLauncher = registerForActivityResult(
+    private val importZipLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri == null) return@registerForActivityResult
         AlertDialog.Builder(requireContext())
-            .setTitle("DB 불러오기")
-            .setMessage("기존 모든 데이터가 선택한 파일로 대체됩니다.\n계속하시겠습니까?")
+            .setTitle("백업 불러오기")
+            .setMessage("기존 모든 데이터와 사진이 백업 파일로 대체됩니다.\n계속하시겠습니까?")
             .setPositiveButton("불러오기") { _, _ ->
                 lifecycleScope.launch(Dispatchers.IO) {
-                    val success = AppDatabase.importFromUri(requireContext(), uri)
+                    val success = AppDatabase.importFromZip(requireContext(), uri)
                     withContext(Dispatchers.Main) {
                         if (success) {
-                            Toast.makeText(requireContext(), "DB를 불러왔습니다. 앱을 재시작합니다.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(requireContext(), "백업을 복원했습니다. 앱을 재시작합니다.", Toast.LENGTH_LONG).show()
                             val intent = requireContext().packageManager
                                 .getLaunchIntentForPackage(requireContext().packageName)
                             intent?.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                             startActivity(intent)
                             requireActivity().finish()
                         } else {
-                            Toast.makeText(requireContext(), "DB 불러오기 실패. 올바른 파일인지 확인하세요.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), "불러오기 실패. 올바른 백업 파일(.zip)인지 확인하세요.", Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -79,14 +82,14 @@ class SettingsFragment : Fragment() {
     }
 
     private val cloudExportLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/octet-stream")
+        ActivityResultContracts.CreateDocument("application/zip")
     ) { uri ->
         if (uri == null) return@registerForActivityResult
         lifecycleScope.launch(Dispatchers.IO) {
-            val success = AppDatabase.exportToUri(requireContext(), uri)
+            val success = AppDatabase.exportToZip(requireContext(), uri)
             withContext(Dispatchers.Main) {
                 Toast.makeText(requireContext(),
-                    if (success) "클라우드에 DB가 저장되었습니다." else "클라우드 저장 실패.",
+                    if (success) "클라우드에 백업이 저장되었습니다." else "클라우드 저장 실패.",
                     Toast.LENGTH_SHORT).show()
             }
         }
@@ -144,28 +147,44 @@ class SettingsFragment : Fragment() {
         // ─── CSV 내보내기 ─────────────────────────────────────────────
         binding.btnExportCsv.setOnClickListener { exportDataToCsv() }
 
-        // ─── DB 내보내기/불러오기 ──────────────────────────────────────
-        binding.btnExportDb.setOnClickListener {
-            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            exportDbLauncher.launch("Siteboard_DB_$timeStamp.db")
+        // ─── 관리자 히든 메뉴 (버전 텍스트 5회 탭) ────────────────────
+        binding.tvAppVersion.setOnClickListener {
+            val now = System.currentTimeMillis()
+            if (now - adminTapLastTime > 2000) adminTapCount = 0
+            adminTapLastTime = now
+            adminTapCount++
+            when (adminTapCount) {
+                3 -> Toast.makeText(requireContext(), "관리자 메뉴까지 2번 더...", Toast.LENGTH_SHORT).show()
+                4 -> Toast.makeText(requireContext(), "관리자 메뉴까지 1번 더...", Toast.LENGTH_SHORT).show()
+                5 -> {
+                    adminTapCount = 0
+                    showAdminMenu()
+                }
+            }
         }
+    }
 
-        binding.btnImportDb.setOnClickListener {
-            importDbLauncher.launch(arrayOf("application/octet-stream", "*/*"))
-        }
-
-        // ─── 클라우드 동기화 ───────────────────────────────────────────
-        binding.btnCloudGoogleDrive.setOnClickListener {
-            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            Toast.makeText(requireContext(), "저장 위치에서 Google Drive를 선택하세요.", Toast.LENGTH_SHORT).show()
-            cloudExportLauncher.launch("Siteboard_DB_$timeStamp.db")
-        }
-
-        binding.btnCloudOneDrive.setOnClickListener {
-            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            Toast.makeText(requireContext(), "저장 위치에서 OneDrive를 선택하세요.", Toast.LENGTH_SHORT).show()
-            cloudExportLauncher.launch("Siteboard_DB_$timeStamp.db")
-        }
+    private fun showAdminMenu() {
+        val items = arrayOf("📦  백업 내보내기 (.zip)", "📥  백업 불러오기 (.zip)", "☁  Google Drive로 백업", "☁  OneDrive로 백업")
+        AlertDialog.Builder(requireContext())
+            .setTitle("🔒 관리자 메뉴")
+            .setItems(items) { _, which ->
+                val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                when (which) {
+                    0 -> exportZipLauncher.launch("Siteboard_Backup_$timeStamp.zip")
+                    1 -> importZipLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
+                    2 -> {
+                        Toast.makeText(requireContext(), "저장 위치에서 Google Drive를 선택하세요.", Toast.LENGTH_SHORT).show()
+                        cloudExportLauncher.launch("Siteboard_Backup_$timeStamp.zip")
+                    }
+                    3 -> {
+                        Toast.makeText(requireContext(), "저장 위치에서 OneDrive를 선택하세요.", Toast.LENGTH_SHORT).show()
+                        cloudExportLauncher.launch("Siteboard_Backup_$timeStamp.zip")
+                    }
+                }
+            }
+            .setNegativeButton("닫기", null)
+            .show()
     }
 
     // ─── 워터마크 테마 선택 로직 ──────────────────────────────────────────

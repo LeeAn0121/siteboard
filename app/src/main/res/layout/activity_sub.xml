@@ -132,6 +132,7 @@
 
             <!-- GPS 위치 표시 (자동, 읽기 전용) -->
             <LinearLayout
+                android:id="@+id/layoutGpsSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"

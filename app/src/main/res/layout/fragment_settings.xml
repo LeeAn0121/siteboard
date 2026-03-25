@@ -197,76 +197,6 @@
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
             </LinearLayout>
 
-            <!-- DB 내보내기 -->
-            <LinearLayout
-                android:id="@+id/btnExportDb"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="16dp"
-                android:background="#1E2023"
-                android:clickable="true"
-                android:focusable="true"
-                android:layout_marginTop="2dp">
-
-                <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:background="#1A2196F3">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="💾" android:textSize="18sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DB 파일 내보내기 (.db)" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="설정·기록 전체를 .db 파일로 저장 (Google Drive·OneDrive 등 가능)" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
-                </LinearLayout>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
-            </LinearLayout>
-
-            <!-- DB 불러오기 -->
-            <LinearLayout
-                android:id="@+id/btnImportDb"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="16dp"
-                android:background="#1E2023"
-                android:clickable="true"
-                android:focusable="true"
-                android:layout_marginTop="2dp">
-
-                <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:background="#1AFF9800">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📥" android:textSize="18sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="DB 파일 불러오기 (.db)" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="기존 저장된 .db 파일로 복원합니다 (기존 데이터 대체)" android:textColor="#E05567" android:textSize="12sp" android:layout_marginTop="2dp" />
-                </LinearLayout>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
-            </LinearLayout>
-
             <!-- 섹션: 보고서 -->
             <TextView
                 android:layout_width="wrap_content"
@@ -400,105 +330,18 @@
                     app:trackTint="#FF6F00" />
             </LinearLayout>
 
-            <!-- 섹션: 클라우드 동기화 -->
+            <!-- 앱 버전 (5회 탭 시 관리자 메뉴 진입) -->
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="CLOUD SYNC"
-                android:textColor="#A0A0A5"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.12"
-                android:layout_marginTop="28dp"
-                android:layout_marginBottom="6dp"
-                android:layout_marginStart="4dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="기기에 Google Drive / OneDrive 앱이 설치되어 로그인되어 있으면, DB 내보내기/불러오기 시 클라우드 저장소를 선택할 수 있습니다."
-                android:textColor="#606065"
-                android:textSize="12sp"
-                android:layout_marginBottom="12dp"
-                android:lineSpacingExtra="3dp" />
-
-            <!-- Google Drive 연동 -->
-            <LinearLayout
-                android:id="@+id/btnCloudGoogleDrive"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="14dp"
-                android:background="#1E2023"
-                android:clickable="true"
-                android:focusable="true">
-
-                <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:background="#1A4285F4">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="☁" android:textSize="20sp" android:textColor="#4285F4" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Google Drive로 저장" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Google Drive 앱 로그인 필요" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
-                </LinearLayout>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
-            </LinearLayout>
-
-            <!-- OneDrive 연동 -->
-            <LinearLayout
-                android:id="@+id/btnCloudOneDrive"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="14dp"
-                android:background="#1E2023"
-                android:clickable="true"
-                android:focusable="true"
-                android:layout_marginTop="2dp">
-
-                <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:background="#1A0078D4">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="☁" android:textSize="20sp" android:textColor="#0078D4" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="OneDrive로 저장" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Microsoft OneDrive 앱 로그인 필요" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
-                </LinearLayout>
-
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
-            </LinearLayout>
-
-            <!-- 앱 버전 -->
-            <TextView
+                android:id="@+id/tvAppVersion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="SITEBOARD  v2.0"
                 android:textColor="#404045"
                 android:textSize="12sp"
                 android:gravity="center"
+                android:paddingVertical="16dp"
+                android:clickable="true"
+                android:focusable="true"
                 android:layout_marginTop="40dp" />
 
         </LinearLayout>

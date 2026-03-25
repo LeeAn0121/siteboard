@@ -7,6 +7,7 @@ import android.provider.MediaStore
 import androidx.annotation.RequiresApi
 import androidx.room.*
 import androidx.room.migration.Migration
+import kotlinx.coroutines.flow.first
 
 @Entity(tableName = "site_posts")
 data class PostEntity(
@@ -187,11 +188,16 @@ abstract class AppDatabase : RoomDatabase() {
                         catch (e: Exception) { e.printStackTrace() }
                     }
                 }
+
+                // 복원 직후임을 표시 → syncDatabaseWithGallery() 건너뜀
+                if (restored) {
+                    ctx.getSharedPreferences("SiteboardPrefs", android.content.Context.MODE_PRIVATE)
+                        .edit().putBoolean("db_just_restored", true).apply()
+                }
             }
 
             return Room.databaseBuilder(ctx, AppDatabase::class.java, primary.absolutePath)
                 .addMigrations(MIGRATION_1_2)
-                .fallbackToDestructiveMigration()
                 .build()
         }
 
@@ -221,28 +227,149 @@ abstract class AppDatabase : RoomDatabase() {
             } catch (e: Exception) { e.printStackTrace() }
         }
 
-        // DB를 사용자 지정 URI로 내보내기 (SAF — Google Drive·OneDrive 지원)
-        fun exportToUri(context: android.content.Context, targetUri: android.net.Uri): Boolean {
+        // ─── ZIP 내보내기 (DB + 사진 전체) ────────────────────────────────
+        suspend fun exportToZip(context: android.content.Context, targetUri: android.net.Uri): Boolean {
             return try {
-                val primary = primaryDbFile(context.applicationContext)
+                val ctx = context.applicationContext
+                val primary = primaryDbFile(ctx)
                 if (!primary.exists()) return false
+
+                val db = getDatabase(ctx)
                 walCheckpoint()
-                context.contentResolver.openOutputStream(targetUri)?.use { out ->
-                    primary.inputStream().use { input -> input.copyTo(out) }
+                val posts = db.postDao().getAllPosts().first()
+
+                val tmpZip = java.io.File(ctx.cacheDir, "siteboard_export_tmp.zip")
+                java.util.zip.ZipOutputStream(java.io.BufferedOutputStream(tmpZip.outputStream())).use { zip ->
+                    // 1. DB 파일
+                    zip.putNextEntry(java.util.zip.ZipEntry("siteboard.db"))
+                    primary.inputStream().use { it.copyTo(zip) }
+                    zip.closeEntry()
+
+                    // 2. 사진 파일 (워터마크본 + 원본)
+                    for (post in posts) {
+                        try {
+                            ctx.contentResolver.openInputStream(android.net.Uri.parse(post.imageUri))?.use { input ->
+                                zip.putNextEntry(java.util.zip.ZipEntry("photos/${post.id}_w.jpg"))
+                                input.copyTo(zip)
+                                zip.closeEntry()
+                            }
+                        } catch (e: Exception) { e.printStackTrace() }
+
+                        if (!post.originalUri.isNullOrEmpty()) {
+                            try {
+                                ctx.contentResolver.openInputStream(android.net.Uri.parse(post.originalUri))?.use { input ->
+                                    zip.putNextEntry(java.util.zip.ZipEntry("photos/${post.id}_o.jpg"))
+                                    input.copyTo(zip)
+                                    zip.closeEntry()
+                                }
+                            } catch (e: Exception) { e.printStackTrace() }
+                        }
+                    }
                 }
+
+                ctx.contentResolver.openOutputStream(targetUri)?.use { out ->
+                    tmpZip.inputStream().use { it.copyTo(out) }
+                }
+                tmpZip.delete()
                 true
             } catch (e: Exception) { e.printStackTrace(); false }
         }
 
-        // 사용자 지정 DB 파일을 불러와 현재 DB 교체 (SAF)
-        fun importFromUri(context: android.content.Context, sourceUri: android.net.Uri): Boolean {
+        // ─── ZIP 불러오기 (DB + 사진 전체 복원) ──────────────────────────
+        fun importFromZip(context: android.content.Context, sourceUri: android.net.Uri): Boolean {
             return try {
-                val primary = primaryDbFile(context.applicationContext)
+                val ctx = context.applicationContext
+                val tmpDir = java.io.File(ctx.cacheDir, "siteboard_import_tmp")
+                if (tmpDir.exists()) tmpDir.deleteRecursively()
+                tmpDir.mkdirs()
+
+                // 1. ZIP 압축 해제
+                ctx.contentResolver.openInputStream(sourceUri)?.use { input ->
+                    java.util.zip.ZipInputStream(java.io.BufferedInputStream(input)).use { zip ->
+                        var entry = zip.nextEntry
+                        while (entry != null) {
+                            if (!entry.isDirectory) {
+                                val outFile = java.io.File(tmpDir, entry.name)
+                                outFile.parentFile?.mkdirs()
+                                outFile.outputStream().buffered().use { out -> zip.copyTo(out) }
+                            }
+                            zip.closeEntry()
+                            entry = zip.nextEntry
+                        }
+                    }
+                }
+
+                val extractedDb = java.io.File(tmpDir, "siteboard.db")
+                if (!extractedDb.exists()) { tmpDir.deleteRecursively(); return false }
+
+                // 2. 사진을 갤러리에 재저장하고 새 URI 수집
+                val photosDir = java.io.File(tmpDir, "photos")
+                val uriMap = mutableMapOf<String, String>() // "42_w" → new content:// URI
+                if (photosDir.exists()) {
+                    for (photoFile in (photosDir.listFiles() ?: emptyArray()).sortedBy { it.name }) {
+                        try {
+                            val baseName = photoFile.nameWithoutExtension
+                            val lastUnder = baseName.lastIndexOf('_')
+                            if (lastUnder < 0) continue
+                            val type = baseName.substring(lastUnder + 1)
+                            val relativePath = if (type == "o") "Pictures/SITEBOARD_ORIGINALS" else "Pictures/SITEBOARD"
+
+                            val cv = ContentValues().apply {
+                                put(MediaStore.MediaColumns.DISPLAY_NAME, photoFile.name)
+                                put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                                    put(MediaStore.MediaColumns.RELATIVE_PATH, relativePath)
+                            }
+                            val newUri = ctx.contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, cv)
+                            if (newUri != null) {
+                                ctx.contentResolver.openOutputStream(newUri)?.use { out ->
+                                    photoFile.inputStream().use { it.copyTo(out) }
+                                }
+                                uriMap[baseName] = newUri.toString()
+                            }
+                        } catch (e: Exception) { e.printStackTrace() }
+                    }
+                }
+
+                // 3. 추출된 DB의 URI를 새 URI로 교체 (직접 SQLite)
+                val sqliteDb = android.database.sqlite.SQLiteDatabase.openDatabase(
+                    extractedDb.absolutePath, null,
+                    android.database.sqlite.SQLiteDatabase.OPEN_READWRITE
+                )
+                try {
+                    val cursor = sqliteDb.rawQuery("SELECT id FROM site_posts", null)
+                    cursor.use { c ->
+                        while (c.moveToNext()) {
+                            val id = c.getInt(0)
+                            val newImage = uriMap["${id}_w"] ?: ""
+                            sqliteDb.execSQL(
+                                "UPDATE site_posts SET imageUri = ? WHERE id = ?",
+                                arrayOf(newImage, id)
+                            )
+                            if (uriMap.containsKey("${id}_o")) {
+                                sqliteDb.execSQL(
+                                    "UPDATE site_posts SET originalUri = ? WHERE id = ?",
+                                    arrayOf(uriMap["${id}_o"], id)
+                                )
+                            } else {
+                                sqliteDb.execSQL(
+                                    "UPDATE site_posts SET originalUri = NULL WHERE id = ?",
+                                    arrayOf(id)
+                                )
+                            }
+                        }
+                    }
+                } finally { sqliteDb.close() }
+
+                // 4. Room DB 교체
                 INSTANCE?.close()
                 INSTANCE = null
-                context.contentResolver.openInputStream(sourceUri)?.use { input ->
-                    primary.outputStream().use { out -> input.copyTo(out) }
-                }
+                extractedDb.copyTo(primaryDbFile(ctx), overwrite = true)
+
+                ctx.getSharedPreferences("SiteboardPrefs", android.content.Context.MODE_PRIVATE)
+                    .edit().putBoolean("db_just_restored", true).apply()
+
+                tmpDir.deleteRecursively()
                 true
             } catch (e: Exception) { e.printStackTrace(); false }
         }

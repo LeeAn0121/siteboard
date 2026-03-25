@@ -40,6 +40,11 @@ class HomeFragment : Fragment() {
             v.updatePadding(top = statusBars.top + (20 * resources.displayMetrics.density).toInt())
             insets
         }
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutSelectionMode) { v, insets ->
+            val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = statusBars.top + (20 * resources.displayMetrics.density).toInt())
+            insets
+        }
 
         db = AppDatabase.getDatabase(requireContext())
 
@@ -88,18 +93,23 @@ class HomeFragment : Fragment() {
                 .setMessage("선택한 ${postsToDelete.size}개의 기록과 원본 사진을 완전히 삭제하시겠습니까?")
                 .setPositiveButton("삭제") { _, _ ->
                     viewLifecycleOwner.lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                        try {
-                            for (post in postsToDelete) {
-                                if (post.imageUri.isNotEmpty()) {
+                        // 이미지 삭제 (실패해도 DB 삭제는 반드시 진행)
+                        for (post in postsToDelete) {
+                            if (post.imageUri.isNotEmpty()) {
+                                try {
                                     requireContext().contentResolver.delete(android.net.Uri.parse(post.imageUri), null, null)
-                                }
+                                } catch (e: Exception) { e.printStackTrace() }
                             }
+                        }
+                        // DB 삭제
+                        try {
                             db.postDao().deleteList(postsToDelete)
-                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                postAdapter.exitSelectionMode()
-                                android.widget.Toast.makeText(requireContext(), "${postsToDelete.size}개가 삭제되었습니다.", android.widget.Toast.LENGTH_SHORT).show()
-                            }
                         } catch (e: Exception) { e.printStackTrace() }
+
+                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                            postAdapter.exitSelectionMode()
+                            android.widget.Toast.makeText(requireContext(), "${postsToDelete.size}개가 삭제되었습니다.", android.widget.Toast.LENGTH_SHORT).show()
+                        }
                     }
                 }
                 .setNegativeButton("취소", null)
