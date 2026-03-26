@@ -63,7 +63,129 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun postDao(): PostDao
     companion object {
         private const val BACKUP_FILE_NAME = "siteboard_backup.db"
+        private const val SETTINGS_FILE_NAME = "siteboard_settings.json"
         private const val BACKUP_RELATIVE_PATH = "Download/SITEBOARD/"
+
+        // ─── 설정 직렬화 ──────────────────────────────────────────────────
+        private val PREF_NAMES = listOf("SiteboardPrefs", "WatermarkPrefs")
+
+        private fun exportSettingsJson(context: android.content.Context): String {
+            val root = org.json.JSONObject()
+            for (prefName in PREF_NAMES) {
+                val prefs = context.getSharedPreferences(prefName, android.content.Context.MODE_PRIVATE)
+                val obj = org.json.JSONObject()
+                for ((key, value) in prefs.all) {
+                    when (value) {
+                        is Boolean -> obj.put(key, value)
+                        is Int     -> obj.put(key, value)
+                        is Float   -> obj.put(key, value.toDouble())
+                        is Long    -> obj.put(key, value)
+                        is String  -> obj.put(key, value)
+                    }
+                }
+                root.put(prefName, obj)
+            }
+            return root.toString(2)
+        }
+
+        private fun importSettingsJson(context: android.content.Context, json: String) {
+            val root = org.json.JSONObject(json)
+            for (prefName in PREF_NAMES) {
+                if (!root.has(prefName)) continue
+                val obj = root.getJSONObject(prefName)
+                val editor = context.getSharedPreferences(prefName, android.content.Context.MODE_PRIVATE).edit()
+                for (key in obj.keys()) {
+                    // db_just_restored 는 설정 복원 시 덮어쓰지 않음
+                    if (key == "db_just_restored") continue
+                    when (val value = obj.get(key)) {
+                        is Boolean -> editor.putBoolean(key, value)
+                        is Int     -> editor.putInt(key, value)
+                        is Double  -> editor.putFloat(key, value.toFloat())
+                        is Long    -> editor.putLong(key, value)
+                        is String  -> editor.putString(key, value)
+                    }
+                }
+                editor.apply()
+            }
+        }
+
+        // ─── 외부저장소 설정 백업 (API 분기) ─────────────────────────────
+        private fun backupSettingsToExternalStorage(context: android.content.Context) {
+            try {
+                val json = exportSettingsJson(context)
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    backupSettingsViaMediaStore(context, json)
+                } else {
+                    val dir = java.io.File(
+                        android.os.Environment.getExternalStoragePublicDirectory(
+                            android.os.Environment.DIRECTORY_DOWNLOADS
+                        ), "SITEBOARD"
+                    )
+                    if (!dir.exists()) dir.mkdirs()
+                    java.io.File(dir, SETTINGS_FILE_NAME).writeText(json)
+                }
+            } catch (e: Exception) { e.printStackTrace() }
+        }
+
+        @androidx.annotation.RequiresApi(android.os.Build.VERSION_CODES.Q)
+        private fun backupSettingsViaMediaStore(context: android.content.Context, json: String) {
+            val cr = context.contentResolver
+            val externalUri = android.provider.MediaStore.Downloads.getContentUri("external")
+            // 기존 파일 삭제
+            cr.query(
+                externalUri,
+                arrayOf(android.provider.MediaStore.Downloads._ID),
+                "${android.provider.MediaStore.Downloads.DISPLAY_NAME} = ? AND ${android.provider.MediaStore.Downloads.RELATIVE_PATH} LIKE ?",
+                arrayOf(SETTINGS_FILE_NAME, "%SITEBOARD%"),
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val id = cursor.getLong(cursor.getColumnIndexOrThrow(android.provider.MediaStore.Downloads._ID))
+                    cr.delete(android.content.ContentUris.withAppendedId(externalUri, id), null, null)
+                }
+            }
+            val values = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.Downloads.DISPLAY_NAME, SETTINGS_FILE_NAME)
+                put(android.provider.MediaStore.Downloads.MIME_TYPE, "application/json")
+                put(android.provider.MediaStore.Downloads.RELATIVE_PATH, BACKUP_RELATIVE_PATH)
+            }
+            val newUri = cr.insert(externalUri, values) ?: return
+            cr.openOutputStream(newUri)?.use { it.write(json.toByteArray()) }
+        }
+
+        private fun restoreSettingsFromExternalStorage(context: android.content.Context) {
+            try {
+                val json: String? = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+                    restoreSettingsViaMediaStore(context)
+                } else {
+                    val file = java.io.File(
+                        android.os.Environment.getExternalStoragePublicDirectory(
+                            android.os.Environment.DIRECTORY_DOWNLOADS
+                        ), "SITEBOARD/$SETTINGS_FILE_NAME"
+                    )
+                    if (file.exists()) file.readText() else null
+                }
+                if (json != null) importSettingsJson(context, json)
+            } catch (e: Exception) { e.printStackTrace() }
+        }
+
+        @androidx.annotation.RequiresApi(android.os.Build.VERSION_CODES.Q)
+        private fun restoreSettingsViaMediaStore(context: android.content.Context): String? {
+            val cr = context.contentResolver
+            val externalUri = android.provider.MediaStore.Downloads.getContentUri("external")
+            val id = cr.query(
+                externalUri,
+                arrayOf(android.provider.MediaStore.Downloads._ID),
+                "${android.provider.MediaStore.Downloads.DISPLAY_NAME} = ? AND ${android.provider.MediaStore.Downloads.RELATIVE_PATH} LIKE ?",
+                arrayOf(SETTINGS_FILE_NAME, "%SITEBOARD%"),
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) cursor.getLong(cursor.getColumnIndexOrThrow(android.provider.MediaStore.Downloads._ID))
+                else null
+            } ?: return null
+            val uri = android.content.ContentUris.withAppendedId(externalUri, id)
+            return cr.openInputStream(uri)?.use { it.bufferedReader().readText() }
+        }
 
         @Volatile private var INSTANCE: AppDatabase? = null
 
@@ -196,6 +318,9 @@ abstract class AppDatabase : RoomDatabase() {
                     ctx.getSharedPreferences("SiteboardPrefs", android.content.Context.MODE_PRIVATE)
                         .edit().putBoolean("db_just_restored", true).apply()
                 }
+
+                // 외부저장소에 설정 파일이 있으면 SharedPreferences 복원
+                restoreSettingsFromExternalStorage(ctx)
             }
 
             return Room.databaseBuilder(ctx, AppDatabase::class.java, primary.absolutePath)
@@ -258,13 +383,14 @@ abstract class AppDatabase : RoomDatabase() {
                 walCheckpoint()
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    // API 29+: MediaStore 백업 (재설치 후 복구 가능)
                     backupViaMediaStore(context.applicationContext, primary)
                 } else {
-                    // API 28-: 파일 직접 복사 (requestLegacyExternalStorage 활용)
                     val legacy = legacyBackupFile() ?: return
                     primary.copyTo(legacy, overwrite = true)
                 }
+
+                // DB 백업과 함께 설정도 외부저장소에 저장
+                backupSettingsToExternalStorage(context.applicationContext)
             } catch (e: Exception) { e.printStackTrace() }
         }
 
@@ -286,7 +412,13 @@ abstract class AppDatabase : RoomDatabase() {
                     primary.inputStream().use { it.copyTo(zip) }
                     zip.closeEntry()
 
-                    // 2. 사진 파일 (워터마크본 + 원본)
+                    // 2. 설정 파일 (SharedPreferences → JSON)
+                    val settingsJson = exportSettingsJson(ctx).toByteArray(Charsets.UTF_8)
+                    zip.putNextEntry(java.util.zip.ZipEntry("settings.json"))
+                    zip.write(settingsJson)
+                    zip.closeEntry()
+
+                    // 3. 사진 파일 (워터마크본 + 원본)
                     for (post in posts) {
                         try {
                             ctx.contentResolver.openInputStream(android.net.Uri.parse(post.imageUri))?.use { input ->
@@ -351,6 +483,12 @@ abstract class AppDatabase : RoomDatabase() {
 
                 val extractedDb = java.io.File(tmpDir, "siteboard.db")
                 if (!extractedDb.exists()) { tmpDir.deleteRecursively(); return null }
+
+                // settings.json 이 있으면 SharedPreferences 복원
+                val extractedSettings = java.io.File(tmpDir, "settings.json")
+                if (extractedSettings.exists()) {
+                    importSettingsJson(ctx, extractedSettings.readText())
+                }
 
                 // 2. 사진을 갤러리에 재저장하고 새 URI 수집
                 val photosDir = java.io.File(tmpDir, "photos")

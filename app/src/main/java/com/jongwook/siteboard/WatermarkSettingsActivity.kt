@@ -12,6 +12,9 @@ import android.widget.EditText
 import android.widget.SeekBar
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import com.jongwook.siteboard.databinding.ActivityWatermarkSettingsBinding
 
 class WatermarkSettingsActivity : AppCompatActivity() {
@@ -37,6 +40,12 @@ class WatermarkSettingsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityWatermarkSettingsBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutTop) { v, insets ->
+            val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
+            v.updatePadding(top = statusBars.top + (8 * resources.displayMetrics.density).toInt())
+            insets
+        }
 
         binding.btnBack.setOnClickListener { finish() }
 

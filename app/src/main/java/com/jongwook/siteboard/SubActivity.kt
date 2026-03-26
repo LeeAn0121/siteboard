@@ -51,6 +51,12 @@ class SubActivity : AppCompatActivity() {
     private var previewBitmap: Bitmap? = null
     private var currentLocation: String = ""
 
+    // 수정 모드에서 사용할 기존 이미지 URI 정보
+    private var editImageUri: String = ""
+    private var editOriginalUri: String = ""
+    private var editOriginalFileName: String = ""
+    private var editPreviewIsOriginal = false
+
     private val requestCameraPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) launchCamera() else Toast.makeText(this, "카메라 권한이 필요합니다.", Toast.LENGTH_SHORT).show()
     }
@@ -122,18 +128,33 @@ class SubActivity : AppCompatActivity() {
             currentLocation = intent.getStringExtra("edit_loc") ?: ""
             binding.tvGpsLocation.text = if (currentLocation.isEmpty()) "위치 정보 없음" else currentLocation
 
-            // 기존 사진을 미리보기에 불러오기
-            val editImageUri = intent.getStringExtra("edit_imageUri") ?: ""
-            if (editImageUri.isNotEmpty()) {
+            // 기존 이미지 URI 저장
+            editImageUri = intent.getStringExtra("edit_imageUri") ?: ""
+            editOriginalUri = intent.getStringExtra("edit_originalUri") ?: ""
+            editOriginalFileName = intent.getStringExtra("edit_originalFileName") ?: ""
+
+            // 원본 사진(원본 URI) 우선 로드, 없으면 워터마크 이미지 사용
+            val uriToLoad = if (editOriginalUri.isNotEmpty()) editOriginalUri else editImageUri
+            editPreviewIsOriginal = editOriginalUri.isNotEmpty()
+            if (uriToLoad.isNotEmpty()) {
                 lifecycleScope.launch(Dispatchers.IO) {
-                    val bmp = try { loadOrientedBitmapFromUri(android.net.Uri.parse(editImageUri)) } catch (e: Exception) { null }
+                    var bmp = try { loadOrientedBitmapFromUri(Uri.parse(uriToLoad)) } catch (e: Exception) { null }
+                    // 원본 로드 실패 시 워터마크 이미지로 폴백
+                    if (bmp == null && editOriginalUri.isNotEmpty() && editImageUri.isNotEmpty()) {
+                        editPreviewIsOriginal = false
+                        bmp = try { loadOrientedBitmapFromUri(Uri.parse(editImageUri)) } catch (e: Exception) { null }
+                    }
                     withContext(Dispatchers.Main) {
                         if (bmp != null) { previewBitmap = bmp; updatePreview() }
                     }
                 }
             }
 
-            Toast.makeText(this, "내용을 수정한 후 사진을 다시 촬영/선택하면 워터마크가 변경됩니다.", Toast.LENGTH_LONG).show()
+            // 수정 모드: "현재 사진으로 저장" 버튼 표시
+            binding.btnSaveKeepPhoto.visibility = View.VISIBLE
+            binding.btnSaveKeepPhoto.setOnClickListener {
+                if (validateInputs()) saveWithExistingPhoto()
+            }
         } else {
             val prefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
             val savedSiteName = prefs.getString("last_site_name", "")
@@ -321,6 +342,82 @@ class SubActivity : AppCompatActivity() {
                     .apply()
 
                 // 저장 직후 즉시 백업 (강제종료 대비)
+                AppDatabase.backup(this@SubActivity)
+
+                withContext(Dispatchers.Main) {
+                    binding.layoutLoading.visibility = View.GONE
+                    Toast.makeText(this@SubActivity, "현장 기록이 안전하게 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                    setResult(RESULT_OK)
+                    finish()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@SubActivity, "오류: ${e.message}", Toast.LENGTH_SHORT).show()
+                    binding.layoutLoading.visibility = View.GONE
+                }
+            }
+        }
+    }
+
+    // 수정 모드: 새 사진 없이 현재 미리보기 사진으로 워터마크를 새로 찍어 저장
+    private fun saveWithExistingPhoto() {
+        val bmp = previewBitmap
+        if (bmp == null) {
+            Toast.makeText(this, "미리보기 사진이 없습니다. 사진을 촬영하거나 선택해주세요.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val title     = binding.etTitle.text.toString().trim()
+        val desc      = binding.etDesc.text.toString().trim()
+        val loc       = currentLocation
+        val detailLoc = binding.etDetailLocation.text.toString().trim()
+        val memo      = binding.etMemo.text.toString().trim()
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                withContext(Dispatchers.Main) {
+                    binding.layoutLoading.visibility = View.VISIBLE
+                }
+                // 원본 사진인 경우 개인정보 블러 재적용, 이미 워터마크된 이미지면 건너뜀
+                val isPrivacyBlurEnabled = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+                    .getBoolean("privacy_blur_mode", true)
+                val bitmapToStamp = if (editPreviewIsOriginal && isPrivacyBlurEnabled) {
+                    val blurred = detectAndBlurPrivacy(bmp)
+                    if (bmp != blurred && !bmp.isRecycled) bmp.recycle()
+                    blurred
+                } else bmp
+
+                // 워터마크 적용 후 갤러리 저장
+                val stampedBitmap = stampTextOnBitmap(bitmapToStamp, title, desc, loc, detailLoc, memo)
+                if (bitmapToStamp != stampedBitmap && !bitmapToStamp.isRecycled) bitmapToStamp.recycle()
+
+                val newSavedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
+                if (!stampedBitmap.isRecycled) stampedBitmap.recycle()
+
+                // 기존 워터마크 이미지 갤러리에서 삭제
+                if (editImageUri.isNotEmpty()) {
+                    try { contentResolver.delete(Uri.parse(editImageUri), null, null) } catch (e: Exception) { }
+                }
+
+                // DB 업데이트
+                val currentDate = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+                val post = PostEntity(
+                    id = editPostId,
+                    title = title, description = desc,
+                    location = loc.ifEmpty { null },
+                    imageUri = newSavedUri.toString(), date = currentDate,
+                    detailLocation = detailLoc.ifEmpty { null },
+                    memo = memo.ifEmpty { null },
+                    originalUri = editOriginalUri.ifEmpty { null },
+                    originalFileName = editOriginalFileName.ifEmpty { null }
+                )
+                db.postDao().update(post)
+
+                getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE).edit()
+                    .putString("last_site_name", title)
+                    .putString("last_work_content", desc)
+                    .putString("last_detail_loc", detailLoc)
+                    .apply()
+
                 AppDatabase.backup(this@SubActivity)
 
                 withContext(Dispatchers.Main) {

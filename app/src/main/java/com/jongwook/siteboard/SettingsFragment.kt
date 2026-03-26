@@ -22,8 +22,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.BufferedReader
 import java.io.File
 import java.io.FileWriter
+import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -147,8 +151,11 @@ class SettingsFragment : Fragment() {
         // ─── CSV 내보내기 ─────────────────────────────────────────────
         binding.btnExportCsv.setOnClickListener { exportDataToCsv() }
 
-        // ─── 관리자 히든 메뉴 (버전 텍스트 5회 탭) ────────────────────
-        binding.tvAppVersion.setOnClickListener {
+        // ─── 현재 버전 표시 ────────────────────────────────────────────
+        binding.tvAppVersion.text = BuildConfig.VERSION_NAME_FULL
+
+        // ─── 관리자 히든 메뉴 (버전 행 5회 탭) ────────────────────────
+        binding.layoutAppVersion.setOnClickListener {
             val now = System.currentTimeMillis()
             if (now - adminTapLastTime > 2000) adminTapCount = 0
             adminTapLastTime = now
@@ -159,6 +166,61 @@ class SettingsFragment : Fragment() {
                 5 -> {
                     adminTapCount = 0
                     showAdminMenu()
+                }
+            }
+        }
+
+        // ─── 업데이트 확인 ─────────────────────────────────────────────
+        binding.btnCheckUpdate.setOnClickListener { checkForUpdate() }
+    }
+
+    // GitHub 레포의 version.properties를 직접 읽어 버전을 비교합니다.
+    // 별도 릴리즈 없이 푸시만 해도 최신 버전이 반영됩니다.
+    private fun checkForUpdate() {
+        binding.tvUpdateStatus.text = "확인 중..."
+        lifecycleScope.launch(Dispatchers.IO) {
+            val result = runCatching {
+                val url = URL("https://raw.githubusercontent.com/LeeAn0121/siteboard/master/app/version.properties")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.connectTimeout = 5000
+                conn.readTimeout = 5000
+                conn.requestMethod = "GET"
+
+                if (conn.responseCode == 200) {
+                    val props = java.util.Properties()
+                    props.load(InputStreamReader(conn.inputStream))
+                    val major = props.getProperty("VERSION_MAJOR", "1").toInt()
+                    val minor = props.getProperty("VERSION_MINOR", "0").toInt()
+                    val patch = props.getProperty("VERSION_PATCH", "0").toInt()
+                    val build = props.getProperty("BUILD_NUMBER", "0").toInt()
+                    "$major.$minor.$patch" to build
+                } else null
+            }.getOrNull()
+
+            withContext(Dispatchers.Main) {
+                if (result == null) {
+                    binding.tvUpdateStatus.text = "확인 실패 — 네트워크를 확인하세요"
+                    return@withContext
+                }
+                val (latestVersion, latestBuild) = result
+                val currentVersion = BuildConfig.VERSION_NAME
+                val currentBuild = BuildConfig.BUILD_NUMBER
+
+                if (latestBuild <= currentBuild) {
+                    binding.tvUpdateStatus.text = "최신 버전입니다 ($currentVersion)"
+                } else {
+                    binding.tvUpdateStatus.text = "새 버전 $latestVersion (build $latestBuild) 이 있습니다!"
+                    AlertDialog.Builder(requireContext())
+                        .setTitle("업데이트 가능")
+                        .setMessage("현재: $currentVersion (build $currentBuild)\n최신: $latestVersion (build $latestBuild)\n\n지금 GitHub 페이지로 이동하시겠습니까?")
+                        .setPositiveButton("이동") { _, _ ->
+                            startActivity(android.content.Intent(
+                                android.content.Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://github.com/LeeAn0121/siteboard")
+                            ))
+                        }
+                        .setNegativeButton("나중에", null)
+                        .show()
                 }
             }
         }

@@ -7,28 +7,34 @@ plugins {
     id("com.google.devtools.ksp") // KSP 플러그인
 }
 
-// 💡 [자동 버전업 로직 시작]
+// ── 버전 관리 ──────────────────────────────────────────────────────────
+// [개발자용] version.properties에서 MAJOR/MINOR/PATCH를 직접 수정하세요.
+// BUILD_NUMBER는 빌드할 때마다 자동으로 증가합니다.
 val versionPropsFile = file("version.properties")
 val versionProps = Properties()
 
-// 파일이 있으면 읽어오고, 없으면 새로 만듭니다.
 if (versionPropsFile.canRead()) {
     versionProps.load(FileInputStream(versionPropsFile))
 } else {
-    versionProps.setProperty("VERSION_CODE", "0")
+    versionProps.setProperty("VERSION_MAJOR", "1")
+    versionProps.setProperty("VERSION_MINOR", "0")
+    versionProps.setProperty("VERSION_PATCH", "0")
+    versionProps.setProperty("BUILD_NUMBER", "0")
 }
 
-// 현재 숫자를 가져와서 +1 해줍니다.
-val currentCode = (versionProps.getProperty("VERSION_CODE") ?: "0").toInt()
-val autoVersionCode = currentCode + 1
-versionProps.setProperty("VERSION_CODE", autoVersionCode.toString())
+val vMajor = (versionProps.getProperty("VERSION_MAJOR") ?: "1").toInt()
+val vMinor = (versionProps.getProperty("VERSION_MINOR") ?: "0").toInt()
+val vPatch = (versionProps.getProperty("VERSION_PATCH") ?: "0").toInt()
+val buildNum = (versionProps.getProperty("BUILD_NUMBER") ?: "0").toInt() + 1
 
-// 증가된 숫자를 다시 파일에 저장합니다.
+versionProps.setProperty("BUILD_NUMBER", buildNum.toString())
 versionProps.store(versionPropsFile.writer(), "Auto-increment build version")
 
-// 사용자에게 보여질 버전 이름 (예: 1.0.1, 1.0.2 ...)
-val autoVersionName = "1.0.$autoVersionCode"
-// 💡 [자동 버전업 로직 끝]
+// versionCode: 스토어 업로드용 정수 (계속 증가)
+val autoVersionCode = buildNum
+// versionName: 사용자에게 보여지는 버전 (예: 1.0.0)
+val autoVersionName = "$vMajor.$vMinor.$vPatch"
+// ── 버전 관리 끝 ──────────────────────────────────────────────────────
 
 
 android {
@@ -40,9 +46,12 @@ android {
         minSdk = 24
         targetSdk = 35
 
-        // 💡 [적용 완료!] 고정된 숫자 대신 위에서 만든 자동 변수를 넣습니다.
         versionCode = autoVersionCode
         versionName = autoVersionName
+
+        // BuildConfig 필드 — 앱 내에서 BuildConfig.BUILD_NUMBER / BuildConfig.VERSION_NAME_FULL 로 접근
+        buildConfigField("int", "BUILD_NUMBER", "$buildNum")
+        buildConfigField("String", "VERSION_NAME_FULL", "\"$autoVersionName (build $buildNum)\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -68,7 +77,9 @@ android {
 
     buildFeatures {
         viewBinding = true
+        buildConfig = true
     }
+
 }
 
 dependencies {
