@@ -179,6 +179,7 @@ class SettingsFragment : Fragment() {
     private fun checkForUpdate() {
         binding.tvUpdateStatus.text = "확인 중..."
         lifecycleScope.launch(Dispatchers.IO) {
+            var errorMsg = ""
             val result = runCatching {
                 val url = URL("https://raw.githubusercontent.com/LeeAn0121/siteboard/master/app/version.properties")
                 val conn = url.openConnection() as HttpURLConnection
@@ -186,7 +187,8 @@ class SettingsFragment : Fragment() {
                 conn.readTimeout = 5000
                 conn.requestMethod = "GET"
 
-                if (conn.responseCode == 200) {
+                val code = conn.responseCode
+                if (code == 200) {
                     val props = java.util.Properties()
                     props.load(InputStreamReader(conn.inputStream))
                     val major = props.getProperty("VERSION_MAJOR", "1").toInt()
@@ -194,12 +196,15 @@ class SettingsFragment : Fragment() {
                     val patch = props.getProperty("VERSION_PATCH", "0").toInt()
                     val build = props.getProperty("BUILD_NUMBER", "0").toInt()
                     "$major.$minor.$patch" to build
-                } else null
-            }.getOrNull()
+                } else {
+                    errorMsg = "HTTP $code"
+                    null
+                }
+            }.onFailure { errorMsg = it.javaClass.simpleName + ": " + it.message }.getOrNull()
 
             withContext(Dispatchers.Main) {
                 if (result == null) {
-                    binding.tvUpdateStatus.text = "확인 실패 — 네트워크를 확인하세요"
+                    binding.tvUpdateStatus.text = "확인 실패 ($errorMsg)"
                     return@withContext
                 }
                 val (latestVersion, latestBuild) = result
