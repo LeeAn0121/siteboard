@@ -4,7 +4,8 @@
       "Bash(./gradlew assembleDebug)",
       "Bash(xargs grep:*)",
       "Bash(grep -A 5 \"public class\\\\|interface\\\\|data class\" /c/Users/jmpar/AndroidStudioProjects/siteboard/app/src/main/java/com/jongwook/siteboard/*.kt)",
-      "Bash(bash gradlew:*)"
+      "Bash(bash gradlew:*)",
+      "Bash(curl:*)"
     ]
   }
 }
