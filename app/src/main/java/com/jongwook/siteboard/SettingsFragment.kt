@@ -218,11 +218,19 @@ class SettingsFragment : Fragment() {
                     AlertDialog.Builder(requireContext())
                         .setTitle("업데이트 가능")
                         .setMessage("현재: $currentVersion (build $currentBuild)\n최신: $latestVersion (build $latestBuild)\n\n지금 GitHub 페이지로 이동하시겠습니까?")
-                        .setPositiveButton("이동") { _, _ ->
-                            startActivity(android.content.Intent(
-                                android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://github.com/LeeAn0121/siteboard")
-                            ))
+                        .setPositiveButton("업데이트") { _, _ ->
+                            val packageName = requireContext().packageName
+                            try {
+                                startActivity(android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse("market://details?id=$packageName")
+                                ))
+                            } catch (e: android.content.ActivityNotFoundException) {
+                                startActivity(android.content.Intent(
+                                    android.content.Intent.ACTION_VIEW,
+                                    android.net.Uri.parse("https://play.google.com/store/apps/details?id=$packageName")
+                                ))
+                            }
                         }
                         .setNegativeButton("나중에", null)
                         .show()
