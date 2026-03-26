@@ -163,6 +163,41 @@
                 android:layout_marginBottom="10dp"
                 android:layout_marginStart="4dp" />
 
+            <!-- 갤러리에서 가져오기 -->
+            <LinearLayout
+                android:id="@+id/btnImportFromGallery"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="16dp"
+                android:background="#1E2023"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginBottom="2dp">
+
+                <LinearLayout
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:background="#1A2196F3">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📥" android:textSize="18sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="14dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="갤러리에서 가져오기" android:textColor="#EBEBEB" android:textSize="15sp" android:textStyle="bold" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SITEBOARD 앨범의 사진에서 워터마크 정보를 읽어 복원합니다" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
+                </LinearLayout>
+
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="›" android:textSize="20sp" android:textColor="#404045" />
+            </LinearLayout>
+
             <!-- CSV 내보내기 -->
             <LinearLayout
                 android:id="@+id/btnExportCsv"

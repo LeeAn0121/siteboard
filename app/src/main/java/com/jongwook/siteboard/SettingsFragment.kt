@@ -3,6 +3,7 @@ package com.jongwook.siteboard
 import android.app.AlertDialog
 import android.content.Context
 import android.graphics.*
+import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.view.LayoutInflater
@@ -17,10 +18,14 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.card.MaterialCardView
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions
 import com.jongwook.siteboard.databinding.FragmentSettingsBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.File
@@ -40,63 +45,11 @@ class SettingsFragment : Fragment() {
     private var selectedTheme = 0
     private lateinit var themePreviewViews: List<ImageView>
 
-    private var adminTapCount = 0
-    private var adminTapLastTime = 0L
-
-    private val exportZipLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/zip")
-    ) { uri ->
-        if (uri == null) return@registerForActivityResult
-        lifecycleScope.launch(Dispatchers.IO) {
-            val exportedCount = AppDatabase.exportToZip(requireContext(), uri)
-            withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(),
-                    if (exportedCount != null) "${exportedCount}건의 내보내기 작업이 완료되었습니다." else "백업 내보내기 실패.",
-                    Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private val importZipLauncher = registerForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) { uri ->
-        if (uri == null) return@registerForActivityResult
-        AlertDialog.Builder(requireContext())
-            .setTitle("백업 불러오기")
-            .setMessage("기존 모든 데이터와 사진이 백업 파일로 대체됩니다.\n계속하시겠습니까?")
-            .setPositiveButton("불러오기") { _, _ ->
-                lifecycleScope.launch(Dispatchers.IO) {
-                    val importedCount = AppDatabase.importFromZip(requireContext(), uri)
-                    withContext(Dispatchers.Main) {
-                        if (importedCount != null) {
-                            Toast.makeText(requireContext(), "${importedCount}건의 불러오기 작업이 완료되었습니다.", Toast.LENGTH_LONG).show()
-                            val intent = requireContext().packageManager
-                                .getLaunchIntentForPackage(requireContext().packageName)
-                            intent?.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP or android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                            startActivity(intent)
-                            requireActivity().finish()
-                        } else {
-                            Toast.makeText(requireContext(), "불러오기 실패. 올바른 백업 파일(.zip)인지 확인하세요.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-            }
-            .setNegativeButton("취소", null)
-            .show()
-    }
-
-    private val cloudExportLauncher = registerForActivityResult(
-        ActivityResultContracts.CreateDocument("application/zip")
-    ) { uri ->
-        if (uri == null) return@registerForActivityResult
-        lifecycleScope.launch(Dispatchers.IO) {
-            val exportedCount = AppDatabase.exportToZip(requireContext(), uri)
-            withContext(Dispatchers.Main) {
-                Toast.makeText(requireContext(),
-                    if (exportedCount != null) "${exportedCount}건의 내보내기 작업이 완료되었습니다." else "클라우드 저장 실패.",
-                    Toast.LENGTH_SHORT).show()
-            }
-        }
+    private val pickImagesLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenMultipleDocuments()
+    ) { uris ->
+        if (uris.isNullOrEmpty()) return@registerForActivityResult
+        importFromUris(uris)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -148,27 +101,14 @@ class SettingsFragment : Fragment() {
             sharedPref.edit().putBoolean("privacy_blur_mode", isChecked).apply()
         }
 
+        // ─── 갤러리에서 가져오기 ──────────────────────────────────────
+        binding.btnImportFromGallery.setOnClickListener { confirmImportFromGallery() }
+
         // ─── CSV 내보내기 ─────────────────────────────────────────────
         binding.btnExportCsv.setOnClickListener { exportDataToCsv() }
 
         // ─── 현재 버전 표시 ────────────────────────────────────────────
         binding.tvAppVersion.text = BuildConfig.VERSION_NAME_FULL
-
-        // ─── 관리자 히든 메뉴 (버전 행 5회 탭) ────────────────────────
-        binding.layoutAppVersion.setOnClickListener {
-            val now = System.currentTimeMillis()
-            if (now - adminTapLastTime > 2000) adminTapCount = 0
-            adminTapLastTime = now
-            adminTapCount++
-            when (adminTapCount) {
-                3 -> Toast.makeText(requireContext(), "관리자 메뉴까지 2번 더...", Toast.LENGTH_SHORT).show()
-                4 -> Toast.makeText(requireContext(), "관리자 메뉴까지 1번 더...", Toast.LENGTH_SHORT).show()
-                5 -> {
-                    adminTapCount = 0
-                    showAdminMenu()
-                }
-            }
-        }
 
         // ─── 업데이트 확인 ─────────────────────────────────────────────
         binding.btnCheckUpdate.setOnClickListener { checkForUpdate() }
@@ -239,27 +179,101 @@ class SettingsFragment : Fragment() {
         }
     }
 
-    private fun showAdminMenu() {
-        val items = arrayOf("📦  백업 내보내기 (.zip)", "📥  백업 불러오기 (.zip)", "☁  Google Drive로 백업", "☁  OneDrive로 백업")
-        AlertDialog.Builder(requireContext())
-            .setTitle("🔒 관리자 메뉴")
-            .setItems(items) { _, which ->
-                val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-                when (which) {
-                    0 -> exportZipLauncher.launch("Siteboard_Backup_$timeStamp.zip")
-                    1 -> importZipLauncher.launch(arrayOf("application/zip", "application/octet-stream", "*/*"))
-                    2 -> {
-                        Toast.makeText(requireContext(), "저장 위치에서 Google Drive를 선택하세요.", Toast.LENGTH_SHORT).show()
-                        cloudExportLauncher.launch("Siteboard_Backup_$timeStamp.zip")
-                    }
-                    3 -> {
-                        Toast.makeText(requireContext(), "저장 위치에서 OneDrive를 선택하세요.", Toast.LENGTH_SHORT).show()
-                        cloudExportLauncher.launch("Siteboard_Backup_$timeStamp.zip")
+    // ─── 갤러리 가져오기 ─────────────────────────────────────────────────
+    private fun confirmImportFromGallery() {
+        pickImagesLauncher.launch(arrayOf("image/*"))
+    }
+
+    private fun importFromUris(uris: List<Uri>) {
+        Toast.makeText(requireContext(), "${uris.size}장 분석 중...", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val cr = requireContext().applicationContext.contentResolver
+
+                // DB에 이미 등록된 imageUri 목록 (중복 방지)
+                val existingUris = db.postDao().getAllPosts().first()
+                    .map { it.imageUri }.toSet()
+
+                val recognizer = TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
+                var importedCount = 0
+                var skippedCount = 0
+                var failedCount = 0
+
+                for (uri in uris) {
+                    if (uri.toString() in existingUris) { skippedCount++; continue }
+
+                    try {
+                        // URI 영구 접근 권한 획득
+                        try { cr.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Exception) {}
+
+                        val bitmap = android.graphics.BitmapFactory.decodeStream(
+                            cr.openInputStream(uri)
+                        ) ?: run { failedCount++; continue }
+
+                        val result = recognizer.process(InputImage.fromBitmap(bitmap, 0)).await()
+                        bitmap.recycle()
+
+                        val allLines = result.textBlocks
+                            .flatMap { it.lines }
+                            .map { it.text.trim() }
+
+                        val parsed = parseWatermarkLines(allLines)
+
+                        // 날짜: OCR 실패 시 현재 시각
+                        val date = parsed["날짜"]?.ifEmpty { null }
+                            ?: SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+
+                        db.postDao().insert(PostEntity(
+                            title          = parsed["제목"] ?: "",
+                            description    = parsed["작업내용"] ?: "",
+                            location       = parsed["위치"]?.ifEmpty { null },
+                            imageUri       = uri.toString(),
+                            date           = date,
+                            detailLocation = parsed["상세위치"]?.ifEmpty { null },
+                            memo           = parsed["메모"]?.ifEmpty { null }
+                        ))
+                        importedCount++
+                    } catch (e: Exception) {
+                        failedCount++
                     }
                 }
+
+                recognizer.close()
+
+                withContext(Dispatchers.Main) {
+                    val parts = mutableListOf("${importedCount}개 가져옴")
+                    if (skippedCount > 0) parts.add("${skippedCount}개 이미 등록됨")
+                    if (failedCount > 0) parts.add("${failedCount}개 실패")
+                    Toast.makeText(requireContext(), parts.joinToString(", "), Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "가져오기 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
-            .setNegativeButton("닫기", null)
-            .show()
+        }
+    }
+
+    // 워터마크 텍스트 줄 목록에서 각 필드 추출
+    // 형식: "제목 : value", "위치(GPS) : value", "상세위치 : value",
+    //       "작업내용 : value", "메모 : value", "날짜 : value"
+    private fun parseWatermarkLines(lines: List<String>): Map<String, String> {
+        val result = mutableMapOf<String, String>()
+        for (line in lines) {
+            val colonIdx = line.indexOf(':')
+            if (colonIdx < 0) continue
+            val key = line.substring(0, colonIdx).trim()
+            val value = line.substring(colonIdx + 1).trim()
+            when {
+                key.contains("제목")     -> result["제목"] = value
+                key.contains("위치(GPS)") || key.contains("위치(gps)") || key == "위치" -> result["위치"] = value
+                key.contains("상세위치")  -> result["상세위치"] = value
+                key.contains("작업내용")  -> result["작업내용"] = value
+                key.contains("메모")     -> result["메모"] = value
+                key.contains("날짜")     -> result["날짜"] = value
+            }
+        }
+        return result
     }
 
     // ─── 워터마크 테마 선택 로직 ──────────────────────────────────────────

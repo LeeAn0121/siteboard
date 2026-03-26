@@ -341,9 +341,6 @@ class SubActivity : AppCompatActivity() {
                     .putString("last_detail_loc", detailLoc)
                     .apply()
 
-                // 저장 직후 즉시 백업 (강제종료 대비)
-                AppDatabase.backup(this@SubActivity)
-
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
                     Toast.makeText(this@SubActivity, "현장 기록이 안전하게 저장되었습니다.", Toast.LENGTH_SHORT).show()
@@ -417,8 +414,6 @@ class SubActivity : AppCompatActivity() {
                     .putString("last_work_content", desc)
                     .putString("last_detail_loc", detailLoc)
                     .apply()
-
-                AppDatabase.backup(this@SubActivity)
 
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
