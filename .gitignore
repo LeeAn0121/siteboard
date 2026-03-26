@@ -18,5 +18,4 @@ local.properties
 /app/release/output-metadata.json
 /app/release/baselineProfiles/1/app-release.dm
 /app/release/siteboard.apk.txt
-/app/version.properties
 /*.log
