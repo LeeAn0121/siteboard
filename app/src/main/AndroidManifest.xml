@@ -81,6 +81,10 @@
             android:screenOrientation="portrait"
             android:exported="false" />
 
+        <activity android:name=".PermissionInfoActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
         <activity android:name=".BatchEditActivity"
             android:screenOrientation="portrait"
             android:exported="false" />

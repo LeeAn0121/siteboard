@@ -1,5 +1,6 @@
 package com.jongwook.siteboard
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -23,5 +24,8 @@ class AppInfoActivity : AppCompatActivity() {
 
         binding.btnBack.setOnClickListener { finish() }
         binding.tvAppVersion.text = BuildConfig.VERSION_NAME_FULL
+        binding.btnPermissionInfo.setOnClickListener {
+            startActivity(Intent(this, PermissionInfoActivity::class.java))
+        }
     }
 }

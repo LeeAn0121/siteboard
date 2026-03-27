@@ -62,7 +62,8 @@
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
             android:paddingVertical="16dp"
-            android:background="@drawable/bg_action_row">
+            android:background="@drawable/bg_action_row"
+            android:layout_marginTop="8dp">
 
             <LinearLayout
                 android:layout_width="40dp"
@@ -98,6 +99,61 @@
                     android:layout_marginTop="2dp"
                     android:text="불러오는 중..." />
             </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnPermissionInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="16dp"
+            android:background="@drawable/bg_action_row"
+            android:layout_marginTop="10dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <LinearLayout
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:gravity="center"
+                android:background="#1A7DE5B2">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="🔐"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="사용 권한"
+                    android:textColor="@color/text_primary"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="카메라, 사진, 위치 권한 상태와 시스템 설정 이동"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="›"
+                android:textSize="20sp"
+                android:textColor="@color/text_tertiary" />
         </LinearLayout>
     </LinearLayout>
 
