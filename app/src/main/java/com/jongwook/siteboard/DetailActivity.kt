@@ -52,7 +52,6 @@ class DetailActivity : AppCompatActivity() {
         val date            = intent.getStringExtra("date") ?: ""
         val detailLoc       = intent.getStringExtra("detailLoc") ?: ""
         val memo            = intent.getStringExtra("memo") ?: ""
-        val originalFileName = intent.getStringExtra("originalFileName") ?: ""
         val originalUri     = intent.getStringExtra("originalUri") ?: ""
 
         binding.tvDetailTitle.text    = title
@@ -70,12 +69,6 @@ class DetailActivity : AppCompatActivity() {
         if (memo.isNotBlank()) {
             binding.layoutMemo.visibility = android.view.View.VISIBLE
             binding.tvDetailMemo.text = memo
-        }
-
-        // 원본 파일명 표시
-        if (originalFileName.isNotBlank()) {
-            binding.layoutOriginalInfo.visibility = android.view.View.VISIBLE
-            binding.tvOriginalFileName.text = originalFileName
         }
 
         binding.tvDetailLocation.setOnClickListener {

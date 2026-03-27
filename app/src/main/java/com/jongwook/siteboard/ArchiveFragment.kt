@@ -150,7 +150,7 @@ class ArchiveFragment : Fragment() {
                     if (!post.memo.isNullOrBlank()) {
                         canvas.drawText("• 메모 : ${post.memo.replace("\n", " ")}", margin, y, textPaint); y += 25f
                     }
-                    y += 15f
+                    y += 8f
 
                     try {
                         val uri = android.net.Uri.parse(post.imageUri)
@@ -162,10 +162,21 @@ class ArchiveFragment : Fragment() {
                             @Suppress("DEPRECATION")
                             MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
                         }
-                        val targetW = pageWidth - margin * 2
-                        val scale = targetW / bitmap.width.toFloat()
+                        val availableWidth = pageWidth - margin * 2
+                        val availableHeight = pageHeight - margin - y
+                        val widthScale = availableWidth / bitmap.width.toFloat()
+                        val heightScale = availableHeight / bitmap.height.toFloat()
+                        val scale = minOf(widthScale, heightScale)
+                        if (scale <= 0f) {
+                            canvas.drawText("[이미지 배치 공간 부족]", margin, y, textPaint)
+                            pdfDocument.finishPage(page)
+                            continue
+                        }
+                        val targetW = bitmap.width * scale
+                        val targetH = bitmap.height * scale
+                        val imageLeft = margin + ((availableWidth - targetW) / 2f)
                         val imgPaint = Paint().apply { isAntiAlias = true; isFilterBitmap = true }
-                        canvas.drawBitmap(bitmap, null, RectF(margin, y, margin + targetW, y + bitmap.height * scale), imgPaint)
+                        canvas.drawBitmap(bitmap, null, RectF(imageLeft, y, imageLeft + targetW, y + targetH), imgPaint)
                     } catch (e: Exception) {
                         canvas.drawText("[이미지 로드 실패]", margin, y, textPaint)
                     }

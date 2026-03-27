@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -42,7 +43,10 @@ class HomeFragment : Fragment() {
         }
         ViewCompat.setOnApplyWindowInsetsListener(binding.layoutSelectionMode) { v, insets ->
             val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-            v.updatePadding(top = statusBars.top + (20 * resources.displayMetrics.density).toInt())
+            val extraTopMargin = statusBars.top + (10 * resources.displayMetrics.density).toInt()
+            v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
+                topMargin = extraTopMargin
+            }
             insets
         }
 
@@ -218,7 +222,7 @@ class HomeFragment : Fragment() {
                         canvas.drawText("• 메모 : $safeMemo", margin, currentY, textPaint)
                         currentY += 25f
                     }
-                    currentY += 15f
+                    currentY += 8f
 
                     try {
                         val imageString = post.imageUri
@@ -246,14 +250,26 @@ class HomeFragment : Fragment() {
                                 isDither = true
                             }
 
-                            val targetCanvasWidth = pageWidth - (margin * 2)
-                            val scale = targetCanvasWidth / bitmap.width.toFloat()
+                            val availableWidth = pageWidth - (margin * 2)
+                            val availableHeight = pageHeight - margin - currentY
+                            val widthScale = availableWidth / bitmap.width.toFloat()
+                            val heightScale = availableHeight / bitmap.height.toFloat()
+                            val scale = minOf(widthScale, heightScale)
+
+                            if (scale <= 0f) {
+                                canvas.drawText("[! 페이지 여백이 부족하여 이미지를 배치할 수 없습니다 !]", margin, currentY, textPaint)
+                                pdfDocument.finishPage(page)
+                                continue
+                            }
+
+                            val targetCanvasWidth = bitmap.width * scale
                             val targetCanvasHeight = bitmap.height * scale
+                            val imageLeft = margin + ((availableWidth - targetCanvasWidth) / 2f)
 
                             val dstRect = android.graphics.RectF(
-                                margin,
+                                imageLeft,
                                 currentY,
-                                margin + targetCanvasWidth,
+                                imageLeft + targetCanvasWidth,
                                 currentY + targetCanvasHeight
                             )
 

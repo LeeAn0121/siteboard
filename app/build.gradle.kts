@@ -8,8 +8,9 @@ plugins {
 }
 
 // ── 버전 관리 ──────────────────────────────────────────────────────────
-// [개발자용] version.properties에서 MAJOR/MINOR/PATCH를 직접 수정하세요.
 // BUILD_NUMBER는 빌드할 때마다 자동으로 증가합니다.
+// 매 빌드마다 PATCH를 1 올리고, PATCH가 10을 넘으면 MINOR를 1 올립니다.
+// MINOR가 10을 넘으면 MAJOR를 1 올립니다.
 val versionPropsFile = file("version.properties")
 val versionProps = Properties()
 
@@ -22,11 +23,24 @@ if (versionPropsFile.canRead()) {
     versionProps.setProperty("BUILD_NUMBER", "0")
 }
 
-val vMajor = (versionProps.getProperty("VERSION_MAJOR") ?: "1").trim().toInt()
-val vMinor = (versionProps.getProperty("VERSION_MINOR") ?: "0").trim().toInt()
-val vPatch = (versionProps.getProperty("VERSION_PATCH") ?: "0").trim().toInt()
+var vMajor = (versionProps.getProperty("VERSION_MAJOR") ?: "1").trim().toInt()
+var vMinor = (versionProps.getProperty("VERSION_MINOR") ?: "0").trim().toInt()
+var vPatch = (versionProps.getProperty("VERSION_PATCH") ?: "0").trim().toInt()
 val buildNum = (versionProps.getProperty("BUILD_NUMBER") ?: "0").trim().toInt() + 1
 
+vPatch += 1
+if (vPatch > 10) {
+    vPatch = 0
+    vMinor += 1
+}
+if (vMinor > 10) {
+    vMinor = 0
+    vMajor += 1
+}
+
+versionProps.setProperty("VERSION_MAJOR", vMajor.toString())
+versionProps.setProperty("VERSION_MINOR", vMinor.toString())
+versionProps.setProperty("VERSION_PATCH", vPatch.toString())
 versionProps.setProperty("BUILD_NUMBER", buildNum.toString())
 versionProps.store(versionPropsFile.writer(), "Auto-increment build version")
 

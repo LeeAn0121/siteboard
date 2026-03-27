@@ -226,32 +226,6 @@
                         android:lineSpacingExtra="4dp" />
                 </LinearLayout>
 
-                <!-- 원본 사진 정보 -->
-                <LinearLayout
-                    android:id="@+id/layoutOriginalInfo"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_marginTop="12dp"
-                    android:background="#0FFF6F00"
-                    android:padding="12dp"
-                    android:visibility="gone">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="원본 파일"
-                        android:textSize="10sp"
-                        android:textColor="#FF6F00" />
-                    <TextView
-                        android:id="@+id/tvOriginalFileName"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="#808085"
-                        android:textSize="12sp"
-                        android:layout_marginTop="2dp"
-                        android:fontFamily="monospace" />
-                </LinearLayout>
-
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

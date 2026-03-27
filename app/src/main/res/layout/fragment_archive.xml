@@ -13,81 +13,39 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
-        android:paddingTop="18dp"
-        android:paddingBottom="16dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="ARCHIVE"
-            android:textColor="@color/teal_accent"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.12"
-            android:layout_marginBottom="10dp" />
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:layout_marginBottom="14dp">
-
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="vertical">
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="현장 보관함"
-                    android:textSize="32sp"
-                    android:textColor="@color/text_primary"
-                    android:textStyle="bold" />
-                <TextView
-                    android:id="@+id/tvArchiveDesc"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="현장명별로 현장 기록을 모아봅니다"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp"
-                    android:layout_marginTop="4dp" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_hero_panel"
             android:orientation="vertical"
-            android:padding="18dp"
-            android:layout_marginBottom="14dp">
+            android:layout_marginBottom="10dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="현장 단위로 정리"
+                android:text="보관함"
+                android:textSize="27sp"
                 android:textColor="@color/text_primary"
-                android:textSize="18sp"
                 android:textStyle="bold" />
 
             <TextView
-                android:layout_width="match_parent"
+                android:id="@+id/tvArchiveDesc"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="현장명을 기준으로 기록을 묶고, 필요한 현장만 찾아 바로 PDF로 넘길 수 있습니다."
+                android:text="현장명별로 기록을 모아 보고 PDF로 정리합니다"
                 android:textColor="@color/text_secondary"
-                android:textSize="13sp"
-                android:layout_marginTop="6dp" />
+                android:textSize="12sp"
+                android:layout_marginTop="4dp" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
             android:background="@drawable/bg_search_field_modern"
+            android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
             android:paddingVertical="2dp">
 
@@ -116,47 +74,61 @@
 
     <ListView
         android:id="@+id/lvProjects"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="0dp"
+        android:layout_marginHorizontal="20dp"
         android:divider="@android:color/transparent"
         android:dividerHeight="0dp"
         android:listSelector="?attr/selectableItemBackground"
         android:background="@android:color/transparent"
-        android:paddingTop="2dp"
+        android:paddingTop="6dp"
         android:paddingBottom="110dp"
         android:clipToPadding="false"
         app:layout_constraintTop_toBottomOf="@id/layoutHeader"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />
 
     <!-- 빈 상태 -->
     <LinearLayout
         android:id="@+id/layoutEmpty"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:background="@drawable/bg_surface_card"
+        android:background="@drawable/bg_surface_card_soft"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="20dp"
         android:paddingHorizontal="28dp"
         android:paddingVertical="28dp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/layoutHeader"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_bias="0.32">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="📂"
-            android:textSize="52sp"
-            android:layout_marginBottom="16dp" />
+            android:textSize="48sp"
+            android:layout_marginBottom="14dp" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="등록된 현장이 없습니다"
-            android:textSize="19sp"
+            android:textSize="17sp"
             android:textColor="@color/text_primary"
             android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="현장 기록이 쌓이면 이곳에서 현장명 단위로 모아볼 수 있습니다"
+            android:textSize="13sp"
+            android:textColor="@color/text_tertiary"
+            android:layout_marginTop="6dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

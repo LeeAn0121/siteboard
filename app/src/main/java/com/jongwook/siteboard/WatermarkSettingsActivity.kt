@@ -19,6 +19,7 @@ import com.jongwook.siteboard.databinding.ActivityWatermarkSettingsBinding
 
 class WatermarkSettingsActivity : AppCompatActivity() {
     private lateinit var binding: ActivityWatermarkSettingsBinding
+    private var selectedTheme = 0
 
     // 💡 기본 워터마크 설정 변수
     private var isTop = false
@@ -27,6 +28,7 @@ class WatermarkSettingsActivity : AppCompatActivity() {
     private var marginY = 50
     private var fontSize = 30f
     private var useBgBox = true
+    private var deleteOriginal = false
 
     // 💡 추가된 커스텀 설정 변수 (색상, 폰트)
     private var textColor = Color.WHITE
@@ -69,6 +71,9 @@ class WatermarkSettingsActivity : AppCompatActivity() {
         marginY = prefs.getInt("wm_margin_y", 50)
         fontSize = prefs.getFloat("wm_font_size", 30f)
         useBgBox = prefs.getBoolean("wm_use_bg", true)
+        selectedTheme = prefs.getInt("wm_theme_index", 0)
+        deleteOriginal = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+            .getBoolean("delete_original_mode", false)
 
         // 색상과 폰트도 불러옵니다 (없으면 기본값 흰색, 기본고딕)
         textColor = prefs.getInt("wm_color", Color.WHITE)
@@ -83,11 +88,14 @@ class WatermarkSettingsActivity : AppCompatActivity() {
         prefs.putInt("wm_margin_y", marginY)
         prefs.putFloat("wm_font_size", fontSize)
         prefs.putBoolean("wm_use_bg", useBgBox)
-
-        // 색상과 폰트도 저장
+        prefs.putInt("wm_theme_index", selectedTheme)
         prefs.putInt("wm_color", textColor)
         prefs.putString("wm_font", fontType)
         prefs.apply()
+        getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean("delete_original_mode", deleteOriginal)
+            .apply()
     }
 
     private fun setupUI() {
@@ -105,12 +113,15 @@ class WatermarkSettingsActivity : AppCompatActivity() {
 
         binding.sbFontSize.progress = fontSize.toInt()
         binding.etFontSize.setText(fontSize.toInt().toString())
+        binding.switchDeleteOriginal.isChecked = deleteOriginal
 
         // 💡 폰트 드롭다운(Spinner) 세팅
         val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, fontNames)
         binding.spinnerFont.adapter = adapter
         val fontIndex = fontValues.indexOf(fontType)
         binding.spinnerFont.setSelection(if (fontIndex >= 0) fontIndex else 0)
+
+        setupThemeSelector()
 
         // 💡 RGB 색상 슬라이더 초기화
         val r = Color.red(textColor)
@@ -133,6 +144,9 @@ class WatermarkSettingsActivity : AppCompatActivity() {
         }
         binding.switchBgBox.setOnCheckedChangeListener { _, isChecked ->
             useBgBox = isChecked; updatePreview()
+        }
+        binding.switchDeleteOriginal.setOnCheckedChangeListener { _, isChecked ->
+            deleteOriginal = isChecked
         }
 
         // 2. 폰트 선택 드롭다운 리스너
@@ -193,6 +207,130 @@ class WatermarkSettingsActivity : AppCompatActivity() {
         setupTwoWayBinding(binding.sbMarginX, binding.etMarginX, 0, 300) { value -> marginX = value }
         setupTwoWayBinding(binding.sbMarginY, binding.etMarginY, 0, 300) { value -> marginY = value }
         setupTwoWayBinding(binding.sbFontSize, binding.etFontSize, 10, 100) { value -> fontSize = value.toFloat() }
+    }
+
+    private fun setupThemeSelector() {
+        val previewViews = listOf(
+            binding.ivThemePreview0, binding.ivThemePreview1,
+            binding.ivThemePreview2, binding.ivThemePreview3
+        )
+        val themeViews = listOf(
+            binding.viewTheme0, binding.viewTheme1,
+            binding.viewTheme2, binding.viewTheme3
+        )
+        val themeLabels = listOf(
+            binding.tvThemeLabel0, binding.tvThemeLabel1,
+            binding.tvThemeLabel2, binding.tvThemeLabel3
+        )
+        val themeLayouts = listOf(
+            binding.layoutTheme0, binding.layoutTheme1,
+            binding.layoutTheme2, binding.layoutTheme3
+        )
+
+        previewViews.forEachIndexed { index, imageView ->
+            imageView.setImageBitmap(createThemePreviewBitmap(index))
+        }
+        updateThemeSelection(themeViews, themeLabels, selectedTheme)
+
+        themeLayouts.forEachIndexed { index, layout ->
+            layout.setOnClickListener {
+                selectedTheme = index
+                updateThemeSelection(themeViews, themeLabels, index)
+                applyThemePreset(index)
+                updatePreview()
+            }
+        }
+    }
+
+    private fun updateThemeSelection(views: List<View>, labels: List<android.widget.TextView>, selectedIndex: Int) {
+        val strokePx = (2 * resources.displayMetrics.density).toInt()
+        views.forEachIndexed { index, view ->
+            (view as com.google.android.material.card.MaterialCardView).strokeWidth = if (index == selectedIndex) strokePx else 0
+        }
+        labels.forEachIndexed { index, label ->
+            label.setTextColor(if (index == selectedIndex) getColor(R.color.orange_primary) else Color.parseColor("#A0A0A5"))
+        }
+    }
+
+    private fun applyThemePreset(index: Int) {
+        when (index) {
+            0 -> {
+                useBgBox = false
+                textColor = Color.WHITE
+                fontType = "SANS_SERIF_LIGHT"
+                fontSize = 28f
+            }
+            1 -> {
+                useBgBox = true
+                textColor = Color.YELLOW
+                fontType = "MONOSPACE"
+                fontSize = 40f
+            }
+            2 -> {
+                useBgBox = true
+                textColor = Color.WHITE
+                fontType = "SERIF"
+                fontSize = 36f
+            }
+            3 -> {
+                useBgBox = true
+                textColor = Color.YELLOW
+                fontType = "SANS_SERIF_BLACK"
+                fontSize = 50f
+            }
+        }
+        setupUI()
+        Toast.makeText(this, "테마가 변경되었습니다.", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun createThemePreviewBitmap(themeIndex: Int): Bitmap {
+        val w = 240
+        val h = 240
+        val bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        canvas.drawColor(Color.parseColor("#1A1A1E"))
+
+        data class ThemeCfg(val color: Int, val font: String, val size: Float, val bg: Boolean)
+        val themes = arrayOf(
+            ThemeCfg(Color.WHITE, "SANS_SERIF_LIGHT", 20f, false),
+            ThemeCfg(Color.YELLOW, "MONOSPACE", 24f, true),
+            ThemeCfg(Color.WHITE, "SERIF", 22f, true),
+            ThemeCfg(Color.YELLOW, "SANS_SERIF_BLACK", 28f, true)
+        )
+        val cfg = themes[themeIndex]
+        val typeface = when (cfg.font) {
+            "SERIF" -> Typeface.create(Typeface.SERIF, Typeface.BOLD)
+            "MONOSPACE" -> Typeface.create(Typeface.MONOSPACE, Typeface.BOLD)
+            "SANS_SERIF_LIGHT" -> Typeface.create("sans-serif-light", Typeface.BOLD)
+            "SANS_SERIF_BLACK" -> Typeface.create("sans-serif-black", Typeface.BOLD)
+            else -> Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = cfg.color
+            textSize = cfg.size
+            this.typeface = typeface
+            setShadowLayer(2f, 1f, 1f, Color.BLACK)
+        }
+        val lines = listOf("현장명", "2026-03-25")
+        val fm = paint.fontMetrics
+        val lineH = fm.descent - fm.ascent
+        val spacing = cfg.size * 0.4f
+        val totalH = lines.size * lineH + (lines.size - 1) * spacing
+        val maxW = lines.maxOf { paint.measureText(it) }
+        val startX = 14f
+        val startY = h - 14f - totalH
+
+        if (cfg.bg) {
+            val pad = cfg.size * 0.3f
+            val bgPaint = Paint().apply { color = Color.parseColor("#88000000") }
+            canvas.drawRoundRect(RectF(startX - pad, startY - pad, startX + maxW + pad, startY + totalH + pad), 5f, 5f, bgPaint)
+        }
+        var y = startY - fm.ascent
+        for (line in lines) {
+            canvas.drawText(line, startX, y, paint)
+            y += lineH + spacing
+        }
+        return bitmap
     }
 
     // 💡 선택된 RGB 값으로 동그란 미리보기 색상 및 텍스트를 업데이트하는 함수

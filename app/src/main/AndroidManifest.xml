@@ -61,6 +61,26 @@
             android:screenOrientation="portrait"
             android:exported="false" />
 
+        <activity android:name=".WatermarkMenuActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
+        <activity android:name=".DataManagementActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
+        <activity android:name=".SettingsBackupActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
+        <activity android:name=".CapturePrivacySettingsActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
+        <activity android:name=".AppInfoActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
         <activity android:name=".BatchEditActivity"
             android:screenOrientation="portrait"
             android:exported="false" />

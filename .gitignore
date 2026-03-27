@@ -19,3 +19,4 @@ local.properties
 /app/release/baselineProfiles/1/app-release.dm
 /app/release/siteboard.apk.txt
 /*.log
+/app/release/app-release.aab
