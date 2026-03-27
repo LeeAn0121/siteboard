@@ -22,10 +22,10 @@ if (versionPropsFile.canRead()) {
     versionProps.setProperty("BUILD_NUMBER", "0")
 }
 
-val vMajor = (versionProps.getProperty("VERSION_MAJOR") ?: "1").toInt()
-val vMinor = (versionProps.getProperty("VERSION_MINOR") ?: "0").toInt()
-val vPatch = (versionProps.getProperty("VERSION_PATCH") ?: "0").toInt()
-val buildNum = (versionProps.getProperty("BUILD_NUMBER") ?: "0").toInt() + 1
+val vMajor = (versionProps.getProperty("VERSION_MAJOR") ?: "1").trim().toInt()
+val vMinor = (versionProps.getProperty("VERSION_MINOR") ?: "0").trim().toInt()
+val vPatch = (versionProps.getProperty("VERSION_PATCH") ?: "0").trim().toInt()
+val buildNum = (versionProps.getProperty("BUILD_NUMBER") ?: "0").trim().toInt() + 1
 
 versionProps.setProperty("BUILD_NUMBER", buildNum.toString())
 versionProps.store(versionPropsFile.writer(), "Auto-increment build version")

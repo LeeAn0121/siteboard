@@ -54,73 +54,6 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_surface_card_soft"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:layout_marginBottom="12dp">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="빠른 작업"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="기록을 찾고, 필요한 순간에만 PDF를 내보내는 흐름으로 정리했습니다."
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:layout_marginTop="10dp">
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/btnQuickAdd"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="빠른 등록"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:background="@drawable/bg_chip_neutral"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="9dp"
-                    android:layout_marginEnd="8dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground" />
-
-                <androidx.appcompat.widget.AppCompatTextView
-                    android:id="@+id/btnQuickPdf"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="PDF 정리"
-                    android:textColor="@color/text_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold"
-                    android:gravity="center"
-                    android:background="@drawable/bg_chip_neutral"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="9dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:orientation="vertical">
 
             <LinearLayout
@@ -152,17 +85,23 @@
                     android:paddingHorizontal="12dp" />
             </LinearLayout>
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/btnExportPdf"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:background="@drawable/bg_secondary_button"
+                android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="PDF 보고서 내보내기"
-                android:textAllCaps="false"
-                android:textColor="@color/orange_primary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/btnExportPdf"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:background="@drawable/bg_secondary_button"
+                    android:text="보고서 내보내기"
+                    android:textAllCaps="false"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
