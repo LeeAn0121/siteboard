@@ -74,6 +74,17 @@ class HomeFragment : Fragment() {
             val intent = Intent(requireContext(), SubActivity::class.java)
             startActivity(intent)
         }
+        binding.btnQuickAdd.setOnClickListener {
+            val intent = Intent(requireContext(), SubActivity::class.java)
+            startActivity(intent)
+        }
+        binding.btnQuickPdf.setOnClickListener {
+            if (allPosts.isEmpty()) {
+                android.widget.Toast.makeText(requireContext(), "추출할 현장 기록이 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
+            } else {
+                exportToPdf()
+            }
+        }
 
         // 💡 4. 선택 모드 취소/삭제 버튼 리스너
         binding.btnCancelSelection.setOnClickListener {

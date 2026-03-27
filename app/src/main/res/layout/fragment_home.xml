@@ -81,7 +81,8 @@
                 android:orientation="horizontal"
                 android:layout_marginTop="10dp">
 
-                <TextView
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/btnQuickAdd"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -93,9 +94,13 @@
                     android:background="@drawable/bg_chip_neutral"
                     android:paddingHorizontal="12dp"
                     android:paddingVertical="9dp"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground" />
 
-                <TextView
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/btnQuickPdf"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -106,7 +111,10 @@
                     android:gravity="center"
                     android:background="@drawable/bg_chip_neutral"
                     android:paddingHorizontal="12dp"
-                    android:paddingVertical="9dp" />
+                    android:paddingVertical="9dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground" />
             </LinearLayout>
         </LinearLayout>
 
