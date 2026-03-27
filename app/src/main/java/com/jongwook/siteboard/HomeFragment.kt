@@ -104,6 +104,7 @@ class HomeFragment : Fragment() {
                         // DB 삭제
                         try {
                             db.postDao().deleteList(postsToDelete)
+                            AppDatabase.backupNow(requireContext().applicationContext)
                         } catch (e: Exception) { e.printStackTrace() }
 
                         kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {

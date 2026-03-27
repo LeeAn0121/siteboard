@@ -136,7 +136,10 @@ class DetailActivity : AppCompatActivity() {
                 // DB에서 레코드 삭제 (getById로 전체 엔티티 조회 후 삭제)
                 try {
                     val post = db.postDao().getById(id)
-                    if (post != null) db.postDao().delete(post)
+                    if (post != null) {
+                        db.postDao().delete(post)
+                        AppDatabase.backupNow(applicationContext)
+                    }
                 } catch (e: Exception) { e.printStackTrace() }
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@DetailActivity, "워터마크 기록이 삭제되었습니다. 원본은 갤러리에 유지됩니다.", Toast.LENGTH_SHORT).show()

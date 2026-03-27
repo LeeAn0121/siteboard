@@ -3,45 +3,74 @@ package com.jongwook.siteboard
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import kotlin.jvm.java
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SplashActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 💡 스플래시 레이아웃 설정 (아까 그 주황색 화면)
         setContentView(R.layout.activity_splash)
 
-        // 1.5초 동안 로고 보여주면서 권한 체크 진행
-        Handler(Looper.getMainLooper()).postDelayed({
+        lifecycleScope.launch {
+            val isFirstInstall = AppDatabase.isFirstInstall(applicationContext)
+            // 1.5초 대기와 백업 확인을 동시에 실행
+            val delayJob = async(Dispatchers.Default) { kotlinx.coroutines.delay(1500) }
+            val backupJob = async(Dispatchers.IO) {
+                if (isFirstInstall)
+                    AppDatabase.findDownloadsBackup(applicationContext)
+                else null
+            }
+            delayJob.await()
+            val backupUri = backupJob.await()
+
+            if (isFinishing) return@launch
+
+            if (backupUri != null) {
+                restoreBackupAndNavigate(backupUri)
+            } else {
+                if (isFirstInstall) {
+                    Toast.makeText(
+                        this@SplashActivity,
+                        "복원 가능한 백업 파일을 찾지 못했습니다. 새로 시작합니다.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                checkPermissionsAndNavigate()
+            }
+        }
+    }
+
+    private fun restoreBackupAndNavigate(backupUri: Uri) {
+        lifecycleScope.launch {
+            val success = withContext(Dispatchers.IO) {
+                AppDatabase.restoreFromBackup(applicationContext, backupUri)
+            }
+            Toast.makeText(
+                this@SplashActivity,
+                if (success) "이전 기록 데이터를 자동으로 복원했습니다." else "복원에 실패했습니다. 새로 시작합니다.",
+                Toast.LENGTH_SHORT
+            ).show()
             checkPermissionsAndNavigate()
-        }, 1500)
+        }
     }
 
     private fun checkPermissionsAndNavigate() {
-        // 필수 권한들 리스트
         val requiredPermissions = arrayOf(
             Manifest.permission.CAMERA,
-            Manifest.permission.READ_MEDIA_IMAGES // Android 13+ 기준
+            Manifest.permission.READ_MEDIA_IMAGES
         )
-
-        // 모든 권한이 허용되었는지 확인
         val allGranted = requiredPermissions.all {
             ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
         }
-
-        if (allGranted) {
-            // ✅ 권한이 이미 있다면? -> 바로 메인으로!
-            startActivity(Intent(this, MainActivity::class.java))
-        } else {
-            // ❌ 권한이 하나라도 없다면? -> 권한 안내 화면으로!
-            startActivity(Intent(this, PermissionActivity::class.java))
-        }
-        finish() // 스플래시는 이제 안녕!
+        startActivity(Intent(this, if (allGranted) MainActivity::class.java else PermissionActivity::class.java))
+        finish()
     }
 }

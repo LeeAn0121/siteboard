@@ -336,6 +336,10 @@ class BatchEditActivity : AppCompatActivity() {
                 }
             }
 
+            if (successCount > 0) {
+                AppDatabase.backupNow(applicationContext)
+            }
+
             withContext(Dispatchers.Main) {
                 binding.layoutLoading.visibility = View.GONE
                 binding.btnApplyAll.isEnabled = true
@@ -389,11 +393,11 @@ class BatchEditActivity : AppCompatActivity() {
         val canvas = Canvas(result)
 
         val wmPrefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
-        val baseFontSize = wmPrefs.getFloat("wm_font_size", 40f)
+        val baseFontSize = wmPrefs.getFloat("wm_font_size", 30f)
         val useBgBox = wmPrefs.getBoolean("wm_use_bg", true)
-        val textColorCode = wmPrefs.getInt("wm_color", Color.YELLOW)
+        val textColorCode = wmPrefs.getInt("wm_color", Color.WHITE)
         val fontType = wmPrefs.getString("wm_font", "DEFAULT") ?: "DEFAULT"
-        val baseMarginX = wmPrefs.getInt("wm_margin_x", 50)
+        val baseMarginX = wmPrefs.getInt("wm_margin_x", 10)
         val baseMarginY = wmPrefs.getInt("wm_margin_y", 50)
 
         val scaleX = result.width / 1000f

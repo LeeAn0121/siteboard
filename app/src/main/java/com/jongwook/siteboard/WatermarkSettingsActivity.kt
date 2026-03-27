@@ -23,13 +23,13 @@ class WatermarkSettingsActivity : AppCompatActivity() {
     // 💡 기본 워터마크 설정 변수
     private var isTop = false
     private var isLeft = true
-    private var marginX = 50
+    private var marginX = 10
     private var marginY = 50
-    private var fontSize = 40f
+    private var fontSize = 30f
     private var useBgBox = true
 
     // 💡 추가된 커스텀 설정 변수 (색상, 폰트)
-    private var textColor = Color.YELLOW
+    private var textColor = Color.WHITE
     private var fontType = "DEFAULT"
 
     // 💡 스피너(드롭다운)에 보여질 폰트 목록과 실제 시스템 값
@@ -65,13 +65,13 @@ class WatermarkSettingsActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
         isTop = prefs.getBoolean("wm_is_top", false)
         isLeft = prefs.getBoolean("wm_is_left", true)
-        marginX = prefs.getInt("wm_margin_x", 50)
+        marginX = prefs.getInt("wm_margin_x", 10)
         marginY = prefs.getInt("wm_margin_y", 50)
-        fontSize = prefs.getFloat("wm_font_size", 40f)
+        fontSize = prefs.getFloat("wm_font_size", 30f)
         useBgBox = prefs.getBoolean("wm_use_bg", true)
 
-        // 색상과 폰트도 불러옵니다 (없으면 기본값 노란색, 기본고딕)
-        textColor = prefs.getInt("wm_color", Color.YELLOW)
+        // 색상과 폰트도 불러옵니다 (없으면 기본값 흰색, 기본고딕)
+        textColor = prefs.getInt("wm_color", Color.WHITE)
         fontType = prefs.getString("wm_font", "DEFAULT") ?: "DEFAULT"
     }
 

@@ -334,6 +334,7 @@ class SubActivity : AppCompatActivity() {
                     originalFileName = originalFileName.ifEmpty { null }
                 )
                 if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
+                AppDatabase.backupNow(applicationContext)
 
                 getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE).edit()
                     .putString("last_site_name", title)
@@ -408,6 +409,7 @@ class SubActivity : AppCompatActivity() {
                     originalFileName = editOriginalFileName.ifEmpty { null }
                 )
                 db.postDao().update(post)
+                AppDatabase.backupNow(applicationContext)
 
                 getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE).edit()
                     .putString("last_site_name", title)
@@ -506,11 +508,11 @@ class SubActivity : AppCompatActivity() {
         val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE)
         val isTop        = prefs.getBoolean("wm_is_top", false)
         val isLeft       = prefs.getBoolean("wm_is_left", true)
-        val baseMarginX  = prefs.getInt("wm_margin_x", 50)
+        val baseMarginX  = prefs.getInt("wm_margin_x", 10)
         val baseMarginY  = prefs.getInt("wm_margin_y", 50)
-        val baseFontSize = prefs.getFloat("wm_font_size", 40f)
+        val baseFontSize = prefs.getFloat("wm_font_size", 30f)
         val useBgBox     = prefs.getBoolean("wm_use_bg", true)
-        val textColorCode= prefs.getInt("wm_color", Color.YELLOW)
+        val textColorCode= prefs.getInt("wm_color", Color.WHITE)
         val fontType     = prefs.getString("wm_font", "DEFAULT") ?: "DEFAULT"
 
         val scaleX = resultBitmap.width / 1000f

@@ -7,7 +7,10 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import com.jongwook.siteboard.databinding.ActivityMainBinding
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -28,6 +31,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         db = AppDatabase.getDatabase(this)
+        lifecycleScope.launch(Dispatchers.IO) {
+            AppDatabase.ensureBackupExists(applicationContext)
+        }
 
         // 앱이 켜지면 기본으로 홈 프래그먼트를 보여줌
         if (savedInstanceState == null) {
@@ -43,6 +49,12 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // 앱이 백그라운드로 전환될 때마다 Downloads에 로컬 백업 저장
+        Thread { AppDatabase.backupToDownloads(applicationContext) }.start()
     }
 
     // 프래그먼트를 교체하는 공통 함수

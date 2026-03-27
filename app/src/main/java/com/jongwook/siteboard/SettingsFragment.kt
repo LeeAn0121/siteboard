@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileWriter
@@ -50,6 +52,18 @@ class SettingsFragment : Fragment() {
     ) { uris ->
         if (uris.isNullOrEmpty()) return@registerForActivityResult
         importFromUris(uris)
+    }
+
+    private val exportSettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) exportSettingsToUri(uri)
+    }
+
+    private val importSettingsLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) importSettingsFromUri(uri)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -106,12 +120,126 @@ class SettingsFragment : Fragment() {
 
         // ─── CSV 내보내기 ─────────────────────────────────────────────
         binding.btnExportCsv.setOnClickListener { exportDataToCsv() }
+        binding.btnExportSettings.setOnClickListener {
+            val name = "siteboard_settings_${SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())}.json"
+            exportSettingsLauncher.launch(name)
+        }
+        binding.btnImportSettings.setOnClickListener {
+            importSettingsLauncher.launch(arrayOf("application/json", "*/*"))
+        }
 
         // ─── 현재 버전 표시 ────────────────────────────────────────────
         binding.tvAppVersion.text = BuildConfig.VERSION_NAME_FULL
 
         // ─── 업데이트 확인 ─────────────────────────────────────────────
         binding.btnCheckUpdate.setOnClickListener { checkForUpdate() }
+    }
+
+    private fun exportSettingsToUri(uri: Uri) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val json = buildSettingsBackupJson()
+                requireContext().contentResolver.openOutputStream(uri, "wt")?.use { out ->
+                    out.write(json.toByteArray(Charsets.UTF_8))
+                } ?: throw IllegalStateException("출력 스트림을 열 수 없습니다.")
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "설정 파일을 저장했습니다.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "설정 내보내기 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun importSettingsFromUri(uri: Uri) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val raw = requireContext().contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+                    ?: throw IllegalStateException("파일을 읽을 수 없습니다.")
+                applySettingsBackupJson(raw)
+                AppDatabase.backupNow(requireContext().applicationContext)
+                withContext(Dispatchers.Main) {
+                    refreshSettingsUi()
+                    Toast.makeText(requireContext(), "설정을 불러왔습니다.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "설정 불러오기 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun buildSettingsBackupJson(): String {
+        val root = JSONObject()
+        root.put("format", "siteboard-settings-v1")
+        root.put("exportedAt", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
+        root.put("SiteboardPrefs", prefsToJson("SiteboardPrefs"))
+        root.put("WatermarkPrefs", prefsToJson("WatermarkPrefs"))
+        return root.toString(2)
+    }
+
+    private fun prefsToJson(prefName: String): JSONObject {
+        val prefs = requireContext().getSharedPreferences(prefName, Context.MODE_PRIVATE)
+        val root = JSONObject()
+        for ((key, value) in prefs.all) {
+            val item = JSONObject()
+            when (value) {
+                is String -> { item.put("type", "string"); item.put("value", value) }
+                is Int -> { item.put("type", "int"); item.put("value", value) }
+                is Long -> { item.put("type", "long"); item.put("value", value) }
+                is Float -> { item.put("type", "float"); item.put("value", value.toDouble()) }
+                is Boolean -> { item.put("type", "boolean"); item.put("value", value) }
+                is Set<*> -> {
+                    item.put("type", "string_set")
+                    item.put("value", JSONArray(value.filterIsInstance<String>()))
+                }
+                else -> continue
+            }
+            root.put(key, item)
+        }
+        return root
+    }
+
+    private fun applySettingsBackupJson(raw: String) {
+        val root = JSONObject(raw)
+        applyPrefsJson("SiteboardPrefs", root.getJSONObject("SiteboardPrefs"))
+        applyPrefsJson("WatermarkPrefs", root.getJSONObject("WatermarkPrefs"))
+    }
+
+    private fun applyPrefsJson(prefName: String, json: JSONObject) {
+        val prefs = requireContext().getSharedPreferences(prefName, Context.MODE_PRIVATE)
+        val editor = prefs.edit().clear()
+        val keys = json.keys()
+        while (keys.hasNext()) {
+            val key = keys.next()
+            val item = json.optJSONObject(key) ?: continue
+            when (item.optString("type")) {
+                "string" -> editor.putString(key, item.optString("value"))
+                "int" -> editor.putInt(key, item.optInt("value"))
+                "long" -> editor.putLong(key, item.optLong("value"))
+                "float" -> editor.putFloat(key, item.optDouble("value").toFloat())
+                "boolean" -> editor.putBoolean(key, item.optBoolean("value"))
+                "string_set" -> {
+                    val arr = item.optJSONArray("value") ?: JSONArray()
+                    val values = mutableSetOf<String>()
+                    for (i in 0 until arr.length()) values += arr.optString(i)
+                    editor.putStringSet(key, values)
+                }
+            }
+        }
+        editor.apply()
+    }
+
+    private fun refreshSettingsUi() {
+        val sharedPref = requireActivity().getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
+        binding.switchDeleteOriginal.isChecked = sharedPref.getBoolean("delete_original_mode", false)
+        binding.switchGpsEnabled.isChecked = sharedPref.getBoolean("gps_enabled", true)
+        binding.switchPdfMode.isChecked = sharedPref.getBoolean("pdf_multi_mode", false)
+        binding.switchPrivacyBlur.isChecked = sharedPref.getBoolean("privacy_blur_mode", true)
+        setupThemeSelector()
     }
 
     // GitHub 레포의 version.properties를 직접 읽어 버전을 비교합니다.
@@ -239,6 +367,10 @@ class SettingsFragment : Fragment() {
                 }
 
                 recognizer.close()
+
+                if (importedCount > 0) {
+                    AppDatabase.backupNow(requireContext().applicationContext)
+                }
 
                 withContext(Dispatchers.Main) {
                     val parts = mutableListOf("${importedCount}개 가져옴")
