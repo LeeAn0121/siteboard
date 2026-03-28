@@ -88,7 +88,7 @@
                 android:layout_height="wrap_content"
                 android:text="현장"
                 android:textSize="10sp"
-                android:textColor="@color/teal_accent"
+                android:textColor="@color/orange_primary"
                 android:textStyle="bold"
                 android:letterSpacing="0.1"
                 android:layout_marginBottom="4dp" />

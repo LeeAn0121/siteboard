@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_marginHorizontal="6dp"
     android:layout_marginVertical="5dp"
-    app:cardBackgroundColor="@color/surface_dark"
+    app:cardBackgroundColor="@color/surface_elevated"
     app:cardCornerRadius="22dp"
     app:cardElevation="0dp"
     app:strokeColor="@color/stroke_subtle"
@@ -23,7 +23,7 @@
         <LinearLayout
             android:layout_width="46dp"
             android:layout_height="46dp"
-            android:background="@drawable/bg_chip_neutral"
+            android:background="@drawable/bg_widget_metric_tile"
             android:gravity="center">
 
             <TextView
@@ -63,7 +63,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:textColor="@color/text_tertiary"
+                android:textColor="@color/orange_primary"
                 android:textSize="11sp" />
         </LinearLayout>
 

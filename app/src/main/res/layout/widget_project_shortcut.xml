@@ -2,23 +2,26 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_surface_card_soft"
+    android:background="@drawable/bg_widget_actual_luxury"
     android:orientation="vertical"
     android:padding="16dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="최근 현장"
+        android:background="@drawable/bg_widget_preview_pill"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:text="현장 바로가기"
         android:textColor="#FFFFB36B"
-        android:textSize="11sp"
+        android:textSize="10sp"
         android:textStyle="bold" />
 
     <TextView
         android:id="@+id/tvWidgetProjectTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:text="기록 없음"
@@ -32,7 +35,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:text="사진 0장"
-        android:textColor="#B3C0D0"
+        android:textColor="#D6DEE8"
         android:textSize="12sp" />
 
     <TextView
@@ -41,7 +44,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:text="업데이트 00:00"
-        android:textColor="#738297"
+        android:textColor="#8F9FB0"
         android:textSize="11sp" />
 
     <LinearLayout

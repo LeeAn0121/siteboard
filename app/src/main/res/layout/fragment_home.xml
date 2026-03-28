@@ -118,17 +118,19 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:orientation="horizontal">
+            android:background="@drawable/bg_surface_card_soft"
+            android:orientation="horizontal"
+            android:padding="10dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginEnd="6dp"
-                app:cardBackgroundColor="@color/surface_dark"
+                app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/stroke_subtle"
+                app:strokeColor="#26FFFFFF"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -161,10 +163,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginHorizontal="3dp"
-                app:cardBackgroundColor="@color/surface_dark"
+                app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/stroke_subtle"
+                app:strokeColor="#26FFFFFF"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -197,10 +199,10 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
-                app:cardBackgroundColor="@color/surface_dark"
+                app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/stroke_subtle"
+                app:strokeColor="#26FFFFFF"
                 app:strokeWidth="1dp">
 
                 <LinearLayout

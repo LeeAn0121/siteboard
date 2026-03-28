@@ -3,90 +3,104 @@
     android:id="@+id/widgetStatsRoot"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg_surface_card_soft"
+    android:background="@drawable/bg_widget_actual_luxury"
     android:orientation="vertical"
     android:padding="16dp">
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="@drawable/bg_widget_preview_pill"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
         android:text="현장 대시보드"
         android:textColor="#FFFFB36B"
-        android:textSize="11sp"
+        android:textSize="10sp"
         android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal">
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:background="@drawable/bg_widget_metric_tile"
+            android:orientation="vertical"
+            android:padding="10dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="오늘"
-                android:textColor="#B3C0D0"
-                android:textSize="11sp" />
+                android:textColor="#C7D0DB"
+                android:textSize="10sp" />
 
             <TextView
                 android:id="@+id/tvWidgetTodayCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="22sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:background="@drawable/bg_widget_metric_tile"
+            android:orientation="vertical"
+            android:padding="10dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="전체"
-                android:textColor="#B3C0D0"
-                android:textSize="11sp" />
+                android:textColor="#C7D0DB"
+                android:textSize="10sp" />
 
             <TextView
                 android:id="@+id/tvWidgetTotalCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="22sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            android:background="@drawable/bg_widget_metric_tile"
+            android:orientation="vertical"
+            android:padding="10dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="현장"
-                android:textColor="#B3C0D0"
-                android:textSize="11sp" />
+                android:textColor="#C7D0DB"
+                android:textSize="10sp" />
 
             <TextView
                 android:id="@+id/tvWidgetProjectCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="22sp"
+                android:textSize="20sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
@@ -95,11 +109,11 @@
         android:id="@+id/tvWidgetRecentProject"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:text="최근 현장 없음"
-        android:textColor="#CCFFFFFF"
+        android:textColor="#E4E8EE"
         android:textSize="12sp" />
 
     <TextView
@@ -108,7 +122,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
         android:text="업데이트 00:00"
-        android:textColor="#738297"
+        android:textColor="#8F9FB0"
         android:textSize="11sp" />
 
     <LinearLayout
