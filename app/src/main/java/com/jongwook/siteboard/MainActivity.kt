@@ -24,6 +24,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
         SiteboardNotificationManager.ensureChannels(this)
         SiteboardWidgetManager.refreshAll(applicationContext)
+        SiteboardNotificationManager.ensureChannels(this)
+        SiteboardWidgetManager.refreshAll(applicationContext)
 
         // 하단 네비게이션 바 패딩 처리
         ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNavigationView) { v, insets ->
@@ -39,8 +41,9 @@ class MainActivity : AppCompatActivity() {
 
         // 앱이 켜지면 기본으로 홈 프래그먼트를 보여줌
         if (savedInstanceState == null) {
-            replaceFragment(HomeFragment())
+            replaceFragment(fragmentForTab(intent.getStringExtra(EXTRA_OPEN_TAB)))
         }
+        binding.bottomNavigationView.selectedItemId = menuIdForTab(intent.getStringExtra(EXTRA_OPEN_TAB))
 
         // 하단 탭 바 터치 이벤트 처리
         binding.bottomNavigationView.setOnItemSelectedListener { item ->
@@ -64,5 +67,28 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.mainContainer, fragment)
             .commit()
+    }
+
+    private fun fragmentForTab(tab: String?): Fragment {
+        return when (tab) {
+            TAB_ARCHIVE -> ArchiveFragment()
+            TAB_SETTINGS -> SettingsFragment()
+            else -> HomeFragment()
+        }
+    }
+
+    private fun menuIdForTab(tab: String?): Int {
+        return when (tab) {
+            TAB_ARCHIVE -> R.id.nav_archive
+            TAB_SETTINGS -> R.id.nav_settings
+            else -> R.id.nav_home
+        }
+    }
+
+    companion object {
+        const val EXTRA_OPEN_TAB = "open_tab"
+        const val TAB_HOME = "home"
+        const val TAB_ARCHIVE = "archive"
+        const val TAB_SETTINGS = "settings"
     }
 }

@@ -9,6 +9,16 @@ import kotlinx.coroutines.launch
 
 class ProjectWidgetActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
+        if (intent?.action == ACTION_REFRESH_WIDGETS) {
+            SiteboardWidgetManager.refreshAll(context.applicationContext)
+            SiteboardNotificationManager.showStatusNotification(
+                context.applicationContext,
+                "위젯 갱신",
+                "홈 화면 위젯 정보를 최신 상태로 새로고침했습니다.",
+                4100
+            )
+            return
+        }
         if (intent?.action != ACTION_EXPORT_LATEST_PROJECT_PDF) return
         val pendingResult = goAsync()
         val appContext = context.applicationContext
@@ -35,7 +45,7 @@ class ProjectWidgetActionReceiver : BroadcastReceiver() {
 
     companion object {
         const val ACTION_EXPORT_LATEST_PROJECT_PDF = "com.jongwook.siteboard.EXPORT_LATEST_PROJECT_PDF"
+        const val ACTION_REFRESH_WIDGETS = "com.jongwook.siteboard.REFRESH_WIDGETS"
         const val EXTRA_PROJECT_TITLE = "project_title"
     }
 }
-

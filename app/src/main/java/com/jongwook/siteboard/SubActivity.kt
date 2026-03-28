@@ -163,6 +163,11 @@ class SubActivity : AppCompatActivity() {
             if (!savedWorkContent.isNullOrEmpty()) binding.etDesc.setText(savedWorkContent)
             val savedDetailLoc = prefs.getString("last_detail_loc", "")
             if (!savedDetailLoc.isNullOrEmpty()) binding.etDetailLocation.setText(savedDetailLoc)
+            val prefillTitle = intent.getStringExtra(EXTRA_PREFILL_TITLE).orEmpty()
+            if (prefillTitle.isNotBlank()) {
+                binding.etTitle.setText(prefillTitle)
+                binding.etTitle.setSelection(prefillTitle.length)
+            }
         }
 
         setupClearButton(binding.etTitle)
@@ -693,5 +698,9 @@ class SubActivity : AppCompatActivity() {
         val final_ = Bitmap.createScaledBitmap(small, sw, sh, false)
         canvas.drawBitmap(final_, sl.toFloat(), st.toFloat(), null)
         cropped.recycle(); small.recycle(); final_.recycle()
+    }
+
+    companion object {
+        const val EXTRA_PREFILL_TITLE = "prefill_title"
     }
 }
