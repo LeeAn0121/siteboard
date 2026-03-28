@@ -349,6 +349,13 @@ class BatchEditActivity : AppCompatActivity() {
                 else
                     "${successCount}장 저장 완료, ${failCount}장 실패"
                 Toast.makeText(this@BatchEditActivity, msg, Toast.LENGTH_LONG).show()
+                if (successCount > 0) {
+                    SiteboardNotificationManager.showSaveSuccessNotification(
+                        this@BatchEditActivity,
+                        msg,
+                        4203
+                    )
+                }
                 if (successCount > 0) finish()
             }
         }

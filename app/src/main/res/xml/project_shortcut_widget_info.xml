@@ -3,6 +3,8 @@
     android:minWidth="220dp"
     android:minHeight="120dp"
     android:updatePeriodMillis="0"
+    android:configure="com.jongwook.siteboard.ProjectWidgetConfigActivity"
     android:initialLayout="@layout/widget_project_shortcut"
+    android:previewLayout="@layout/widget_preview_project_shortcut"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen" />

@@ -51,6 +51,12 @@ object SiteboardNotificationManager {
         if (!canPostNotifications(context)) return
         ensureChannels(context)
 
+        val posts = AppDatabase.getDatabase(context).postDao().getAllPostsOnce()
+        val today = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date())
+        val hasTodayRecord = posts.any { it.date.startsWith(today) }
+        val isMissedDay = !hasTodayRecord && NotificationPreferences.isMissedDayEnabled(context)
+        if (!hasTodayRecord && !NotificationPreferences.isMissedDayEnabled(context)) return
+
         val intent = Intent(context, SubActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -63,8 +69,8 @@ object SiteboardNotificationManager {
 
         val notification = NotificationCompat.Builder(context, REMINDER_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
-            .setContentTitle("SITEBOARD 기록 알림")
-            .setContentText("오늘 현장 기록을 남길 시간이 되었습니다.")
+            .setContentTitle(if (isMissedDay) "SITEBOARD 미기록 경고" else "SITEBOARD 기록 알림")
+            .setContentText(if (isMissedDay) "오늘 저장된 현장 기록이 없습니다. 지금 바로 남겨두세요." else "오늘 현장 기록을 남길 시간이 되었습니다.")
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -99,5 +105,14 @@ object SiteboardNotificationManager {
 
         NotificationManagerCompat.from(context).notify(notificationId, notification)
     }
-}
 
+    fun showSaveSuccessNotification(context: Context, message: String, notificationId: Int) {
+        if (!NotificationPreferences.isSaveSuccessEnabled(context)) return
+        showStatusNotification(context, "기록 저장 완료", message, notificationId)
+    }
+
+    fun showPdfCompleteNotification(context: Context, message: String, notificationId: Int) {
+        if (!NotificationPreferences.isPdfCompleteEnabled(context)) return
+        showStatusNotification(context, "PDF 저장 완료", message, notificationId)
+    }
+}

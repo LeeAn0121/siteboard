@@ -38,12 +38,24 @@ class NotificationSettingsActivity : AppCompatActivity() {
         binding.btnBack.setOnClickListener { finish() }
         binding.tvReminderTime.text = "매일 18:00"
         binding.switchDailyReminder.isChecked = ReminderScheduler.isEnabled(this)
+        binding.switchSaveSuccess.isChecked = NotificationPreferences.isSaveSuccessEnabled(this)
+        binding.switchPdfComplete.isChecked = NotificationPreferences.isPdfCompleteEnabled(this)
+        binding.switchMissedDay.isChecked = NotificationPreferences.isMissedDayEnabled(this)
         binding.switchDailyReminder.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 enableReminder()
             } else {
                 ReminderScheduler.setEnabled(this, false)
             }
+        }
+        binding.switchSaveSuccess.setOnCheckedChangeListener { _, isChecked ->
+            NotificationPreferences.setSaveSuccessEnabled(this, isChecked)
+        }
+        binding.switchPdfComplete.setOnCheckedChangeListener { _, isChecked ->
+            NotificationPreferences.setPdfCompleteEnabled(this, isChecked)
+        }
+        binding.switchMissedDay.setOnCheckedChangeListener { _, isChecked ->
+            NotificationPreferences.setMissedDayEnabled(this, isChecked)
         }
         binding.btnTestNotification.setOnClickListener {
             SiteboardNotificationManager.showReminderNotification(this)

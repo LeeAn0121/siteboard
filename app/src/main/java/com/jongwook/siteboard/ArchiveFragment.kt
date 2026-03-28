@@ -220,6 +220,11 @@ class ArchiveFragment : Fragment() {
                 pdfDocument.close()
 
                 withContext(Dispatchers.Main) {
+                    SiteboardNotificationManager.showPdfCompleteNotification(
+                        requireContext(),
+                        "[$siteTitle] PDF를 ${file.name}으로 저장했습니다.",
+                        4302
+                    )
                     val snackbar = Snackbar.make(requireView(), "[$siteTitle] PDF 저장 완료 📄", Snackbar.LENGTH_LONG)
                     snackbar.setAction("폴더 열기") {
                         try {

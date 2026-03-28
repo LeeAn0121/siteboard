@@ -27,10 +27,11 @@ data class WidgetSnapshot(
 object SiteboardWidgetManager {
     fun refreshAll(context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
-            val snapshot = loadSnapshot(context)
+            val posts = AppDatabase.getDatabase(context).postDao().getAllPostsOnce()
+            val snapshot = loadSnapshot(posts)
             updateQuickAddWidget(context)
             updateStatsWidget(context, snapshot)
-            updateProjectWidget(context, snapshot)
+            updateProjectWidget(context, posts, snapshot)
         }
     }
 
@@ -72,8 +73,9 @@ object SiteboardWidgetManager {
             views.setTextViewText(R.id.tvWidgetProjectCount, snapshot.projectCount.toString())
             views.setTextViewText(R.id.tvWidgetRecentProject, "최근 현장 · ${snapshot.recentProject}")
             views.setTextViewText(R.id.tvWidgetUpdatedAt, snapshot.lastUpdated)
+
             val openIntent = Intent(context, MainActivity::class.java)
-            val pendingIntent = PendingIntent.getActivity(
+            val homePendingIntent = PendingIntent.getActivity(
                 context,
                 appWidgetId + 1000,
                 openIntent,
@@ -104,26 +106,35 @@ object SiteboardWidgetManager {
                 refreshIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.widgetStatsRoot, pendingIntent)
-            views.setOnClickPendingIntent(R.id.btnWidgetOpenHome, pendingIntent)
+
+            views.setOnClickPendingIntent(R.id.widgetStatsRoot, homePendingIntent)
+            views.setOnClickPendingIntent(R.id.btnWidgetOpenHome, homePendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetOpenArchiveMini, archivePendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetAddRecordMini, addPendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetRefreshMini, refreshPendingIntent)
+
+            applyStatsWidgetSizing(appWidgetManager.getAppWidgetOptions(appWidgetId), views)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 
-    fun updateProjectWidget(context: Context, snapshot: WidgetSnapshot) {
+    fun updateProjectWidget(context: Context, posts: List<PostEntity>, fallbackSnapshot: WidgetSnapshot) {
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, ProjectShortcutWidgetProvider::class.java))
         ids.forEach { appWidgetId ->
+            val selectedTitle = WidgetPreferences.getSelectedProject(context, appWidgetId)
+            val title = resolveProjectTitle(posts, selectedTitle, fallbackSnapshot.recentProject)
+            val projectPosts = posts.filter { it.title == title }
+            val recentDate = projectPosts.firstOrNull()?.date ?: "최근 기록 없음"
+            val updatedAt = "업데이트 ${SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())}"
+
             val views = RemoteViews(context.packageName, R.layout.widget_project_shortcut)
-            views.setTextViewText(R.id.tvWidgetProjectTitle, snapshot.recentProject)
-            views.setTextViewText(R.id.tvWidgetProjectMeta, "사진 ${snapshot.recentProjectCount}장 · ${snapshot.recentDate}")
-            views.setTextViewText(R.id.tvWidgetProjectUpdatedAt, snapshot.lastUpdated)
+            views.setTextViewText(R.id.tvWidgetProjectTitle, title)
+            views.setTextViewText(R.id.tvWidgetProjectMeta, "사진 ${projectPosts.size}장 · ${recentDate}")
+            views.setTextViewText(R.id.tvWidgetProjectUpdatedAt, updatedAt)
 
             val openIntent = Intent(context, ProjectDetailActivity::class.java).apply {
-                putExtra("PROJECT_TITLE", snapshot.recentProject)
+                putExtra("PROJECT_TITLE", title)
             }
             val openPendingIntent = PendingIntent.getActivity(
                 context,
@@ -131,9 +142,8 @@ object SiteboardWidgetManager {
                 openIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.btnWidgetOpenProject, openPendingIntent)
             val addIntent = Intent(context, SubActivity::class.java).apply {
-                putExtra(SubActivity.EXTRA_PREFILL_TITLE, snapshot.recentProject)
+                putExtra(SubActivity.EXTRA_PREFILL_TITLE, title)
             }
             val addPendingIntent = PendingIntent.getActivity(
                 context,
@@ -141,10 +151,9 @@ object SiteboardWidgetManager {
                 addIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-
             val exportIntent = Intent(context, ProjectWidgetActionReceiver::class.java).apply {
                 action = ProjectWidgetActionReceiver.ACTION_EXPORT_LATEST_PROJECT_PDF
-                putExtra(ProjectWidgetActionReceiver.EXTRA_PROJECT_TITLE, snapshot.recentProject)
+                putExtra(ProjectWidgetActionReceiver.EXTRA_PROJECT_TITLE, title)
             }
             val exportPendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -152,7 +161,6 @@ object SiteboardWidgetManager {
                 exportIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            views.setOnClickPendingIntent(R.id.btnWidgetExportPdf, exportPendingIntent)
             val refreshIntent = Intent(context, ProjectWidgetActionReceiver::class.java).apply {
                 action = ProjectWidgetActionReceiver.ACTION_REFRESH_WIDGETS
             }
@@ -162,14 +170,26 @@ object SiteboardWidgetManager {
                 refreshIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+
+            views.setOnClickPendingIntent(R.id.btnWidgetOpenProject, openPendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetAddSameProject, addPendingIntent)
+            views.setOnClickPendingIntent(R.id.btnWidgetExportPdf, exportPendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetProjectRefresh, refreshPendingIntent)
+
+            applyProjectWidgetSizing(appWidgetManager.getAppWidgetOptions(appWidgetId), views)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 
-    private fun loadSnapshot(context: Context): WidgetSnapshot {
-        val posts = AppDatabase.getDatabase(context).postDao().getAllPostsOnce()
+    private fun resolveProjectTitle(posts: List<PostEntity>, selectedTitle: String?, fallbackTitle: String): String {
+        return when {
+            !selectedTitle.isNullOrBlank() && posts.any { it.title == selectedTitle } -> selectedTitle
+            posts.any { it.title == fallbackTitle } -> fallbackTitle
+            else -> posts.firstOrNull()?.title ?: "기록 없음"
+        }
+    }
+
+    private fun loadSnapshot(posts: List<PostEntity>): WidgetSnapshot {
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         val todayCount = posts.count { it.date.startsWith(today) }
         val recentProject = posts.firstOrNull()?.title ?: "기록 없음"
@@ -185,5 +205,23 @@ object SiteboardWidgetManager {
             recentDate = recentDate,
             lastUpdated = lastUpdated
         )
+    }
+
+    private fun applyStatsWidgetSizing(options: Bundle, views: RemoteViews) {
+        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+        val showActionRow = minWidth >= 220 && minHeight >= 110
+        views.setViewVisibility(R.id.btnWidgetOpenHome, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
+        views.setViewVisibility(R.id.btnWidgetOpenArchiveMini, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
+        views.setViewVisibility(R.id.btnWidgetAddRecordMini, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
+        views.setViewVisibility(R.id.btnWidgetRefreshMini, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
+    }
+
+    private fun applyProjectWidgetSizing(options: Bundle, views: RemoteViews) {
+        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
+        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+        val showExtra = minWidth >= 240 && minHeight >= 130
+        views.setViewVisibility(R.id.btnWidgetAddSameProject, if (showExtra) android.view.View.VISIBLE else android.view.View.GONE)
+        views.setViewVisibility(R.id.btnWidgetProjectRefresh, if (showExtra) android.view.View.VISIBLE else android.view.View.GONE)
     }
 }

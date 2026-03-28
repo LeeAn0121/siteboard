@@ -11,12 +11,6 @@ class ProjectWidgetActionReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
         if (intent?.action == ACTION_REFRESH_WIDGETS) {
             SiteboardWidgetManager.refreshAll(context.applicationContext)
-            SiteboardNotificationManager.showStatusNotification(
-                context.applicationContext,
-                "위젯 갱신",
-                "홈 화면 위젯 정보를 최신 상태로 새로고침했습니다.",
-                4100
-            )
             return
         }
         if (intent?.action != ACTION_EXPORT_LATEST_PROJECT_PDF) return
@@ -30,9 +24,8 @@ class ProjectWidgetActionReceiver : BroadcastReceiver() {
                     .filter { it.title == projectTitle }
                 if (posts.isNotEmpty()) {
                     val file = SiteboardPdfExporter.exportProjectPdf(appContext, projectTitle, posts)
-                    SiteboardNotificationManager.showStatusNotification(
+                    SiteboardNotificationManager.showPdfCompleteNotification(
                         appContext,
-                        "PDF 저장 완료",
                         "[$projectTitle] 보고서를 ${file.name}으로 저장했습니다.",
                         4101
                     )

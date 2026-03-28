@@ -351,6 +351,11 @@ class SubActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
                     Toast.makeText(this@SubActivity, "현장 기록이 안전하게 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                    SiteboardNotificationManager.showSaveSuccessNotification(
+                        this@SubActivity,
+                        "[$title] 현장 기록이 저장되었습니다.",
+                        4201
+                    )
                     setResult(RESULT_OK)
                     finish()
                 }
@@ -427,6 +432,11 @@ class SubActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
                     Toast.makeText(this@SubActivity, "현장 기록이 안전하게 저장되었습니다.", Toast.LENGTH_SHORT).show()
+                    SiteboardNotificationManager.showSaveSuccessNotification(
+                        this@SubActivity,
+                        "[$title] 현장 기록이 수정 저장되었습니다.",
+                        4202
+                    )
                     setResult(RESULT_OK)
                     finish()
                 }

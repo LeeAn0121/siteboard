@@ -185,6 +185,11 @@ class ProjectDetailActivity : AppCompatActivity() {
                 pdfDocument.close()
 
                 withContext(Dispatchers.Main) {
+                    SiteboardNotificationManager.showPdfCompleteNotification(
+                        this@ProjectDetailActivity,
+                        "[$projectTitle] PDF를 ${file.name}으로 저장했습니다.",
+                        4303
+                    )
                     val snackbar = Snackbar.make(binding.root, "[$projectTitle] PDF 저장 완료 📄", Snackbar.LENGTH_LONG)
                     snackbar.setAction("폴더 열기") {
                         try {
