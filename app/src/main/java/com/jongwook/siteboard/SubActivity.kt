@@ -335,6 +335,7 @@ class SubActivity : AppCompatActivity() {
                 )
                 if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
                 AppDatabase.backupNow(applicationContext)
+                SiteboardWidgetManager.refreshAll(applicationContext)
 
                 getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE).edit()
                     .putString("last_site_name", title)
@@ -410,6 +411,7 @@ class SubActivity : AppCompatActivity() {
                 )
                 db.postDao().update(post)
                 AppDatabase.backupNow(applicationContext)
+                SiteboardWidgetManager.refreshAll(applicationContext)
 
                 getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE).edit()
                     .putString("last_site_name", title)

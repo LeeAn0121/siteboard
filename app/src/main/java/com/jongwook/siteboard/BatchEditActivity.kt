@@ -338,6 +338,7 @@ class BatchEditActivity : AppCompatActivity() {
 
             if (successCount > 0) {
                 AppDatabase.backupNow(applicationContext)
+                SiteboardWidgetManager.refreshAll(applicationContext)
             }
 
             withContext(Dispatchers.Main) {

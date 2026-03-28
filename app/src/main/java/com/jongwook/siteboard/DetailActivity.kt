@@ -132,6 +132,7 @@ class DetailActivity : AppCompatActivity() {
                     if (post != null) {
                         db.postDao().delete(post)
                         AppDatabase.backupNow(applicationContext)
+                        SiteboardWidgetManager.refreshAll(applicationContext)
                     }
                 } catch (e: Exception) { e.printStackTrace() }
                 withContext(Dispatchers.Main) {

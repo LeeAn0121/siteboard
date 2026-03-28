@@ -21,24 +21,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="10dp">
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_hero_panel"
+            android:padding="18dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="ARCHIVE"
+                android:textColor="@color/orange_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="보관함"
-                android:textSize="27sp"
                 android:textColor="@color/text_primary"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvArchiveDesc"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="현장명별로 기록을 모아 보고 PDF로 정리합니다"
+                android:layout_marginTop="4dp"
+                android:text="현장별 묶음, 최근 기록 확인, 개별 현장 PDF 내보내기를 빠르게 처리합니다"
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:layout_marginTop="4dp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout

@@ -30,6 +30,9 @@ interface PostDao {
     @Query("SELECT * FROM site_posts ORDER BY id DESC")
     fun getAllPosts(): kotlinx.coroutines.flow.Flow<List<PostEntity>>
 
+    @Query("SELECT * FROM site_posts ORDER BY id DESC")
+    fun getAllPostsOnce(): List<PostEntity>
+
     @Query("SELECT * FROM site_posts WHERE id = :id LIMIT 1")
     fun getById(id: Int): PostEntity?
 

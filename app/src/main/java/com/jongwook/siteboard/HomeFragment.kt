@@ -231,6 +231,7 @@ class HomeFragment : Fragment() {
                     try {
                         db.postDao().deleteList(postsToDelete)
                         AppDatabase.backupNow(requireContext().applicationContext)
+                        SiteboardWidgetManager.refreshAll(requireContext().applicationContext)
                     } catch (_: Exception) {
                     }
 

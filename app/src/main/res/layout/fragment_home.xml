@@ -21,24 +21,35 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="10dp">
+            android:layout_marginBottom="14dp"
+            android:background="@drawable/bg_hero_panel"
+            android:padding="18dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="FIELD BOARD"
+                android:textColor="@color/orange_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
                 android:text="현장 기록"
-                android:textSize="27sp"
                 android:textColor="@color/text_primary"
+                android:textSize="28sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="기록 검색, 보고서 내보내기, 사진 관리를 한 화면에서 처리합니다"
-                android:textSize="12sp"
+                android:layout_marginTop="4dp"
+                android:text="검색, 정리, 일괄 선택, PDF 내보내기를 한 화면에서 빠르게 처리합니다"
                 android:textColor="@color/text_secondary"
-                android:layout_marginTop="4dp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -115,7 +126,7 @@
                 android:layout_weight="1"
                 android:layout_marginEnd="6dp"
                 app:cardBackgroundColor="@color/surface_dark"
-                app:cardCornerRadius="20dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
                 app:strokeColor="@color/stroke_subtle"
                 app:strokeWidth="1dp">
@@ -187,7 +198,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="6dp"
                 app:cardBackgroundColor="@color/surface_dark"
-                app:cardCornerRadius="20dp"
+                app:cardCornerRadius="18dp"
                 app:cardElevation="0dp"
                 app:strokeColor="@color/stroke_subtle"
                 app:strokeWidth="1dp">
@@ -218,32 +229,45 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvResultSummary"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:text="전체 기록을 최신순으로 보고 있습니다"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp" />
+            android:background="@drawable/bg_surface_card_soft"
+            android:orientation="vertical"
+            android:padding="14dp">
 
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:scrollbars="none">
-
-            <LinearLayout
+            <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:text="빠른 필터"
+                android:textColor="@color/orange_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvResultSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="전체 기록을 최신순으로 보고 있습니다"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <com.google.android.material.chip.ChipGroup
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:chipSpacingHorizontal="8dp"
+                app:chipSpacingVertical="8dp"
+                app:singleLine="false">
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/chipFilterAll"
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="전체"
+                    android:text="전체 기록"
                     android:checked="true"
                     app:chipBackgroundColor="@color/surface_dark"
                     app:chipStrokeColor="@color/stroke_subtle"
@@ -256,8 +280,7 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="오늘"
+                    android:text="오늘 추가"
                     app:chipBackgroundColor="@color/surface_dark"
                     app:chipStrokeColor="@color/stroke_subtle"
                     app:chipStrokeWidth="1dp"
@@ -269,8 +292,7 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="메모"
+                    android:text="메모 있음"
                     app:chipBackgroundColor="@color/surface_dark"
                     app:chipStrokeColor="@color/stroke_subtle"
                     app:chipStrokeWidth="1dp"
@@ -282,36 +304,30 @@
                     style="@style/Widget.MaterialComponents.Chip.Choice"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="상세 위치 미입력"
+                    android:text="위치 미입력"
                     app:chipBackgroundColor="@color/surface_dark"
                     app:chipStrokeColor="@color/stroke_subtle"
                     app:chipStrokeWidth="1dp"
                     app:checkedIconVisible="false"
                     android:textColor="@color/text_primary" />
-            </LinearLayout>
-        </HorizontalScrollView>
-
-        <HorizontalScrollView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:scrollbars="none">
+            </com.google.android.material.chip.ChipGroup>
 
             <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/toggleSort"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 app:singleSelection="true"
                 app:selectionRequired="true">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSortRecent"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="40dp"
+                    android:layout_weight="1"
                     android:minWidth="0dp"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="8dp"
                     android:text="최신순"
                     android:textAllCaps="false"
                     android:textColor="@color/text_primary"
@@ -321,10 +337,11 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSortName"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="40dp"
+                    android:layout_weight="1"
                     android:minWidth="0dp"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="8dp"
                     android:text="이름순"
                     android:textAllCaps="false"
                     android:textColor="@color/text_primary"
@@ -334,17 +351,18 @@
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnSortOldest"
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="40dp"
+                    android:layout_weight="1"
                     android:minWidth="0dp"
-                    android:paddingHorizontal="16dp"
+                    android:paddingHorizontal="8dp"
                     android:text="오래된순"
                     android:textAllCaps="false"
                     android:textColor="@color/text_primary"
                     app:backgroundTint="@android:color/transparent"
                     app:strokeColor="@color/stroke_subtle" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
-        </HorizontalScrollView>
+        </LinearLayout>
     </LinearLayout>
 
     <!-- 선택 모드 헤더 (오버레이) -->

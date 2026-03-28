@@ -22,6 +22,8 @@ class MainActivity : AppCompatActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        SiteboardNotificationManager.ensureChannels(this)
+        SiteboardWidgetManager.refreshAll(applicationContext)
 
         // 하단 네비게이션 바 패딩 처리
         ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNavigationView) { v, insets ->
