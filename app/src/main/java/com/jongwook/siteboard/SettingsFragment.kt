@@ -29,14 +29,28 @@ class SettingsFragment : Fragment() {
             insets
         }
 
+        binding.tvAppVersion.text = BuildConfig.VERSION_NAME_FULL
+
+        binding.btnQuickBackup.setOnClickListener {
+            startActivity(Intent(requireContext(), SettingsBackupActivity::class.java))
+        }
+        binding.btnQuickPermission.setOnClickListener {
+            startActivity(Intent(requireContext(), PermissionInfoActivity::class.java))
+        }
         binding.btnWatermarkMenu.setOnClickListener {
             startActivity(Intent(requireContext(), WatermarkMenuActivity::class.java))
         }
         binding.btnDataManagementMenu.setOnClickListener {
             startActivity(Intent(requireContext(), DataManagementActivity::class.java))
         }
+        binding.btnSettingsBackupMenu.setOnClickListener {
+            startActivity(Intent(requireContext(), SettingsBackupActivity::class.java))
+        }
         binding.btnCapturePrivacyMenu.setOnClickListener {
             startActivity(Intent(requireContext(), CapturePrivacySettingsActivity::class.java))
+        }
+        binding.btnPermissionInfoMenu.setOnClickListener {
+            startActivity(Intent(requireContext(), PermissionInfoActivity::class.java))
         }
         binding.btnAppInfoMenu.setOnClickListener {
             startActivity(Intent(requireContext(), AppInfoActivity::class.java))

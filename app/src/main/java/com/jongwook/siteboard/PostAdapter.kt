@@ -23,6 +23,10 @@ class PostAdapter(
         fun bind(post: PostEntity) {
             binding.tvTitle.text = post.title
             binding.tvDate.text = post.date
+            binding.tvProjectLabel.text = if (post.memo.isNullOrBlank()) "현장" else "메모 포함"
+            binding.tvLocation.text = post.detailLocation?.takeIf { it.isNotBlank() }
+                ?: post.location?.takeIf { it.isNotBlank() }
+                ?: "위치 미입력"
 
             try {
                 binding.ivPost.setImageURI(Uri.parse(post.imageUri))
@@ -38,6 +42,7 @@ class PostAdapter(
                 binding.cbSelect.visibility = View.GONE
                 binding.cbSelect.isChecked = false
             }
+            binding.viewSelectedOverlay.visibility = if (selectedItems.contains(post)) View.VISIBLE else View.GONE
 
             // 💡 [수정] 2. 짧게 눌렀을 때의 동작 분기
             itemView.setOnClickListener {
@@ -110,6 +115,18 @@ class PostAdapter(
         }
         notifyDataSetChanged()
         onSelectionChanged(selectedItems.size)
+    }
+
+    fun syncSelection(visibleItems: List<PostEntity>) {
+        if (!isSelectionMode) return
+        val visibleSet = visibleItems.toSet()
+        if (selectedItems.retainAll(visibleSet)) {
+            if (selectedItems.isEmpty()) {
+                isSelectionMode = false
+            }
+            notifyDataSetChanged()
+            onSelectionChanged(selectedItems.size)
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {

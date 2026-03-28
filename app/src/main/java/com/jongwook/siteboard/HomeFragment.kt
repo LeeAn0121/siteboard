@@ -1,11 +1,21 @@
 package com.jongwook.siteboard
 
 import android.content.Intent
-import android.net.Uri
+import android.graphics.Color
+import android.graphics.ImageDecoder
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.pdf.PdfDocument
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
@@ -13,8 +23,17 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import com.google.android.material.chip.Chip
+import com.google.android.material.snackbar.Snackbar
 import com.jongwook.siteboard.databinding.FragmentHomeBinding
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
@@ -23,9 +42,13 @@ class HomeFragment : Fragment() {
     private lateinit var postAdapter: PostAdapter
     private lateinit var db: AppDatabase
     private var allPosts: List<PostEntity> = emptyList()
+    private var filteredPosts: List<PostEntity> = emptyList()
+    private var currentFilter = HomeFilter.ALL
+    private var currentSort = HomeSort.RECENT
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
+        inflater: LayoutInflater,
+        container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
@@ -35,7 +58,6 @@ class HomeFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        // 시스템 상단바 간격 처리
         ViewCompat.setOnApplyWindowInsetsListener(binding.layoutTop) { v, insets ->
             val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
             v.updatePadding(top = statusBars.top + (20 * resources.displayMetrics.density).toInt())
@@ -43,165 +65,218 @@ class HomeFragment : Fragment() {
         }
         ViewCompat.setOnApplyWindowInsetsListener(binding.layoutSelectionMode) { v, insets ->
             val statusBars = insets.getInsets(WindowInsetsCompat.Type.statusBars())
-            val extraTopMargin = statusBars.top + (10 * resources.displayMetrics.density).toInt()
             v.updateLayoutParams<ViewGroup.MarginLayoutParams> {
-                topMargin = extraTopMargin
+                topMargin = statusBars.top + (10 * resources.displayMetrics.density).toInt()
             }
             insets
         }
 
         db = AppDatabase.getDatabase(requireContext())
+        postAdapter = PostAdapter { updateSelectionUi(it) }
 
-        // 💡 1. 어댑터 초기화 및 선택 모드 상태 관리
-        postAdapter = PostAdapter { selectedCount ->
-            if (selectedCount > 0) {
-                binding.layoutSelectionMode.visibility = View.VISIBLE
-                binding.layoutTop.visibility = View.GONE
-                binding.btnOpenSub.hide()
-                binding.tvSelectedCount.text = "${selectedCount}개 선택됨"
-                // 전체 선택 여부에 따라 버튼 텍스트 전환
-                binding.btnSelectAll.text = if (selectedCount == allPosts.size) "해제" else "전체"
-            } else {
-                binding.layoutSelectionMode.visibility = View.GONE
-                binding.layoutTop.visibility = View.VISIBLE
-                binding.btnOpenSub.show()
-            }
-        }
-
-        // 💡 2. 리사이클러뷰 세팅
         binding.rvPostList.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.rvPostList.adapter = postAdapter
 
-        // 💡 3. [가장 중요] 추가 버튼(+) 클릭 리스너 및 우선순위 확보
-        binding.btnOpenSub.bringToFront() // 다른 레이아웃보다 위로 올리기
+        binding.btnOpenSub.bringToFront()
         binding.btnOpenSub.setOnClickListener {
-            val intent = Intent(requireContext(), SubActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(requireContext(), SubActivity::class.java))
         }
-
-        // 💡 4. 선택 모드 취소/삭제 버튼 리스너
-        binding.btnCancelSelection.setOnClickListener {
-            postAdapter.exitSelectionMode()
-        }
-
-        binding.btnSelectAll.setOnClickListener {
-            postAdapter.toggleSelectAll(allPosts)
-        }
-
-        binding.btnDeleteSelected.setOnClickListener {
-            val postsToDelete = postAdapter.selectedItems.toList()
-
-            // 1. 빌더로 다이얼로그를 생성만 합니다 (show 대신 create 사용)
-            val dialog = android.app.AlertDialog.Builder(requireContext())
-                .setTitle("일괄 삭제")
-                .setMessage("선택한 ${postsToDelete.size}개의 기록과 원본 사진을 완전히 삭제하시겠습니까?")
-                .setPositiveButton("삭제") { _, _ ->
-                    viewLifecycleOwner.lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                        // 이미지 삭제 (실패해도 DB 삭제는 반드시 진행)
-                        for (post in postsToDelete) {
-                            if (post.imageUri.isNotEmpty()) {
-                                try {
-                                    requireContext().contentResolver.delete(android.net.Uri.parse(post.imageUri), null, null)
-                                } catch (e: Exception) { e.printStackTrace() }
-                            }
-                        }
-                        // DB 삭제
-                        try {
-                            db.postDao().deleteList(postsToDelete)
-                            AppDatabase.backupNow(requireContext().applicationContext)
-                        } catch (e: Exception) { e.printStackTrace() }
-
-                        kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                            postAdapter.exitSelectionMode()
-                            android.widget.Toast.makeText(requireContext(), "${postsToDelete.size}개가 삭제되었습니다.", android.widget.Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                }
-                .setNegativeButton("취소", null)
-                .create()
-
-            // 🚀 2. [핵심] 팝업창이 화면에 뜰 때 버튼 색상을 주황색(#FF6F00)으로 덮어씌웁니다.
-            dialog.setOnShowListener {
-                // BUTTON_POSITIVE = "삭제" 버튼
-                dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(android.graphics.Color.parseColor("#FF6F00"))
-
-                // BUTTON_NEGATIVE = "취소" 버튼
-                dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(android.graphics.Color.parseColor("#FF6F00"))
-                // (만약 취소 버튼은 회색 등 다른 색으로 하고 싶으시면 위 색상 코드를 "#888888" 등으로 바꾸시면 됩니다)
-            }
-
-            // 3. 화면에 띄우기
-            dialog.show()
-        }
-
-        // 💡 5. 검색창 및 PDF 버튼 (기존 유지)
-        binding.etSearch.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                filterList(s.toString())
-            }
-            override fun afterTextChanged(s: android.text.Editable?) {}
-        })
-
         binding.btnExportPdf.setOnClickListener {
             if (allPosts.isEmpty()) {
-                android.widget.Toast.makeText(requireContext(), "추출할 현장 기록이 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "추출할 현장 기록이 없습니다.", Toast.LENGTH_SHORT).show()
             } else {
                 exportToPdf()
             }
         }
+        binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                binding.btnClearSearch.visibility = if (s.isNullOrEmpty()) View.GONE else View.VISIBLE
+                applyFilters()
+            }
+            override fun afterTextChanged(s: Editable?) = Unit
+        })
 
-        // 💡 6. 실시간 데이터 관찰 (기존 유지)
+        binding.btnCancelSelection.setOnClickListener { postAdapter.exitSelectionMode() }
+        binding.btnSelectAll.setOnClickListener { postAdapter.toggleSelectAll(filteredPosts) }
+        binding.btnDeleteSelected.setOnClickListener { confirmDeleteSelected() }
+
+        setupFilterChips()
+        setupSortControls()
+
         viewLifecycleOwner.lifecycleScope.launch {
             db.postDao().getAllPosts().collect { postList ->
-                if (postList.isEmpty()) {
-                    binding.layoutEmpty.visibility = View.VISIBLE
-                    binding.rvPostList.visibility = View.GONE
-                } else {
-                    allPosts = postList
-                    filterList(binding.etSearch.text.toString())
-                    binding.layoutEmpty.visibility = View.GONE
-                    binding.rvPostList.visibility = View.VISIBLE
-                    postAdapter.submitList(postList)
-                }
+                allPosts = postList
+                updateDashboard()
+                applyFilters()
             }
         }
     }
 
-    private fun exportToPdf() {
-        if (allPosts.isEmpty()) {
-            android.widget.Toast.makeText(requireContext(), "추출할 현장 기록이 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
-            return
+    private fun setupFilterChips() {
+        binding.chipFilterAll.setOnClickListener { setFilter(HomeFilter.ALL) }
+        binding.chipFilterToday.setOnClickListener { setFilter(HomeFilter.TODAY) }
+        binding.chipFilterMemo.setOnClickListener { setFilter(HomeFilter.MEMO) }
+        binding.chipFilterMissingDetail.setOnClickListener { setFilter(HomeFilter.MISSING_DETAIL) }
+        setFilter(HomeFilter.ALL)
+    }
+
+    private fun setupSortControls() {
+        binding.toggleSort.check(R.id.btnSortRecent)
+        binding.toggleSort.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            currentSort = when (checkedId) {
+                R.id.btnSortName -> HomeSort.NAME
+                R.id.btnSortOldest -> HomeSort.OLDEST
+                else -> HomeSort.RECENT
+            }
+            applyFilters()
+        }
+    }
+
+    private fun setFilter(filter: HomeFilter) {
+        currentFilter = filter
+        updateChipState(binding.chipFilterAll, filter == HomeFilter.ALL)
+        updateChipState(binding.chipFilterToday, filter == HomeFilter.TODAY)
+        updateChipState(binding.chipFilterMemo, filter == HomeFilter.MEMO)
+        updateChipState(binding.chipFilterMissingDetail, filter == HomeFilter.MISSING_DETAIL)
+        applyFilters()
+    }
+
+    private fun updateChipState(chip: Chip, checked: Boolean) {
+        chip.isChecked = checked
+        val bgColor = if (checked) R.color.orange_primary else R.color.surface_dark
+        val textColor = if (checked) R.color.bg_dark else R.color.text_primary
+        chip.setChipBackgroundColorResource(bgColor)
+        chip.setTextColor(resources.getColor(textColor, null))
+    }
+
+    private fun updateDashboard() {
+        val projectCount = allPosts.map { it.title.trim() }.filter { it.isNotEmpty() }.distinct().size
+        val memoCount = allPosts.count { !it.memo.isNullOrBlank() }
+        binding.tvTotalCount.text = allPosts.size.toString()
+        binding.tvProjectCount.text = projectCount.toString()
+        binding.tvMemoCount.text = memoCount.toString()
+    }
+
+    private fun applyFilters() {
+        val query = binding.etSearch.text?.toString()?.trim().orEmpty()
+        val searchFiltered = allPosts.filter { post ->
+            query.isBlank() ||
+                post.title.contains(query, ignoreCase = true) ||
+                post.description.contains(query, ignoreCase = true) ||
+                (post.location?.contains(query, ignoreCase = true) == true) ||
+                (post.detailLocation?.contains(query, ignoreCase = true) == true) ||
+                (post.memo?.contains(query, ignoreCase = true) == true) ||
+                post.date.contains(query, ignoreCase = true)
         }
 
-        android.widget.Toast.makeText(requireContext(), "PDF 보고서를 생성 중입니다. 잠시만 기다려주세요...", android.widget.Toast.LENGTH_LONG).show()
+        val filterApplied = searchFiltered.filter { post ->
+            when (currentFilter) {
+                HomeFilter.ALL -> true
+                HomeFilter.TODAY -> todayPatterns().any { post.date.contains(it) }
+                HomeFilter.MEMO -> !post.memo.isNullOrBlank()
+                HomeFilter.MISSING_DETAIL -> post.detailLocation.isNullOrBlank()
+            }
+        }
 
-        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        filteredPosts = when (currentSort) {
+            HomeSort.RECENT -> filterApplied.sortedByDescending { it.id }
+            HomeSort.NAME -> filterApplied.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.title })
+            HomeSort.OLDEST -> filterApplied.sortedBy { it.id }
+        }
+
+        postAdapter.syncSelection(filteredPosts)
+        postAdapter.submitList(filteredPosts)
+
+        val isEmpty = filteredPosts.isEmpty()
+        binding.layoutEmpty.visibility = if (isEmpty) View.VISIBLE else View.GONE
+        binding.rvPostList.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        binding.tvResultSummary.text =
+            "${filteredPosts.size}개 기록 · ${currentFilter.label} · ${currentSort.label}"
+    }
+
+    private fun updateSelectionUi(selectedCount: Int) {
+        if (selectedCount > 0) {
+            binding.layoutSelectionMode.visibility = View.VISIBLE
+            binding.layoutTop.visibility = View.GONE
+            binding.btnOpenSub.hide()
+            binding.tvSelectedCount.text = "${selectedCount}개 선택됨"
+            binding.btnSelectAll.text = if (selectedCount == filteredPosts.size && filteredPosts.isNotEmpty()) "해제" else "전체"
+        } else {
+            binding.layoutSelectionMode.visibility = View.GONE
+            binding.layoutTop.visibility = View.VISIBLE
+            binding.btnOpenSub.show()
+        }
+    }
+
+    private fun confirmDeleteSelected() {
+        val postsToDelete = postAdapter.selectedItems.toList()
+        if (postsToDelete.isEmpty()) return
+
+        val dialog = android.app.AlertDialog.Builder(requireContext())
+            .setTitle("일괄 삭제")
+            .setMessage("선택한 ${postsToDelete.size}개의 기록과 원본 사진을 완전히 삭제하시겠습니까?")
+            .setPositiveButton("삭제") { _, _ ->
+                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                    postsToDelete.forEach { post ->
+                        if (post.imageUri.isNotEmpty()) {
+                            try {
+                                requireContext().contentResolver.delete(android.net.Uri.parse(post.imageUri), null, null)
+                            } catch (_: Exception) {
+                            }
+                        }
+                    }
+                    try {
+                        db.postDao().deleteList(postsToDelete)
+                        AppDatabase.backupNow(requireContext().applicationContext)
+                    } catch (_: Exception) {
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        postAdapter.exitSelectionMode()
+                        Toast.makeText(requireContext(), "${postsToDelete.size}개가 삭제되었습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+            .setNegativeButton("취소", null)
+            .create()
+
+        dialog.setOnShowListener {
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.parseColor("#FF6F00"))
+            dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.parseColor("#FF6F00"))
+        }
+        dialog.show()
+    }
+
+    private fun exportToPdf() {
+        Toast.makeText(requireContext(), "PDF 보고서를 생성 중입니다. 잠시만 기다려주세요...", Toast.LENGTH_LONG).show()
+
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val pdfDocument = android.graphics.pdf.PdfDocument()
+                val pdfDocument = PdfDocument()
                 val pageWidth = 595
                 val pageHeight = 842
                 val margin = 50f
 
-                val titlePaint = android.graphics.Paint().apply {
+                val titlePaint = Paint().apply {
                     textSize = 24f
                     isFakeBoldText = true
-                    color = android.graphics.Color.BLACK
+                    color = Color.BLACK
                 }
-
-                val textPaint = android.graphics.Paint().apply {
+                val textPaint = Paint().apply {
                     textSize = 14f
-                    color = android.graphics.Color.DKGRAY
+                    color = Color.DKGRAY
                 }
 
                 for ((index, post) in allPosts.withIndex()) {
-                    val pageInfo = android.graphics.pdf.PdfDocument.PageInfo.Builder(pageWidth, pageHeight, index + 1).create()
+                    val pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, index + 1).create()
                     val page = pdfDocument.startPage(pageInfo)
                     val canvas = page.canvas
 
                     canvas.drawText("SITEBOARD 현장 보고서", margin, margin, textPaint)
                     canvas.drawLine(margin, margin + 10f, pageWidth - margin, margin + 10f, textPaint)
-
                     canvas.drawText(post.title, margin, margin + 50f, titlePaint)
 
                     var currentY = margin + 90f
@@ -209,52 +284,27 @@ class HomeFragment : Fragment() {
                     currentY += 25f
                     canvas.drawText("• 일시 : ${post.date}", margin, currentY, textPaint)
                     currentY += 25f
-
-                    val safeDesc = post.description.replace("\n", " ")
-                    canvas.drawText("• 작업 내용 : $safeDesc", margin, currentY, textPaint)
+                    canvas.drawText("• 작업 내용 : ${post.description.replace("\n", " ")}", margin, currentY, textPaint)
                     currentY += 25f
                     if (!post.detailLocation.isNullOrBlank()) {
                         canvas.drawText("• 상세 위치 : ${post.detailLocation}", margin, currentY, textPaint)
                         currentY += 25f
                     }
                     if (!post.memo.isNullOrBlank()) {
-                        val safeMemo = post.memo.replace("\n", " ")
-                        canvas.drawText("• 메모 : $safeMemo", margin, currentY, textPaint)
+                        canvas.drawText("• 메모 : ${post.memo.replace("\n", " ")}", margin, currentY, textPaint)
                         currentY += 25f
                     }
                     currentY += 8f
 
                     try {
-                        val imageString = post.imageUri
-                        var bitmap: android.graphics.Bitmap? = null
-
-                        if (imageString.startsWith("content://") || imageString.startsWith("file://")) {
-                            val uri = android.net.Uri.parse(imageString)
-                            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                                val source = android.graphics.ImageDecoder.createSource(requireContext().contentResolver, uri)
-                                bitmap = android.graphics.ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
-                                    decoder.allocator = android.graphics.ImageDecoder.ALLOCATOR_SOFTWARE
-                                }
-                            } else {
-                                @Suppress("DEPRECATION")
-                                bitmap = android.provider.MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
-                            }
-                        } else {
-                            bitmap = android.graphics.BitmapFactory.decodeFile(imageString)
-                        }
-
+                        val bitmap = loadBitmap(post.imageUri)
                         if (bitmap != null) {
-                            val highQualityPaint = android.graphics.Paint().apply {
-                                isAntiAlias = true
-                                isFilterBitmap = true
-                                isDither = true
-                            }
-
                             val availableWidth = pageWidth - (margin * 2)
                             val availableHeight = pageHeight - margin - currentY
-                            val widthScale = availableWidth / bitmap.width.toFloat()
-                            val heightScale = availableHeight / bitmap.height.toFloat()
-                            val scale = minOf(widthScale, heightScale)
+                            val scale = minOf(
+                                availableWidth / bitmap.width.toFloat(),
+                                availableHeight / bitmap.height.toFloat()
+                            )
 
                             if (scale <= 0f) {
                                 canvas.drawText("[! 페이지 여백이 부족하여 이미지를 배치할 수 없습니다 !]", margin, currentY, textPaint)
@@ -265,129 +315,121 @@ class HomeFragment : Fragment() {
                             val targetCanvasWidth = bitmap.width * scale
                             val targetCanvasHeight = bitmap.height * scale
                             val imageLeft = margin + ((availableWidth - targetCanvasWidth) / 2f)
-
-                            val dstRect = android.graphics.RectF(
-                                imageLeft,
-                                currentY,
-                                imageLeft + targetCanvasWidth,
-                                currentY + targetCanvasHeight
+                            canvas.drawBitmap(
+                                bitmap,
+                                null,
+                                RectF(imageLeft, currentY, imageLeft + targetCanvasWidth, currentY + targetCanvasHeight),
+                                Paint().apply {
+                                    isAntiAlias = true
+                                    isFilterBitmap = true
+                                    isDither = true
+                                }
                             )
-
-                            canvas.drawBitmap(bitmap, null, dstRect, highQualityPaint)
                         } else {
                             canvas.drawText("[! 이미지 파일을 찾을 수 없습니다 !]", margin, currentY, textPaint)
                         }
-
                     } catch (e: Exception) {
-                        e.printStackTrace()
                         canvas.drawText("[! 이미지 로드 실패: ${e.localizedMessage} !]", margin, currentY, textPaint)
                     }
 
                     pdfDocument.finishPage(page)
                 }
 
-                val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
-                val fileName = "Siteboard_Report_$timeStamp.pdf"
-
-                // 💡 [수정됨] Downloads 폴더 안의 SITEBOARD 폴더 지정
-                val baseDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
-                val siteboardDir = java.io.File(baseDir, "SITEBOARD")
-
-                // 폴더가 존재하지 않으면 새로 생성
+                val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+                val siteboardDir = File(
+                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+                    "SITEBOARD"
+                )
                 if (!siteboardDir.exists()) {
                     siteboardDir.mkdirs()
                 }
 
-                // 해당 전용 폴더 안에 파일 생성
-                val file = java.io.File(siteboardDir, fileName)
-
-                pdfDocument.writeTo(java.io.FileOutputStream(file))
+                val file = File(siteboardDir, "Siteboard_Report_$timeStamp.pdf")
+                pdfDocument.writeTo(FileOutputStream(file))
                 pdfDocument.close()
 
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    val snackbar = com.google.android.material.snackbar.Snackbar.make(
-                        requireView(),
-                        "PDF 보고서가 저장되었습니다! 📄",
-                        com.google.android.material.snackbar.Snackbar.LENGTH_LONG // 좀 더 오래 떠있게 설정
-                    )
-
-                    // 💡 [핵심] 삼성 갤럭시 '내 파일' 전용 다이렉트 이동 + 실패 시 일반 다운로드 폴더 이동
-                    snackbar.setAction("폴더 열기") {
-                        val baseDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
-                        val siteboardDir = java.io.File(baseDir, "SITEBOARD")
-                        var isOpened = false
-
-                        if (siteboardDir.exists()) {
-                            // 1차 시도: 삼성 갤럭시 기본 앱 '내 파일(My Files)' 전용 인텐트 사용
-                            try {
-                                val intent = android.content.Intent("samsung.myfiles.intent.action.LAUNCH_MY_FILES")
-                                intent.putExtra("samsung.myfiles.intent.extra.START_PATH", siteboardDir.absolutePath)
-                                intent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
-
-                                // 이 기기에 삼성 '내 파일' 앱이 설치되어 있는지 확인
-                                if (intent.resolveActivity(requireContext().packageManager) != null) {
-                                    startActivity(intent)
-                                    isOpened = true
-                                }
-                            } catch (e: Exception) {
-                                // 삼성폰이 아니거나 권한 문제가 있으면 조용히 무시하고 다음 단계로
-                                isOpened = false
-                            }
-                        }
-
-                        // 2차 시도: 갤럭시가 아니거나, 폴더가 없거나, 접근이 막힌 경우 (안전장치)
-                        if (!isOpened) {
-                            try {
-                                // 안드로이드 공식 다운로드 폴더 열기 (최상위)
-                                val fallbackIntent = android.content.Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS)
-                                fallbackIntent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
-                                startActivity(fallbackIntent)
-
-                                // 최상위로 열렸을 경우를 대비해 사용자에게 안내 문구 표시
-                                android.widget.Toast.makeText(requireContext(), "목록에서 [SITEBOARD] 폴더를 확인하세요.", android.widget.Toast.LENGTH_SHORT).show()
-                            } catch (e: Exception) {
-                                android.widget.Toast.makeText(requireContext(), "파일 관리자 앱을 찾을 수 없습니다.", android.widget.Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-
-                    // 액션 버튼("폴더 열기") 글씨 색상을 주황색으로 강조
-                    snackbar.setActionTextColor(android.graphics.Color.parseColor("#FF6F00"))
+                withContext(Dispatchers.Main) {
+                    val snackbar = Snackbar.make(requireView(), "PDF 보고서가 저장되었습니다! 📄", Snackbar.LENGTH_LONG)
+                    snackbar.setAction("폴더 열기") { openSiteboardFolder(siteboardDir) }
+                    snackbar.setActionTextColor(Color.parseColor("#FF6F00"))
                     snackbar.show()
                 }
-
             } catch (e: Exception) {
-                e.printStackTrace()
-                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
-                    android.widget.Toast.makeText(requireContext(), "PDF 생성 실패: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(requireContext(), "PDF 생성 실패: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
 
-    private fun filterList(query: String) {
-        val filteredList = if (query.isBlank()) {
-            allPosts
+    private fun loadBitmap(imageUri: String): android.graphics.Bitmap? {
+        return if (imageUri.startsWith("content://") || imageUri.startsWith("file://")) {
+            val uri = android.net.Uri.parse(imageUri)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ImageDecoder.decodeBitmap(ImageDecoder.createSource(requireContext().contentResolver, uri)) { decoder, _, _ ->
+                    decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+                }
+            } else {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
+            }
         } else {
-            allPosts.filter { post ->
-                post.title.contains(query, ignoreCase = true) ||
-                        (post.location?.contains(query, ignoreCase = true) == true)
+            android.graphics.BitmapFactory.decodeFile(imageUri)
+        }
+    }
+
+    private fun openSiteboardFolder(siteboardDir: File) {
+        var isOpened = false
+        if (siteboardDir.exists()) {
+            try {
+                val intent = Intent("samsung.myfiles.intent.action.LAUNCH_MY_FILES")
+                intent.putExtra("samsung.myfiles.intent.extra.START_PATH", siteboardDir.absolutePath)
+                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                if (intent.resolveActivity(requireContext().packageManager) != null) {
+                    startActivity(intent)
+                    isOpened = true
+                }
+            } catch (_: Exception) {
+                isOpened = false
             }
         }
 
-        if (filteredList.isEmpty()) {
-            binding.layoutEmpty.visibility = View.VISIBLE
-            binding.rvPostList.visibility = View.GONE
-        } else {
-            binding.layoutEmpty.visibility = View.GONE
-            binding.rvPostList.visibility = View.VISIBLE
+        if (!isOpened) {
+            try {
+                val fallbackIntent = Intent(android.app.DownloadManager.ACTION_VIEW_DOWNLOADS)
+                fallbackIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(fallbackIntent)
+                Toast.makeText(requireContext(), "목록에서 [SITEBOARD] 폴더를 확인하세요.", Toast.LENGTH_SHORT).show()
+            } catch (_: Exception) {
+                Toast.makeText(requireContext(), "파일 관리자 앱을 찾을 수 없습니다.", Toast.LENGTH_SHORT).show()
+            }
         }
+    }
 
-        postAdapter.submitList(filteredList)
+    private fun todayPatterns(): List<String> {
+        val now = Date()
+        return listOf(
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(now),
+            SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()).format(now),
+            SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(now)
+        )
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
+}
+
+private enum class HomeFilter(val label: String) {
+    ALL("전체"),
+    TODAY("오늘 기록"),
+    MEMO("메모 포함"),
+    MISSING_DETAIL("상세 위치 미입력")
+}
+
+private enum class HomeSort(val label: String) {
+    RECENT("최신순"),
+    NAME("이름순"),
+    OLDEST("오래된순")
 }

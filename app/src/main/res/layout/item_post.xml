@@ -52,6 +52,25 @@
             app:layout_constraintTop_toTopOf="@id/ivPost"
             app:layout_constraintStart_toStartOf="@id/ivPost" />
 
+        <TextView
+            android:id="@+id/tvLocation"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_chip_neutral"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingHorizontal="9dp"
+            android:paddingVertical="5dp"
+            android:text=""
+            android:textColor="@color/text_primary"
+            android:textSize="10sp"
+            app:layout_constraintBottom_toBottomOf="@id/ivPost"
+            app:layout_constraintEnd_toEndOf="@id/ivPost"
+            app:layout_constraintStart_toStartOf="@id/ivPost" />
+
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
