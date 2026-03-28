@@ -60,9 +60,12 @@
             </LinearLayout>
 
             <TextView
+                android:id="@+id/btnOpenOriginal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_widget_preview_pill"
+                android:clickable="true"
+                android:focusable="true"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="8dp"
                 android:text="원본 보기"
@@ -298,9 +301,9 @@
             android:layout_height="52dp"
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
-            android:background="@drawable/bg_secondary_button"
+            android:background="@drawable/bg_widget_metric_tile"
             android:text="공유"
-            android:textColor="@color/orange_primary"
+            android:textColor="@color/text_primary"
             android:textStyle="bold"
             app:cornerRadius="14dp"
             android:insetTop="0dp"

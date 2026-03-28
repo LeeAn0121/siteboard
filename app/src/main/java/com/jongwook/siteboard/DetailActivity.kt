@@ -89,6 +89,29 @@ class DetailActivity : AppCompatActivity() {
         binding.ivDetailImage.post { initMatrix() }
 
         binding.btnBack.setOnClickListener { finish() }
+        binding.btnOpenOriginal.setOnClickListener {
+            val targetUri = when {
+                originalUri.isNotBlank() -> Uri.parse(originalUri)
+                imageUri.isNotBlank() -> Uri.parse(imageUri)
+                else -> null
+            }
+
+            if (targetUri == null) {
+                Toast.makeText(this, "표시할 원본 이미지가 없습니다.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            val openIntent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(targetUri, "image/*")
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+
+            try {
+                startActivity(openIntent)
+            } catch (e: Exception) {
+                Toast.makeText(this, "원본 이미지를 열 수 없습니다.", Toast.LENGTH_SHORT).show()
+            }
+        }
 
         setupZoom()
 

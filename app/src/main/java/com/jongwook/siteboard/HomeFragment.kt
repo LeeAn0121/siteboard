@@ -45,6 +45,7 @@ class HomeFragment : Fragment() {
     private var filteredPosts: List<PostEntity> = emptyList()
     private var currentFilter = HomeFilter.ALL
     private var currentSort = HomeSort.RECENT
+    private var isFilterExpanded = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -104,14 +105,22 @@ class HomeFragment : Fragment() {
 
         setupFilterChips()
         setupSortControls()
+        setupFilterPanel()
 
         viewLifecycleOwner.lifecycleScope.launch {
             db.postDao().getAllPosts().collect { postList ->
                 allPosts = postList
-                updateDashboard()
                 applyFilters()
             }
         }
+    }
+
+    private fun setupFilterPanel() {
+        binding.layoutFilterHeader.setOnClickListener {
+            isFilterExpanded = !isFilterExpanded
+            renderFilterPanel()
+        }
+        renderFilterPanel()
     }
 
     private fun setupFilterChips() {
@@ -152,12 +161,9 @@ class HomeFragment : Fragment() {
         chip.setTextColor(resources.getColor(textColor, null))
     }
 
-    private fun updateDashboard() {
-        val projectCount = allPosts.map { it.title.trim() }.filter { it.isNotEmpty() }.distinct().size
-        val memoCount = allPosts.count { !it.memo.isNullOrBlank() }
-        binding.tvTotalCount.text = allPosts.size.toString()
-        binding.tvProjectCount.text = projectCount.toString()
-        binding.tvMemoCount.text = memoCount.toString()
+    private fun renderFilterPanel() {
+        binding.layoutFilterContent.visibility = if (isFilterExpanded) View.VISIBLE else View.GONE
+        binding.tvFilterToggle.text = if (isFilterExpanded) "접기" else "펼치기"
     }
 
     private fun applyFilters() {
