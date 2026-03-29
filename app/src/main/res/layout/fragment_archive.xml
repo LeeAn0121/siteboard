@@ -196,15 +196,153 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvResultSummary"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
-            android:paddingHorizontal="2dp"
-            android:text="현장별 기록을 최신 업데이트순으로 보고 있습니다"
-            android:textColor="@color/text_secondary"
-            android:textSize="12sp" />
+            android:background="@drawable/bg_surface_card_soft"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="빠른 필터"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvResultSummary"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="현장별 기록을 최신 업데이트순으로 보고 있습니다"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipArchiveFilters"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:chipSpacingHorizontal="6dp"
+                app:chipSpacingVertical="6dp"
+                app:singleLine="false">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipArchiveAll"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="전체"
+                    android:checked="true"
+                    app:chipBackgroundColor="@color/surface_dark"
+                    app:chipStrokeColor="@color/stroke_subtle"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipArchiveFavorite"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="즐겨찾기"
+                    app:chipBackgroundColor="@color/surface_dark"
+                    app:chipStrokeColor="@color/stroke_subtle"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipArchiveRepair"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="보수 필요"
+                    app:chipBackgroundColor="@color/surface_dark"
+                    app:chipStrokeColor="@color/stroke_subtle"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipArchiveCheck"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="점검 예정"
+                    app:chipBackgroundColor="@color/surface_dark"
+                    app:chipStrokeColor="@color/stroke_subtle"
+                    app:chipStrokeWidth="1dp"
+                    app:checkedIconVisible="false"
+                    android:textColor="@color/text_primary" />
+            </com.google.android.material.chip.ChipGroup>
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/toggleArchiveSort"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                app:singleSelection="true"
+                app:selectionRequired="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnArchiveSortFavorite"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="8dp"
+                    android:text="즐겨찾기 우선"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    app:backgroundTint="@android:color/transparent"
+                    app:strokeColor="@color/stroke_subtle" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnArchiveSortRecent"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="8dp"
+                    android:text="최신순"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    app:backgroundTint="@android:color/transparent"
+                    app:strokeColor="@color/stroke_subtle" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnArchiveSortName"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="42dp"
+                    android:layout_weight="1"
+                    android:minWidth="0dp"
+                    android:paddingHorizontal="8dp"
+                    android:text="이름순"
+                    android:textAllCaps="false"
+                    android:textColor="@color/text_primary"
+                    android:textSize="11sp"
+                    app:backgroundTint="@android:color/transparent"
+                    app:strokeColor="@color/stroke_subtle" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+        </LinearLayout>
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView

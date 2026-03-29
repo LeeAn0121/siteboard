@@ -29,6 +29,7 @@ class InspectionScheduleActivity : AppCompatActivity() {
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private var selectedDate = dateFormat.format(Calendar.getInstance().time)
     private var projectTitles: List<String> = emptyList()
+    private var editingDate = selectedDate
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -159,7 +160,7 @@ class InspectionScheduleActivity : AppCompatActivity() {
                     markComplete(snapshot.entry)
                 }
                 setOnLongClickListener {
-                    confirmDelete(snapshot.entry)
+                    openScheduleOptions(snapshot.entry)
                     true
                 }
             }
@@ -196,6 +197,91 @@ class InspectionScheduleActivity : AppCompatActivity() {
             }
             .setNegativeButton("취소", null)
             .show()
+    }
+
+    private fun openScheduleOptions(entry: InspectionScheduleEntry) {
+        val options = arrayOf("일정 수정", "일정 삭제")
+        AlertDialog.Builder(this)
+            .setTitle(entry.projectTitle)
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> openEditDialog(entry)
+                    else -> confirmDelete(entry)
+                }
+            }
+            .show()
+    }
+
+    private fun openEditDialog(entry: InspectionScheduleEntry) {
+        val input = android.widget.EditText(this).apply {
+            setText(entry.note)
+            hint = "예: 소방 점검"
+        }
+        editingDate = entry.baseDate
+        val cycles = arrayOf("월별", "분기별", "반기별", "연간")
+        var selectedIndex = when (entry.intervalMonths) {
+            1 -> 0
+            3 -> 1
+            6 -> 2
+            else -> 3
+        }
+        AlertDialog.Builder(this)
+            .setTitle("점검 일정 수정")
+            .setSingleChoiceItems(cycles, selectedIndex) { _, which ->
+                selectedIndex = which
+            }
+            .setNeutralButton("기준일 변경") { _, _ ->
+                openEditDatePicker(entry) { picked ->
+                    editingDate = picked
+                    openEditDialog(entry.copy(baseDate = picked, note = input.text.toString().trim().ifBlank { entry.note }, intervalMonths = when (selectedIndex) {
+                        0 -> 1
+                        1 -> 3
+                        2 -> 6
+                        else -> 12
+                    }))
+                }
+            }
+            .setView(input)
+            .setPositiveButton("저장") { _, _ ->
+                val interval = when (selectedIndex) {
+                    0 -> 1
+                    1 -> 3
+                    2 -> 6
+                    else -> 12
+                }
+                InspectionScheduleStore.save(
+                    this,
+                    entry.copy(
+                        baseDate = editingDate,
+                        intervalMonths = interval,
+                        note = input.text.toString().trim().ifBlank { "정기 점검" }
+                    )
+                )
+                SiteboardWidgetManager.refreshAll(applicationContext)
+                renderScheduleList()
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    private fun openEditDatePicker(entry: InspectionScheduleEntry, onPicked: (String) -> Unit) {
+        val calendar = Calendar.getInstance().apply {
+            time = runCatching { dateFormat.parse(entry.baseDate) }.getOrNull() ?: Calendar.getInstance().time
+        }
+        DatePickerDialog(
+            this,
+            { _, year, month, dayOfMonth ->
+                val picked = Calendar.getInstance().apply {
+                    set(Calendar.YEAR, year)
+                    set(Calendar.MONTH, month)
+                    set(Calendar.DAY_OF_MONTH, dayOfMonth)
+                }
+                onPicked(dateFormat.format(picked.time))
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
     }
 
     private fun markComplete(entry: InspectionScheduleEntry) {

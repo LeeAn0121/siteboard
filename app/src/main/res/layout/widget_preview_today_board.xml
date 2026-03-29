@@ -52,6 +52,17 @@
             android:textColor="@android:color/white"
             android:textSize="12sp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_widget_metric_tile"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="10dp"
+            android:text="보수 필요: 지하 펌프실"
+            android:textColor="@android:color/white"
+            android:textSize="12sp" />
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

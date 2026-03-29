@@ -62,6 +62,19 @@
         android:textColor="#C7D0DB"
         android:textSize="12sp" />
 
+    <TextView
+        android:id="@+id/tvTodayBoardLineFour"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_widget_metric_tile"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="12dp"
+        android:text="최근 현장 없음"
+        android:textColor="#C7D0DB"
+        android:textSize="12sp"
+        android:visibility="gone" />
+
     <LinearLayout
         android:id="@+id/layoutTodayBoardActions"
         android:layout_width="match_parent"

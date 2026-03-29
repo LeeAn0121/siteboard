@@ -186,6 +186,10 @@ class SubActivity : AppCompatActivity() {
         }
         binding.btnApplyTemplate.setOnClickListener { showTemplatePicker() }
         binding.btnSaveTemplate.setOnClickListener { saveCurrentAsTemplate() }
+        binding.btnSaveTemplate.setOnLongClickListener {
+            startActivity(android.content.Intent(this, TemplateManagerActivity::class.java))
+            true
+        }
 
         binding.btnCamera.setOnClickListener {
             if (validateInputs()) {
@@ -584,7 +588,7 @@ class SubActivity : AppCompatActivity() {
                 applyTemplate(templates[which])
             }
             .setNeutralButton("관리") { _, _ ->
-                showTemplateManager()
+                startActivity(android.content.Intent(this, TemplateManagerActivity::class.java))
             }
             .show()
     }
@@ -625,19 +629,6 @@ class SubActivity : AppCompatActivity() {
                 Toast.makeText(this, "템플릿을 저장했습니다.", Toast.LENGTH_SHORT).show()
             }
             .setNegativeButton("취소", null)
-            .show()
-    }
-
-    private fun showTemplateManager() {
-        val templates = RecordTemplateStore.getAll(this)
-        if (templates.isEmpty()) return
-        val names = templates.map { it.name }.toTypedArray()
-        androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("템플릿 삭제")
-            .setItems(names) { _, which ->
-                RecordTemplateStore.delete(this, templates[which].id)
-                Toast.makeText(this, "템플릿을 삭제했습니다.", Toast.LENGTH_SHORT).show()
-            }
             .show()
     }
 

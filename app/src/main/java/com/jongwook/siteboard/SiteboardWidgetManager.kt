@@ -84,6 +84,12 @@ object SiteboardWidgetManager {
     fun updateStatsWidget(context: Context, snapshot: WidgetSnapshot) {
         val appWidgetManager = AppWidgetManager.getInstance(context)
         val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, StatsWidgetProvider::class.java))
+        val projectTitles = AppDatabase.getDatabase(context).postDao().getAllPostsOnce()
+            .map { it.title.trim() }
+            .filter { it.isNotEmpty() }
+            .distinct()
+        val repairCount = projectTitles.count { ProjectMetaStore.get(context, it).status == ProjectMeta.STATUS_REPAIR }
+        val checkCount = projectTitles.count { ProjectMetaStore.get(context, it).status == ProjectMeta.STATUS_CHECK }
         ids.forEach { appWidgetId ->
             val views = RemoteViews(context.packageName, R.layout.widget_stats)
             views.setTextViewText(R.id.tvWidgetTodayCount, snapshot.todayCount.toString())
@@ -91,6 +97,8 @@ object SiteboardWidgetManager {
             views.setTextViewText(R.id.tvWidgetProjectCount, snapshot.projectCount.toString())
             views.setTextViewText(R.id.tvWidgetRecentProject, "최근 현장 · ${snapshot.recentProject}")
             views.setTextViewText(R.id.tvWidgetUpdatedAt, snapshot.lastUpdated)
+            views.setTextViewText(R.id.tvWidgetRepairCount, "보수 필요 ${repairCount}건")
+            views.setTextViewText(R.id.tvWidgetCheckCount, "점검 예정 ${checkCount}건")
 
             val openIntent = Intent(context, MainActivity::class.java).apply {
                 action = "com.jongwook.siteboard.widget.stats.home.$appWidgetId"
@@ -137,12 +145,40 @@ object SiteboardWidgetManager {
                 refreshIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+            val repairIntent = Intent(context, MainActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.stats.repair.$appWidgetId"
+                data = Uri.parse("siteboard://widget/stats/repair/$appWidgetId")
+                putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_ARCHIVE)
+                putExtra(MainActivity.EXTRA_ARCHIVE_FILTER, "REPAIR")
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val repairPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 1004,
+                repairIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val checkIntent = Intent(context, MainActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.stats.check.$appWidgetId"
+                data = Uri.parse("siteboard://widget/stats/check/$appWidgetId")
+                putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_ARCHIVE)
+                putExtra(MainActivity.EXTRA_ARCHIVE_FILTER, "CHECK")
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val checkPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 1005,
+                checkIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
             views.setOnClickPendingIntent(R.id.widgetStatsRoot, homePendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetOpenHome, homePendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetOpenArchiveMini, archivePendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetAddRecordMini, addPendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetRefreshMini, refreshPendingIntent)
+            views.setOnClickPendingIntent(R.id.tvWidgetRepairCount, repairPendingIntent)
+            views.setOnClickPendingIntent(R.id.tvWidgetCheckCount, checkPendingIntent)
 
             applyStatsWidgetSizing(appWidgetManager.getAppWidgetOptions(appWidgetId), views)
             appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -313,6 +349,7 @@ object SiteboardWidgetManager {
             views.setTextViewText(R.id.tvTodayBoardLineOne, todayBoard.focusLine)
             views.setTextViewText(R.id.tvTodayBoardLineTwo, "즐겨찾기 · ${todayBoard.favoriteProject}")
             views.setTextViewText(R.id.tvTodayBoardLineThree, "보수 필요 · ${todayBoard.repairProject}")
+            views.setTextViewText(R.id.tvTodayBoardLineFour, "최근 현장 · ${snapshot.recentProject} · ${snapshot.recentDate}")
 
             val addIntent = Intent(context, SubActivity::class.java).apply {
                 action = "com.jongwook.siteboard.widget.today.add.$appWidgetId"
@@ -334,6 +371,30 @@ object SiteboardWidgetManager {
                 context,
                 appWidgetId + 5001,
                 calendarIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val favoriteProjectIntent = Intent(context, ProjectDetailActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.today.favorite.$appWidgetId"
+                data = Uri.parse("siteboard://widget/today/favorite/$appWidgetId")
+                putExtra("PROJECT_TITLE", todayBoard.favoriteProject)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val favoriteProjectPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 5004,
+                favoriteProjectIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val repairProjectIntent = Intent(context, ProjectDetailActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.today.repair.$appWidgetId"
+                data = Uri.parse("siteboard://widget/today/repair/$appWidgetId")
+                putExtra("PROJECT_TITLE", todayBoard.repairProject)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val repairProjectPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 5005,
+                repairProjectIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             val refreshIntent = Intent(context, ProjectWidgetActionReceiver::class.java).apply {
@@ -363,6 +424,9 @@ object SiteboardWidgetManager {
             views.setOnClickPendingIntent(R.id.btnTodayBoardAdd, addPendingIntent)
             views.setOnClickPendingIntent(R.id.btnTodayBoardCalendar, calendarPendingIntent)
             views.setOnClickPendingIntent(R.id.btnTodayBoardRefresh, refreshPendingIntent)
+            views.setOnClickPendingIntent(R.id.tvTodayBoardLineTwo, favoriteProjectPendingIntent)
+            views.setOnClickPendingIntent(R.id.tvTodayBoardLineThree, repairProjectPendingIntent)
+            applyTodayBoardWidgetSizing(appWidgetManager.getAppWidgetOptions(appWidgetId), views)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
@@ -440,6 +504,23 @@ object SiteboardWidgetManager {
         val showActionRow = columns >= 4 && rows >= 2
         views.setViewVisibility(R.id.layoutInspectionWidgetActions, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
         views.setViewVisibility(R.id.btnInspectionComplete, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
+    }
+
+    private fun applyTodayBoardWidgetSizing(options: Bundle, views: RemoteViews) {
+        val columns = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0))
+        val rows = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0))
+        views.setViewVisibility(
+            R.id.layoutTodayBoardActions,
+            if (columns >= 4 && rows >= 2) android.view.View.VISIBLE else android.view.View.GONE
+        )
+        views.setViewVisibility(
+            R.id.tvTodayBoardLineThree,
+            if (rows >= 3) android.view.View.VISIBLE else android.view.View.GONE
+        )
+        views.setViewVisibility(
+            R.id.tvTodayBoardLineFour,
+            if (columns >= 4 && rows >= 3) android.view.View.VISIBLE else android.view.View.GONE
+        )
     }
 
     private fun estimateSpan(sizeDp: Int): Int {

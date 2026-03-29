@@ -130,9 +130,42 @@
                 android:layout_marginTop="4dp"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="24sp"
-                android:textStyle="bold" />
+            android:textSize="24sp"
+            android:textStyle="bold" />
         </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/layoutWidgetStatusActions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvWidgetRepairCount"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_widget_metric_tile"
+            android:gravity="center"
+            android:text="보수 필요 0건"
+            android:textColor="#F7F8FB"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvWidgetCheckCount"
+            android:layout_width="0dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_widget_metric_tile"
+            android:gravity="center"
+            android:text="점검 예정 0건"
+            android:textColor="#F7F8FB"
+            android:textSize="11sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <LinearLayout

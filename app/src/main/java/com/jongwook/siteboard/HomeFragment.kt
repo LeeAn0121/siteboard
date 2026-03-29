@@ -133,7 +133,11 @@ class HomeFragment : Fragment() {
         binding.chipFilterAll.setOnClickListener { setFilter(HomeFilter.ALL) }
         binding.chipFilterToday.setOnClickListener { setFilter(HomeFilter.TODAY) }
         binding.chipFilterMemo.setOnClickListener { setFilter(HomeFilter.MEMO) }
+        binding.chipFilterFavorite.setOnClickListener { setFilter(HomeFilter.FAVORITE) }
         binding.chipFilterMissingDetail.setOnClickListener { setFilter(HomeFilter.MISSING_DETAIL) }
+        binding.chipFilterRepair.setOnClickListener { setFilter(HomeFilter.REPAIR) }
+        binding.chipFilterCheck.setOnClickListener { setFilter(HomeFilter.CHECK) }
+        binding.chipFilterDone.setOnClickListener { setFilter(HomeFilter.DONE) }
         setFilter(HomeFilter.ALL)
     }
 
@@ -155,7 +159,11 @@ class HomeFragment : Fragment() {
         updateChipState(binding.chipFilterAll, filter == HomeFilter.ALL)
         updateChipState(binding.chipFilterToday, filter == HomeFilter.TODAY)
         updateChipState(binding.chipFilterMemo, filter == HomeFilter.MEMO)
+        updateChipState(binding.chipFilterFavorite, filter == HomeFilter.FAVORITE)
         updateChipState(binding.chipFilterMissingDetail, filter == HomeFilter.MISSING_DETAIL)
+        updateChipState(binding.chipFilterRepair, filter == HomeFilter.REPAIR)
+        updateChipState(binding.chipFilterCheck, filter == HomeFilter.CHECK)
+        updateChipState(binding.chipFilterDone, filter == HomeFilter.DONE)
         applyFilters()
     }
 
@@ -192,7 +200,11 @@ class HomeFragment : Fragment() {
                 HomeFilter.ALL -> true
                 HomeFilter.TODAY -> todayPatterns().any { post.date.contains(it) }
                 HomeFilter.MEMO -> !post.memo.isNullOrBlank()
+                HomeFilter.FAVORITE -> ProjectMetaStore.get(context = requireContext(), projectTitle = post.title).favorite
                 HomeFilter.MISSING_DETAIL -> post.detailLocation.isNullOrBlank()
+                HomeFilter.REPAIR -> ProjectMetaStore.get(requireContext(), post.title).status == ProjectMeta.STATUS_REPAIR
+                HomeFilter.CHECK -> ProjectMetaStore.get(requireContext(), post.title).status == ProjectMeta.STATUS_CHECK
+                HomeFilter.DONE -> ProjectMetaStore.get(requireContext(), post.title).status == ProjectMeta.STATUS_DONE
             }
         }
 
@@ -450,7 +462,11 @@ private enum class HomeFilter(val label: String) {
     ALL("전체"),
     TODAY("오늘 기록"),
     MEMO("메모 포함"),
-    MISSING_DETAIL("상세 위치 미입력")
+    FAVORITE("즐겨찾기"),
+    MISSING_DETAIL("상세 위치 미입력"),
+    REPAIR("보수 필요"),
+    CHECK("점검 예정"),
+    DONE("완료")
 }
 
 private enum class HomeSort(val label: String) {

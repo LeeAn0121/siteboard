@@ -23,6 +23,7 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
 import com.jongwook.siteboard.databinding.FragmentArchiveBinding
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +42,9 @@ class ArchiveFragment : Fragment() {
     private lateinit var archiveAdapter: ArchiveProjectAdapter
 
     private var allProjects: List<ProjectSummary> = emptyList()
+    private var currentFilter = ArchiveFilter.ALL
+    private var currentSort = ArchiveSort.FAVORITE
+    private var pendingInitialFilter: ArchiveFilter? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentArchiveBinding.inflate(inflater, container, false)
@@ -78,6 +82,15 @@ class ArchiveFragment : Fragment() {
             AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_rise_stagger)
 
         binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
+        setupArchiveFilters()
+        setupArchiveSort()
+        pendingInitialFilter = when (arguments?.getString(ARG_INITIAL_FILTER)) {
+            ArchiveFilter.FAVORITE.name -> ArchiveFilter.FAVORITE
+            ArchiveFilter.REPAIR.name -> ArchiveFilter.REPAIR
+            ArchiveFilter.CHECK.name -> ArchiveFilter.CHECK
+            else -> ArchiveFilter.ALL
+        }
+        pendingInitialFilter?.let { setArchiveFilter(it) }
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -120,9 +133,47 @@ class ArchiveFragment : Fragment() {
         }
     }
 
+    private fun setupArchiveFilters() {
+        binding.chipArchiveAll.setOnClickListener { setArchiveFilter(ArchiveFilter.ALL) }
+        binding.chipArchiveFavorite.setOnClickListener { setArchiveFilter(ArchiveFilter.FAVORITE) }
+        binding.chipArchiveRepair.setOnClickListener { setArchiveFilter(ArchiveFilter.REPAIR) }
+        binding.chipArchiveCheck.setOnClickListener { setArchiveFilter(ArchiveFilter.CHECK) }
+        setArchiveFilter(ArchiveFilter.ALL)
+    }
+
+    private fun setupArchiveSort() {
+        binding.toggleArchiveSort.check(R.id.btnArchiveSortFavorite)
+        binding.toggleArchiveSort.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (!isChecked) return@addOnButtonCheckedListener
+            currentSort = when (checkedId) {
+                R.id.btnArchiveSortRecent -> ArchiveSort.RECENT
+                R.id.btnArchiveSortName -> ArchiveSort.NAME
+                else -> ArchiveSort.FAVORITE
+            }
+            applyFilter(binding.etSearch.text?.toString().orEmpty())
+        }
+    }
+
+    private fun setArchiveFilter(filter: ArchiveFilter) {
+        currentFilter = filter
+        updateChipState(binding.chipArchiveAll, filter == ArchiveFilter.ALL)
+        updateChipState(binding.chipArchiveFavorite, filter == ArchiveFilter.FAVORITE)
+        updateChipState(binding.chipArchiveRepair, filter == ArchiveFilter.REPAIR)
+        updateChipState(binding.chipArchiveCheck, filter == ArchiveFilter.CHECK)
+        applyFilter(binding.etSearch.text?.toString().orEmpty())
+    }
+
+    private fun updateChipState(chip: Chip, checked: Boolean) {
+        chip.isChecked = checked
+        val bgColor = if (checked) R.color.orange_primary else R.color.surface_dark
+        val textColor = if (checked) R.color.bg_dark else R.color.text_primary
+        chip.setChipBackgroundColorResource(bgColor)
+        chip.setTextColor(resources.getColor(textColor, null))
+    }
+
     private fun applyFilter(query: String) {
         val trimmed = query.trim()
-        val filtered = if (trimmed.isBlank()) {
+        val searchFiltered = if (trimmed.isBlank()) {
             allProjects
         } else {
             allProjects.filter {
@@ -130,12 +181,29 @@ class ArchiveFragment : Fragment() {
                     it.recentLocation.contains(trimmed, ignoreCase = true)
             }
         }
+        val filtered = searchFiltered.filter {
+            when (currentFilter) {
+                ArchiveFilter.ALL -> true
+                ArchiveFilter.FAVORITE -> it.favorite
+                ArchiveFilter.REPAIR -> it.status == ProjectMeta.STATUS_REPAIR
+                ArchiveFilter.CHECK -> it.status == ProjectMeta.STATUS_CHECK
+            }
+        }
+        val sorted = when (currentSort) {
+            ArchiveSort.FAVORITE -> filtered.sortedWith(
+                compareByDescending<ProjectSummary> { it.favorite }
+                    .thenByDescending { it.recentPostId }
+                    .thenBy { it.title.lowercase(Locale.getDefault()) }
+            )
+            ArchiveSort.RECENT -> filtered.sortedByDescending { it.recentPostId }
+            ArchiveSort.NAME -> filtered.sortedBy { it.title.lowercase(Locale.getDefault()) }
+        }
 
-        archiveAdapter.submitList(filtered)
-        binding.tvResultSummary.text = "${filtered.size}개 현장 · 최신 업데이트순"
-        binding.layoutEmpty.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
-        binding.rvProjects.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
-        if (filtered.isNotEmpty()) {
+        archiveAdapter.submitList(sorted)
+        binding.tvResultSummary.text = "${sorted.size}개 현장 · ${currentFilter.label} · ${currentSort.label}"
+        binding.layoutEmpty.visibility = if (sorted.isEmpty()) View.VISIBLE else View.GONE
+        binding.rvProjects.visibility = if (sorted.isEmpty()) View.GONE else View.VISIBLE
+        if (sorted.isNotEmpty()) {
             binding.rvProjects.scheduleLayoutAnimation()
         }
     }
@@ -264,4 +332,29 @@ class ArchiveFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
+    companion object {
+        private const val ARG_INITIAL_FILTER = "initial_filter"
+
+        fun newInstance(filter: String?): ArchiveFragment {
+            return ArchiveFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_INITIAL_FILTER, filter)
+                }
+            }
+        }
+    }
+}
+
+private enum class ArchiveFilter(val label: String) {
+    ALL("전체"),
+    FAVORITE("즐겨찾기"),
+    REPAIR("보수 필요"),
+    CHECK("점검 예정")
+}
+
+private enum class ArchiveSort(val label: String) {
+    FAVORITE("즐겨찾기 우선"),
+    RECENT("최신순"),
+    NAME("이름순")
 }

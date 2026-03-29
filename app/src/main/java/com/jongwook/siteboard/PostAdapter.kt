@@ -1,10 +1,15 @@
 package com.jongwook.siteboard
 
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -21,9 +26,13 @@ class PostAdapter(
 
     inner class ViewHolder(private val binding: ItemPostBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(post: PostEntity) {
+            val meta = ProjectMetaStore.get(itemView.context, post.title)
             binding.tvTitle.text = post.title
             binding.tvDate.text = post.date
             binding.tvProjectLabel.text = if (post.memo.isNullOrBlank()) "현장" else "메모 포함"
+            binding.tvFavoriteLabel.visibility = if (meta.favorite) View.VISIBLE else View.GONE
+            binding.tvStatusBadge.text = meta.status
+            applyStatusStyle(meta.status)
             binding.tvLocation.text = post.detailLocation?.takeIf { it.isNotBlank() }
                 ?: post.location?.takeIf { it.isNotBlank() }
                 ?: "위치 미입력"
@@ -68,6 +77,11 @@ class PostAdapter(
                 }
             }
 
+            binding.tvStatusBadge.setOnClickListener {
+                if (isSelectionMode) return@setOnClickListener
+                cycleStatus(post.title)
+            }
+
             // 💡 [추가] 3. 꾹~ 길게 눌렀을 때 (다중 선택 모드 진입)
             itemView.setOnLongClickListener {
                 if (!isSelectionMode) {
@@ -75,6 +89,39 @@ class PostAdapter(
                     toggleSelection(post)
                 }
                 true
+            }
+        }
+
+        private fun applyStatusStyle(status: String) {
+            val context = itemView.context
+            val (bg, text) = when (status) {
+                ProjectMeta.STATUS_REPAIR -> R.color.danger_accent to R.color.bg_dark
+                ProjectMeta.STATUS_CHECK -> R.color.orange_primary to R.color.bg_dark
+                ProjectMeta.STATUS_DONE -> R.color.mint_accent to R.color.bg_dark
+                else -> R.color.teal_accent to R.color.bg_dark
+            }
+            binding.tvStatusBadge.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context, bg))
+            binding.tvStatusBadge.setTextColor(ContextCompat.getColor(context, text))
+            if (binding.tvFavoriteLabel.visibility == View.VISIBLE) {
+                binding.tvFavoriteLabel.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context, bg))
+                binding.tvFavoriteLabel.setTextColor(ContextCompat.getColor(context, text))
+            } else {
+                binding.tvFavoriteLabel.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context, R.color.orange_primary))
+                binding.tvFavoriteLabel.setTextColor(ContextCompat.getColor(context, R.color.bg_dark))
+            }
+        }
+
+        private fun cycleStatus(projectTitle: String) {
+            val context = itemView.context
+            val statuses = ProjectMeta.ALL_STATUSES
+            val current = ProjectMetaStore.get(context, projectTitle).status
+            val nextIndex = (statuses.indexOf(current).takeIf { it >= 0 } ?: 0) + 1
+            val next = statuses[nextIndex % statuses.size]
+            ProjectMetaStore.setStatus(context, projectTitle, next)
+            binding.tvStatusBadge.text = next
+            applyStatusStyle(next)
+            CoroutineScope(Dispatchers.IO).launch {
+                SiteboardWidgetManager.refreshAll(context.applicationContext)
             }
         }
     }

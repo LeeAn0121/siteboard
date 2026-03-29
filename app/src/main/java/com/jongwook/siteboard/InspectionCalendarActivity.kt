@@ -49,6 +49,7 @@ class InspectionCalendarActivity : AppCompatActivity() {
                 snapshots.forEach { snapshot ->
                     binding.layoutCalendarItems.addView(
                         itemRow(
+                            snapshot.entry,
                             snapshot.entry.projectTitle,
                             "${snapshot.nextDateText} · ${snapshot.entry.note}",
                             "${InspectionScheduleStore.formatIntervalLabel(snapshot.entry.intervalMonths)} · ${formatCountdown(snapshot.daysUntil)}"
@@ -68,7 +69,7 @@ class InspectionCalendarActivity : AppCompatActivity() {
         }
     }
 
-    private fun itemRow(title: String, line1: String, line2: String): View {
+    private fun itemRow(entry: InspectionScheduleEntry, title: String, line1: String, line2: String): View {
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             background = ContextCompat.getDrawable(this@InspectionCalendarActivity, R.drawable.bg_action_row)
@@ -78,6 +79,29 @@ class InspectionCalendarActivity : AppCompatActivity() {
                 LinearLayout.LayoutParams.WRAP_CONTENT
             ).apply {
                 topMargin = dp(8)
+            }
+            setOnClickListener {
+                val updated = InspectionScheduleStore.markCompleted(this@InspectionCalendarActivity, entry.id) ?: return@setOnClickListener
+                SiteboardWidgetManager.refreshAll(applicationContext)
+                android.widget.Toast.makeText(
+                    this@InspectionCalendarActivity,
+                    "[${updated.projectTitle}] 다음 일정으로 넘겼습니다.",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                renderCalendar()
+            }
+            setOnLongClickListener {
+                androidx.appcompat.app.AlertDialog.Builder(this@InspectionCalendarActivity)
+                    .setTitle("점검 일정 삭제")
+                    .setMessage("${entry.projectTitle} 일정 항목을 삭제할까요?")
+                    .setPositiveButton("삭제") { _, _ ->
+                        InspectionScheduleStore.delete(this@InspectionCalendarActivity, entry.id)
+                        SiteboardWidgetManager.refreshAll(applicationContext)
+                        renderCalendar()
+                    }
+                    .setNegativeButton("취소", null)
+                    .show()
+                true
             }
             addView(TextView(context).apply {
                 text = title
@@ -96,6 +120,12 @@ class InspectionCalendarActivity : AppCompatActivity() {
                 textSize = 11f
                 setPadding(0, dp(4), 0, 0)
                 setTextColor(ContextCompat.getColor(context, R.color.orange_primary))
+            })
+            addView(TextView(context).apply {
+                text = "탭: 완료 처리 · 길게 누름: 삭제"
+                textSize = 10f
+                setPadding(0, dp(6), 0, 0)
+                setTextColor(ContextCompat.getColor(context, R.color.text_tertiary))
             })
         }
     }

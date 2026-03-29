@@ -84,7 +84,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun fragmentForTab(tab: String?): Fragment {
         return when (tab) {
-            TAB_ARCHIVE -> ArchiveFragment()
+            TAB_ARCHIVE -> ArchiveFragment.newInstance(intent?.getStringExtra(EXTRA_ARCHIVE_FILTER))
             TAB_SETTINGS -> SettingsFragment()
             else -> HomeFragment()
         }
@@ -100,6 +100,7 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         const val EXTRA_OPEN_TAB = "open_tab"
+        const val EXTRA_ARCHIVE_FILTER = "archive_filter"
         const val TAB_HOME = "home"
         const val TAB_ARCHIVE = "archive"
         const val TAB_SETTINGS = "settings"
