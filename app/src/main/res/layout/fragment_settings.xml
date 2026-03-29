@@ -146,7 +146,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/btnDataManagementMenu"
+                android:id="@+id/btnExportCsvMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
@@ -166,7 +166,7 @@
                     <ImageView
                         android:layout_width="22dp"
                         android:layout_height="22dp"
-                        android:src="@drawable/ic_database_outline" />
+                        android:src="@drawable/ic_chart_outline" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -178,14 +178,14 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="데이터 관리"
+                        android:text="기록 데이터 내보내기"
                         android:textColor="@color/text_primary"
                         android:textSize="16sp"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="사진 복원, CSV 추출, 설정 백업/복원"
+                        android:text="저장된 모든 현장 기록을 CSV 파일로 추출합니다"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
                         android:layout_marginTop="2dp" />
