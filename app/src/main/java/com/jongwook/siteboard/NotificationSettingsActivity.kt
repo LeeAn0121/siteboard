@@ -61,10 +61,6 @@ class NotificationSettingsActivity : AppCompatActivity() {
         binding.switchInspectionReminder.setOnCheckedChangeListener { _, isChecked ->
             NotificationPreferences.setInspectionReminderEnabled(this, isChecked)
         }
-        binding.btnTestNotification.setOnClickListener {
-            SiteboardNotificationManager.showReminderNotification(this)
-            SiteboardNotificationManager.showInspectionReminderNotifications(this)
-        }
     }
 
     private fun enableReminder() {

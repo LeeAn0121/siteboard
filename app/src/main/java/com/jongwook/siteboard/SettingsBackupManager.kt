@@ -8,19 +8,40 @@ import java.util.Date
 import java.util.Locale
 
 object SettingsBackupManager {
+    private val SETTINGS_PREF_NAMES = listOf(
+        "SiteboardPrefs",
+        "WatermarkPrefs",
+        "SiteboardInspectionSchedules",
+        "SiteboardProjectMeta",
+        "SiteboardTemplates",
+        "SiteboardWidgetPrefs"
+    )
+
     fun buildSettingsBackupJson(context: Context): String {
         val root = JSONObject()
-        root.put("format", "siteboard-settings-v1")
+        root.put("format", "siteboard-settings-v2")
         root.put("exportedAt", SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
-        root.put("SiteboardPrefs", prefsToJson(context, "SiteboardPrefs"))
-        root.put("WatermarkPrefs", prefsToJson(context, "WatermarkPrefs"))
+        val prefsRoot = JSONObject()
+        SETTINGS_PREF_NAMES.forEach { prefName ->
+            prefsRoot.put(prefName, prefsToJson(context, prefName))
+        }
+        root.put("preferences", prefsRoot)
         return root.toString(2)
     }
 
     fun applySettingsBackupJson(context: Context, raw: String) {
         val root = JSONObject(raw)
-        applyPrefsJson(context, "SiteboardPrefs", root.getJSONObject("SiteboardPrefs"))
-        applyPrefsJson(context, "WatermarkPrefs", root.getJSONObject("WatermarkPrefs"))
+        val prefContainer = root.optJSONObject("preferences")
+        if (prefContainer != null) {
+            SETTINGS_PREF_NAMES.forEach { prefName ->
+                prefContainer.optJSONObject(prefName)?.let { applyPrefsJson(context, prefName, it) }
+            }
+            return
+        }
+
+        // v1 compatibility
+        root.optJSONObject("SiteboardPrefs")?.let { applyPrefsJson(context, "SiteboardPrefs", it) }
+        root.optJSONObject("WatermarkPrefs")?.let { applyPrefsJson(context, "WatermarkPrefs", it) }
     }
 
     private fun prefsToJson(context: Context, prefName: String): JSONObject {

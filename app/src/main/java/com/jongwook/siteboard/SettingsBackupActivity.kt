@@ -77,6 +77,11 @@ class SettingsBackupActivity : AppCompatActivity() {
                 val raw = contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
                     ?: throw IllegalStateException("파일을 읽을 수 없습니다.")
                 SettingsBackupManager.applySettingsBackupJson(this@SettingsBackupActivity, raw)
+                ReminderScheduler.setEnabled(
+                    applicationContext,
+                    ReminderScheduler.isEnabled(applicationContext)
+                )
+                SiteboardWidgetManager.refreshAll(applicationContext)
                 AppDatabase.backupNow(applicationContext)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(this@SettingsBackupActivity, "설정을 불러왔습니다.", Toast.LENGTH_SHORT).show()

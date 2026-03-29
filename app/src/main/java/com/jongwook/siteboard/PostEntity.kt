@@ -88,7 +88,14 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun postDao(): PostDao
     abstract fun preferenceSnapshotDao(): PreferenceSnapshotDao
     companion object {
-        private val PREF_NAMES = listOf("SiteboardPrefs", "WatermarkPrefs")
+        private val PREF_NAMES = listOf(
+            "SiteboardPrefs",
+            "WatermarkPrefs",
+            "SiteboardInspectionSchedules",
+            "SiteboardProjectMeta",
+            "SiteboardTemplates",
+            "SiteboardWidgetPrefs"
+        )
         private val floatPrefKeys = setOf("wm_font_size")
         private const val BACKUP_FILE_NAME = "siteboard_backup.sbbak"
         private const val BACKUP_FILE_GLOB = "siteboard_backup%"
