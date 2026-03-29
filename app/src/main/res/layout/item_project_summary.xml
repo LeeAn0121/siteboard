@@ -76,6 +76,20 @@
                 android:textColor="@color/orange_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvProjectBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_widget_preview_pill"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="6dp"
+                android:text="즐겨찾기 · 정상"
+                android:textColor="@color/text_primary"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
         </LinearLayout>
 
         <TextView

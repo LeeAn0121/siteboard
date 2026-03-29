@@ -104,6 +104,10 @@
             android:screenOrientation="portrait"
             android:exported="false" />
 
+        <activity android:name=".InspectionCalendarActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
         <receiver
             android:name=".ReminderReceiver"
             android:exported="false" />
@@ -167,6 +171,18 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/inspection_schedule_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name=".TodayBoardWidgetProvider"
+            android:label="@string/widget_today_board_name"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/today_board_widget_info" />
         </receiver>
 
         <provider

@@ -65,6 +65,22 @@ object InspectionScheduleStore {
         prefs(context).edit().putString(KEY_LAST_ALERTS, alerts.toString()).apply()
     }
 
+    fun markCompleted(context: Context, entryId: Long): InspectionScheduleEntry? {
+        val items = getAll(context).toMutableList()
+        val index = items.indexOfFirst { it.id == entryId }
+        if (index < 0) return null
+        val current = items[index]
+        val nextDate = resolveNextOccurrence(current, startOfDay(Date())) ?: return null
+        val calendar = Calendar.getInstance().apply {
+            time = startOfDay(nextDate)
+            add(Calendar.MONTH, current.intervalMonths)
+        }
+        val updated = current.copy(baseDate = dateFormat.format(calendar.time))
+        items[index] = updated
+        writeItems(context, items)
+        return updated
+    }
+
     fun getUpcoming(context: Context, limit: Int = 3): List<InspectionScheduleSnapshot> {
         val today = startOfDay(Date())
         return getAll(context)

@@ -68,10 +68,15 @@ object SiteboardNotificationManager {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val messageLines = mutableListOf<String>()
+        messageLines.add(if (isMissedDay) "오늘 저장된 현장 기록이 없습니다. 지금 바로 남겨두세요." else "오늘 현장 기록을 남길 시간이 되었습니다.")
+        messageLines.addAll(buildMissingProjectMessages(context, posts))
+
         val notification = NotificationCompat.Builder(context, REMINDER_CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle(if (isMissedDay) "SITEBOARD 미기록 경고" else "SITEBOARD 기록 알림")
-            .setContentText(if (isMissedDay) "오늘 저장된 현장 기록이 없습니다. 지금 바로 남겨두세요." else "오늘 현장 기록을 남길 시간이 되었습니다.")
+            .setContentText(messageLines.first())
+            .setStyle(NotificationCompat.BigTextStyle().bigText(messageLines.joinToString("\n")))
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -146,5 +151,22 @@ object SiteboardNotificationManager {
     fun showPdfCompleteNotification(context: Context, message: String, notificationId: Int) {
         if (!NotificationPreferences.isPdfCompleteEnabled(context)) return
         showStatusNotification(context, "PDF 저장 완료", message, notificationId)
+    }
+
+    private fun buildMissingProjectMessages(context: Context, posts: List<PostEntity>): List<String> {
+        val grouped = posts.groupBy { it.title }
+        return ProjectMetaStore.getFavoriteProjects(context).mapNotNull { title ->
+            val recentPost = grouped[title]?.maxByOrNull { it.id } ?: return@mapNotNull null
+            val daysAgo = daysSince(recentPost.date)
+            if (daysAgo >= 7) "즐겨찾기 현장 [$title] 기록이 ${daysAgo}일째 없습니다." else null
+        }.take(2)
+    }
+
+    private fun daysSince(rawDate: String): Long {
+        val patterns = listOf("yyyy-MM-dd", "yyyy.MM.dd", "yyyy/MM/dd", "yyyy-MM-dd HH:mm:ss")
+        val parsed = patterns.firstNotNullOfOrNull { pattern ->
+            runCatching { java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).parse(rawDate) }.getOrNull()
+        } ?: return 0
+        return ((System.currentTimeMillis() - parsed.time) / (24L * 60L * 60L * 1000L)).coerceAtLeast(0)
     }
 }

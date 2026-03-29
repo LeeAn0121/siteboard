@@ -93,6 +93,7 @@ class ArchiveFragment : Fragment() {
                     .groupBy { it.title }
                     .map { (title, posts) ->
                         val recentPost = posts.maxByOrNull { it.id }!!
+                        val projectMeta = ProjectMetaStore.get(requireContext(), title)
                         ProjectSummary(
                             title = title,
                             count = posts.size,
@@ -101,10 +102,16 @@ class ArchiveFragment : Fragment() {
                                 ?: recentPost.location?.takeIf { it.isNotBlank() }
                                 ?: "위치 미입력",
                             recentPostId = recentPost.id,
-                            posts = posts.sortedByDescending { it.id }
+                            posts = posts.sortedByDescending { it.id },
+                            favorite = projectMeta.favorite,
+                            status = projectMeta.status
                         )
                     }
-                    .sortedWith(compareByDescending<ProjectSummary> { it.recentPostId }.thenBy { it.title.lowercase(Locale.getDefault()) })
+                    .sortedWith(
+                        compareByDescending<ProjectSummary> { it.favorite }
+                            .thenByDescending { it.recentPostId }
+                            .thenBy { it.title.lowercase(Locale.getDefault()) }
+                    )
 
                 binding.tvProjectCount.text = allProjects.size.toString()
                 binding.tvArchiveCount.text = postList.size.toString()

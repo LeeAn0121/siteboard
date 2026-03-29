@@ -13,7 +13,9 @@ data class ProjectSummary(
     val recentDate: String,
     val recentLocation: String,
     val recentPostId: Int,
-    val posts: List<PostEntity>
+    val posts: List<PostEntity>,
+    val favorite: Boolean = false,
+    val status: String = ProjectMeta.STATUS_NORMAL
 )
 
 class ArchiveProjectAdapter(
@@ -28,6 +30,11 @@ class ArchiveProjectAdapter(
             binding.tvProjectItem.text = item.title
             binding.tvProjectMeta.text = "사진 ${item.count}장 · ${item.recentLocation}"
             binding.tvProjectRecent.text = "최근 기록 ${item.recentDate}"
+            binding.tvProjectBadge.text = buildList {
+                if (item.favorite) add("즐겨찾기")
+                add(item.status)
+            }.joinToString(" · ")
+            binding.tvProjectBadge.visibility = android.view.View.VISIBLE
 
             binding.root.setOnClickListener { onOpenProject(item) }
             binding.btnExportPdf.setOnClickListener { onExportPdf(item) }

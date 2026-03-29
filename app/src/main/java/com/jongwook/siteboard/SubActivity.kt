@@ -184,6 +184,8 @@ class SubActivity : AppCompatActivity() {
         binding.btnDetailSettings.setOnClickListener {
             startActivity(android.content.Intent(this, WatermarkSettingsActivity::class.java))
         }
+        binding.btnApplyTemplate.setOnClickListener { showTemplatePicker() }
+        binding.btnSaveTemplate.setOnClickListener { saveCurrentAsTemplate() }
 
         binding.btnCamera.setOnClickListener {
             if (validateInputs()) {
@@ -567,6 +569,76 @@ class SubActivity : AppCompatActivity() {
         var textDrawY = startY - fm.ascent
         for (line in lines) { canvas.drawText(line, startX, textDrawY, textPaint); textDrawY += singleH + spacing }
         return resultBitmap
+    }
+
+    private fun showTemplatePicker() {
+        val templates = RecordTemplateStore.getAll(this)
+        if (templates.isEmpty()) {
+            Toast.makeText(this, "저장된 템플릿이 없습니다.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val names = templates.map { it.name }.toTypedArray()
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("템플릿 적용")
+            .setItems(names) { _, which ->
+                applyTemplate(templates[which])
+            }
+            .setNeutralButton("관리") { _, _ ->
+                showTemplateManager()
+            }
+            .show()
+    }
+
+    private fun applyTemplate(template: RecordTemplate) {
+        if (binding.etTitle.text.isNullOrBlank()) binding.etTitle.setText(template.title)
+        binding.etDesc.setText(template.description)
+        binding.etDetailLocation.setText(template.detailLocation)
+        binding.etMemo.setText(template.memo)
+    }
+
+    private fun saveCurrentAsTemplate() {
+        val description = binding.etDesc.text.toString().trim()
+        if (description.isBlank()) {
+            Toast.makeText(this, "작업 내용을 먼저 입력해 주세요.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val input = EditText(this).apply {
+            hint = "예: 월간 점검"
+            setText(binding.etTitle.text?.toString()?.trim().orEmpty().ifBlank { "새 템플릿" })
+        }
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("템플릿 저장")
+            .setView(input)
+            .setPositiveButton("저장") { _, _ ->
+                val name = input.text.toString().trim().ifBlank { "새 템플릿" }
+                RecordTemplateStore.save(
+                    this,
+                    RecordTemplate(
+                        id = RecordTemplateStore.nextId(),
+                        name = name,
+                        title = binding.etTitle.text.toString().trim(),
+                        description = description,
+                        detailLocation = binding.etDetailLocation.text.toString().trim(),
+                        memo = binding.etMemo.text.toString().trim()
+                    )
+                )
+                Toast.makeText(this, "템플릿을 저장했습니다.", Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    private fun showTemplateManager() {
+        val templates = RecordTemplateStore.getAll(this)
+        if (templates.isEmpty()) return
+        val names = templates.map { it.name }.toTypedArray()
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("템플릿 삭제")
+            .setItems(names) { _, which ->
+                RecordTemplateStore.delete(this, templates[which].id)
+                Toast.makeText(this, "템플릿을 삭제했습니다.", Toast.LENGTH_SHORT).show()
+            }
+            .show()
     }
 
     private fun fetchCurrentLocationAndAddress() {

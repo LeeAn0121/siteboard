@@ -1,6 +1,7 @@
 package com.jongwook.siteboard
 
 import android.graphics.Color
+import android.text.format.DateFormat
 import android.graphics.ImageDecoder
 import android.graphics.Paint
 import android.graphics.RectF
@@ -33,6 +34,7 @@ class ProjectDetailActivity : AppCompatActivity() {
     private lateinit var postAdapter: PostAdapter
     private lateinit var db: AppDatabase
     private var projectPosts: List<PostEntity> = emptyList()
+    private lateinit var projectTitle: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +48,7 @@ class ProjectDetailActivity : AppCompatActivity() {
             insets
         }
 
-        val projectTitle = intent.getStringExtra("PROJECT_TITLE") ?: "알 수 없는 현장"
+        projectTitle = intent.getStringExtra("PROJECT_TITLE") ?: "알 수 없는 현장"
         binding.tvProjectTitle.text = projectTitle
         binding.btnExportProjectPdf.setOnClickListener {
             if (projectPosts.isEmpty()) {
@@ -55,6 +57,9 @@ class ProjectDetailActivity : AppCompatActivity() {
                 exportProjectPdf(projectTitle, projectPosts)
             }
         }
+        binding.btnFavoriteProject.setOnClickListener { toggleFavorite() }
+        binding.btnProjectStatus.setOnClickListener { openStatusDialog() }
+        binding.btnProjectReminder.setOnClickListener { openReminderHourDialog() }
 
         // 2. 뒤로가기 버튼 동작
         binding.btnBack.setOnClickListener { finish() }
@@ -88,8 +93,46 @@ class ProjectDetailActivity : AppCompatActivity() {
                             ?: "위치 미입력"
                     }"
                 }
+                renderProjectMeta()
             }
         }
+    }
+
+    private fun renderProjectMeta() {
+        val meta = ProjectMetaStore.get(this, projectTitle)
+        binding.btnFavoriteProject.text = if (meta.favorite) "즐겨찾기 해제" else "즐겨찾기"
+        binding.btnProjectStatus.text = meta.status
+        binding.btnProjectReminder.text = "${meta.reminderHour}시 알림"
+    }
+
+    private fun toggleFavorite() {
+        val meta = ProjectMetaStore.get(this, projectTitle)
+        ProjectMetaStore.setFavorite(this, projectTitle, !meta.favorite)
+        renderProjectMeta()
+        SiteboardWidgetManager.refreshAll(applicationContext)
+    }
+
+    private fun openStatusDialog() {
+        val statuses = ProjectMeta.ALL_STATUSES.toTypedArray()
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("현장 상태")
+            .setItems(statuses) { _, which ->
+                ProjectMetaStore.setStatus(this, projectTitle, statuses[which])
+                renderProjectMeta()
+                SiteboardWidgetManager.refreshAll(applicationContext)
+            }
+            .show()
+    }
+
+    private fun openReminderHourDialog() {
+        val hours = (6..21).map { "${it}시" }.toTypedArray()
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("현장별 알림 시간")
+            .setItems(hours) { _, which ->
+                ProjectMetaStore.setReminderHour(this, projectTitle, which + 6)
+                renderProjectMeta()
+            }
+            .show()
     }
 
     private fun exportProjectPdf(projectTitle: String, posts: List<PostEntity>) {

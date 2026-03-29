@@ -7,4 +7,5 @@
     <string name="widget_stats_name">현장 대시보드</string>
     <string name="widget_project_name">현장 바로가기</string>
     <string name="widget_inspection_name">점검 일정</string>
+    <string name="widget_today_board_name">오늘 해야 할 일</string>
 </resources>

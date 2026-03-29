@@ -25,6 +25,14 @@ data class WidgetSnapshot(
     val lastUpdated: String
 )
 
+data class TodayBoardSnapshot(
+    val todayCount: Int,
+    val inspectionCount: Int,
+    val favoriteProject: String,
+    val repairProject: String,
+    val focusLine: String
+)
+
 object SiteboardWidgetManager {
     fun refreshAll(context: Context) {
         CoroutineScope(Dispatchers.IO).launch {
@@ -34,6 +42,7 @@ object SiteboardWidgetManager {
             updateStatsWidget(context, snapshot)
             updateProjectWidget(context, posts, snapshot)
             updateInspectionWidget(context)
+            updateTodayBoardWidget(context, posts, snapshot)
         }
     }
 
@@ -259,13 +268,101 @@ object SiteboardWidgetManager {
                 refreshIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
+            val completeIntent = Intent(context, ProjectWidgetActionReceiver::class.java).apply {
+                action = ProjectWidgetActionReceiver.ACTION_COMPLETE_INSPECTION
+                data = Uri.parse("siteboard://widget/inspection/complete/$appWidgetId")
+                putExtra(ProjectWidgetActionReceiver.EXTRA_INSPECTION_ENTRY_ID, upcoming.firstOrNull()?.entry?.id ?: -1L)
+            }
+            val completePendingIntent = PendingIntent.getBroadcast(
+                context,
+                appWidgetId + 4003,
+                completeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val calendarIntent = Intent(context, InspectionCalendarActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.inspection.calendar.$appWidgetId"
+                data = Uri.parse("siteboard://widget/inspection/calendar/$appWidgetId")
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val calendarPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 4004,
+                calendarIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
 
             views.setOnClickPendingIntent(R.id.widgetInspectionRoot, managePendingIntent)
             views.setOnClickPendingIntent(R.id.btnInspectionOpenManager, managePendingIntent)
             views.setOnClickPendingIntent(R.id.btnInspectionOpenArchive, archivePendingIntent)
             views.setOnClickPendingIntent(R.id.btnInspectionRefresh, refreshPendingIntent)
+            views.setOnClickPendingIntent(R.id.btnInspectionComplete, completePendingIntent)
+            views.setOnClickPendingIntent(R.id.tvInspectionItemOne, calendarPendingIntent)
 
             applyInspectionWidgetSizing(appWidgetManager.getAppWidgetOptions(appWidgetId), views)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+
+    fun updateTodayBoardWidget(context: Context, posts: List<PostEntity>, snapshot: WidgetSnapshot) {
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, TodayBoardWidgetProvider::class.java))
+        val todayBoard = loadTodayBoardSnapshot(context, posts, snapshot)
+        ids.forEach { appWidgetId ->
+            val views = RemoteViews(context.packageName, R.layout.widget_today_board)
+            views.setTextViewText(R.id.tvTodayBoardHeadline, "점검 ${todayBoard.inspectionCount}건 · 오늘 ${todayBoard.todayCount}건")
+            views.setTextViewText(R.id.tvTodayBoardLineOne, todayBoard.focusLine)
+            views.setTextViewText(R.id.tvTodayBoardLineTwo, "즐겨찾기 · ${todayBoard.favoriteProject}")
+            views.setTextViewText(R.id.tvTodayBoardLineThree, "보수 필요 · ${todayBoard.repairProject}")
+
+            val addIntent = Intent(context, SubActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.today.add.$appWidgetId"
+                data = Uri.parse("siteboard://widget/today/add/$appWidgetId")
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val addPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 5000,
+                addIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val calendarIntent = Intent(context, InspectionCalendarActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.today.calendar.$appWidgetId"
+                data = Uri.parse("siteboard://widget/today/calendar/$appWidgetId")
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val calendarPendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 5001,
+                calendarIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val refreshIntent = Intent(context, ProjectWidgetActionReceiver::class.java).apply {
+                action = ProjectWidgetActionReceiver.ACTION_REFRESH_WIDGETS
+                data = Uri.parse("siteboard://widget/today/refresh/$appWidgetId")
+            }
+            val refreshPendingIntent = PendingIntent.getBroadcast(
+                context,
+                appWidgetId + 5002,
+                refreshIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val homeIntent = Intent(context, MainActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.today.home.$appWidgetId"
+                data = Uri.parse("siteboard://widget/today/home/$appWidgetId")
+                putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_HOME)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val homePendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 5003,
+                homeIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            views.setOnClickPendingIntent(R.id.widgetTodayBoardRoot, homePendingIntent)
+            views.setOnClickPendingIntent(R.id.btnTodayBoardAdd, addPendingIntent)
+            views.setOnClickPendingIntent(R.id.btnTodayBoardCalendar, calendarPendingIntent)
+            views.setOnClickPendingIntent(R.id.btnTodayBoardRefresh, refreshPendingIntent)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
@@ -296,6 +393,29 @@ object SiteboardWidgetManager {
         )
     }
 
+    private fun loadTodayBoardSnapshot(context: Context, posts: List<PostEntity>, fallbackSnapshot: WidgetSnapshot): TodayBoardSnapshot {
+        val now = Date()
+        val todayPatterns = listOf(
+            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(now),
+            SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()).format(now),
+            SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(now)
+        )
+        val todayCount = posts.count { post -> todayPatterns.any { post.date.contains(it) } }
+        val inspectionItems = InspectionScheduleStore.getUpcoming(context, limit = 20)
+        val favoriteProject = ProjectMetaStore.getFavoriteProjects(context).firstOrNull() ?: fallbackSnapshot.recentProject
+        val repairProject = ProjectMetaStore.getProjectsByStatus(context, ProjectMeta.STATUS_REPAIR).firstOrNull() ?: "없음"
+        val focusLine = inspectionItems.firstOrNull()?.let {
+            "${it.entry.projectTitle} · ${it.entry.note} · ${if (it.daysUntil > 0) "D-${it.daysUntil}" else if (it.daysUntil == 0L) "오늘" else "${kotlin.math.abs(it.daysUntil)}일 지남"}"
+        } ?: "최근 현장 · ${fallbackSnapshot.recentProject}"
+        return TodayBoardSnapshot(
+            todayCount = todayCount,
+            inspectionCount = inspectionItems.size,
+            favoriteProject = favoriteProject,
+            repairProject = repairProject,
+            focusLine = focusLine
+        )
+    }
+
     private fun applyStatsWidgetSizing(options: Bundle, views: RemoteViews) {
         val columns = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0))
         val rows = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0))
@@ -319,6 +439,7 @@ object SiteboardWidgetManager {
         val rows = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0))
         val showActionRow = columns >= 4 && rows >= 2
         views.setViewVisibility(R.id.layoutInspectionWidgetActions, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
+        views.setViewVisibility(R.id.btnInspectionComplete, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
     }
 
     private fun estimateSpan(sizeDp: Int): Int {

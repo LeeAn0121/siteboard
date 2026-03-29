@@ -1,6 +1,7 @@
 package com.jongwook.siteboard
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ArrayAdapter
@@ -44,6 +45,9 @@ class InspectionScheduleActivity : AppCompatActivity() {
         binding.tvInspectionDateValue.text = selectedDate
         binding.tvInspectionDateValue.setOnClickListener { openDatePicker() }
         binding.btnSaveInspection.setOnClickListener { saveInspectionSchedule() }
+        binding.btnOpenInspectionCalendar.setOnClickListener {
+            startActivity(Intent(this, InspectionCalendarActivity::class.java))
+        }
 
         setupCycleSpinner()
         loadProjectTitles()
@@ -151,6 +155,9 @@ class InspectionScheduleActivity : AppCompatActivity() {
                 ).apply {
                     topMargin = dp(10)
                 }
+                setOnClickListener {
+                    markComplete(snapshot.entry)
+                }
                 setOnLongClickListener {
                     confirmDelete(snapshot.entry)
                     true
@@ -189,6 +196,13 @@ class InspectionScheduleActivity : AppCompatActivity() {
             }
             .setNegativeButton("취소", null)
             .show()
+    }
+
+    private fun markComplete(entry: InspectionScheduleEntry) {
+        val updated = InspectionScheduleStore.markCompleted(this, entry.id) ?: return
+        SiteboardWidgetManager.refreshAll(applicationContext)
+        Toast.makeText(this, "[${updated.projectTitle}] 다음 일정으로 넘겼습니다.", Toast.LENGTH_SHORT).show()
+        renderScheduleList()
     }
 
     private fun formatCountdown(daysUntil: Long): String {

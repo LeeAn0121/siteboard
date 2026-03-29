@@ -158,6 +158,18 @@
                     android:textColor="#10141B"
                     android:textSize="13sp"
                     android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btnOpenInspectionCalendar"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:layout_marginTop="8dp"
+                    android:background="@drawable/bg_widget_preview_pill"
+                    android:gravity="center"
+                    android:text="점검 캘린더 보기"
+                    android:textColor="@color/text_primary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <TextView
