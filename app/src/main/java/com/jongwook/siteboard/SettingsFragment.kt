@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.OvershootInterpolator
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -46,6 +47,34 @@ class SettingsFragment : Fragment() {
         }
         binding.btnNotificationMenu.setOnClickListener {
             startActivity(Intent(requireContext(), NotificationSettingsActivity::class.java))
+        }
+        binding.btnInspectionMenu.setOnClickListener {
+            startActivity(Intent(requireContext(), InspectionScheduleActivity::class.java))
+        }
+
+        animateMenuRows()
+    }
+
+    private fun animateMenuRows() {
+        val rows = listOf(
+            binding.btnWatermarkMenu,
+            binding.btnDataManagementMenu,
+            binding.btnSettingsBackupMenu,
+            binding.btnCapturePrivacyMenu,
+            binding.btnAppInfoMenu,
+            binding.btnNotificationMenu,
+            binding.btnInspectionMenu
+        )
+        rows.forEachIndexed { index, view ->
+            view.alpha = 0f
+            view.translationY = 24f
+            view.animate()
+                .alpha(1f)
+                .translationY(0f)
+                .setStartDelay((index * 36L))
+                .setDuration(320L)
+                .setInterpolator(OvershootInterpolator(0.8f))
+                .start()
         }
     }
 

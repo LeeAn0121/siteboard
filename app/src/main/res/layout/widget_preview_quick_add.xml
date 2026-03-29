@@ -21,13 +21,14 @@
             android:text="빠른 등록"
             android:textColor="#FFFFB36B"
             android:textSize="11sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="한 번에 바로 기록 시작"
+            android:text="즉시 기록 시작"
             android:textColor="@android:color/white"
             android:textSize="20sp"
             android:textStyle="bold" />
@@ -36,7 +37,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:text="촬영, 추가, 보관함 이동까지 손가락 두 번 안에 끝냅니다."
+            android:text="촬영, 저장, 보관함 이동을 가장 짧은 동선으로 연결합니다."
             android:textColor="#D6DEE8"
             android:textSize="12sp" />
 

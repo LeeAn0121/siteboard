@@ -41,6 +41,7 @@ class NotificationSettingsActivity : AppCompatActivity() {
         binding.switchSaveSuccess.isChecked = NotificationPreferences.isSaveSuccessEnabled(this)
         binding.switchPdfComplete.isChecked = NotificationPreferences.isPdfCompleteEnabled(this)
         binding.switchMissedDay.isChecked = NotificationPreferences.isMissedDayEnabled(this)
+        binding.switchInspectionReminder.isChecked = NotificationPreferences.isInspectionReminderEnabled(this)
         binding.switchDailyReminder.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 enableReminder()
@@ -57,8 +58,12 @@ class NotificationSettingsActivity : AppCompatActivity() {
         binding.switchMissedDay.setOnCheckedChangeListener { _, isChecked ->
             NotificationPreferences.setMissedDayEnabled(this, isChecked)
         }
+        binding.switchInspectionReminder.setOnCheckedChangeListener { _, isChecked ->
+            NotificationPreferences.setInspectionReminderEnabled(this, isChecked)
+        }
         binding.btnTestNotification.setOnClickListener {
             SiteboardNotificationManager.showReminderNotification(this)
+            SiteboardNotificationManager.showInspectionReminderNotifications(this)
         }
     }
 

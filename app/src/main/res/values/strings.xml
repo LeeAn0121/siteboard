@@ -1,6 +1,10 @@
 <resources>
     <string name="app_name">사이트보드</string>
+    <string name="splash_label">Field Workflow Suite</string>
+    <string name="splash_tagline">현장 기록, 사진, PDF, 위젯까지 한 흐름으로 정리합니다.</string>
+    <string name="splash_footer">Daily capture and site reporting</string>
     <string name="widget_quick_add_name">빠른 등록</string>
     <string name="widget_stats_name">현장 대시보드</string>
     <string name="widget_project_name">현장 바로가기</string>
+    <string name="widget_inspection_name">점검 일정</string>
 </resources>

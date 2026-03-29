@@ -4,6 +4,7 @@
     <color name="white">#FFFFFFFF</color>
     <color name="orange_primary">#FFB36B</color>
     <color name="orange_deep">#FF8A3D</color>
+    <color name="orange_soft_overlay">#1AFFB36B</color>
     <color name="bg_dark">#0C1118</color>
     <color name="surface_dark">#151E29</color>
     <color name="surface_elevated">#1B2633</color>

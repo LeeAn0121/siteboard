@@ -20,36 +20,56 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
             android:layout_marginBottom="14dp"
             android:background="@drawable/bg_hero_panel"
-            android:padding="18dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ARCHIVE"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="보관함"
+                    android:textColor="@color/text_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvArchiveDesc"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="현장별 기록과 PDF를 한 번에 관리합니다"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="ARCHIVE"
+                android:background="@drawable/bg_widget_preview_pill"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="SMART STACK"
                 android:textColor="@color/orange_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="보관함"
-                android:textColor="@color/text_primary"
-                android:textSize="28sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvArchiveDesc"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="현장별 묶음, 최근 기록 확인, 개별 현장 PDF 내보내기를 빠르게 처리합니다"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -99,7 +119,7 @@
             android:layout_marginTop="14dp"
             android:background="@drawable/bg_surface_card_soft"
             android:orientation="horizontal"
-            android:padding="10dp">
+            android:padding="8dp">
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
@@ -116,14 +136,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="10dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="현장 수"
                         android:textColor="@color/text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="10sp" />
 
                     <TextView
                         android:id="@+id/tvProjectCount"
@@ -132,7 +153,7 @@
                         android:layout_marginTop="4dp"
                         android:text="0"
                         android:textColor="@color/text_primary"
-                        android:textSize="22sp"
+                        android:textSize="19sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -152,14 +173,15 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="14dp">
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="10dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="보관 기록"
                         android:textColor="@color/text_secondary"
-                        android:textSize="11sp" />
+                        android:textSize="10sp" />
 
                     <TextView
                         android:id="@+id/tvArchiveCount"
@@ -168,7 +190,7 @@
                         android:layout_marginTop="4dp"
                         android:text="0"
                         android:textColor="@color/text_primary"
-                        android:textSize="22sp"
+                        android:textSize="19sp"
                         android:textStyle="bold" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -219,12 +241,12 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.32">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="📂"
-            android:textSize="48sp"
-            android:layout_marginBottom="14dp" />
+        <ImageView
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginBottom="14dp"
+            android:src="@drawable/ic_folder_outline"
+            app:tint="@color/orange_primary" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -238,7 +260,7 @@
             android:layout_height="wrap_content"
             android:text="현장 기록이 쌓이면 이곳에서 현장명 단위로 모아볼 수 있습니다"
             android:textSize="13sp"
-            android:textColor="@color/text_tertiary"
+            android:textColor="@color/text_secondary"
             android:layout_marginTop="6dp" />
     </LinearLayout>
 

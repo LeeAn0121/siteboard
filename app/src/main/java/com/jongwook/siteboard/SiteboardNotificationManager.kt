@@ -16,6 +16,7 @@ object SiteboardNotificationManager {
     const val REMINDER_CHANNEL_ID = "siteboard_reminder"
     const val STATUS_CHANNEL_ID = "siteboard_status"
     const val REMINDER_NOTIFICATION_ID = 2001
+    const val INSPECTION_NOTIFICATION_ID = 2011
 
     fun ensureChannels(context: Context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
@@ -77,6 +78,37 @@ object SiteboardNotificationManager {
             .build()
 
         NotificationManagerCompat.from(context).notify(REMINDER_NOTIFICATION_ID, notification)
+    }
+
+    fun showInspectionReminderNotifications(context: Context) {
+        if (!canPostNotifications(context)) return
+        if (!NotificationPreferences.isInspectionReminderEnabled(context)) return
+        ensureChannels(context)
+
+        val messages = InspectionScheduleStore.consumeDueNotificationMessages(context)
+        if (messages.isEmpty()) return
+
+        val intent = Intent(context, InspectionScheduleActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            3111,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, REMINDER_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_popup_reminder)
+            .setContentTitle("SITEBOARD 점검 일정 알림")
+            .setContentText(messages.first())
+            .setStyle(NotificationCompat.BigTextStyle().bigText(messages.joinToString("\n")))
+            .setContentIntent(pendingIntent)
+            .setAutoCancel(true)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .build()
+
+        NotificationManagerCompat.from(context).notify(INSPECTION_NOTIFICATION_ID, notification)
     }
 
     fun showStatusNotification(context: Context, title: String, message: String, notificationId: Int) {

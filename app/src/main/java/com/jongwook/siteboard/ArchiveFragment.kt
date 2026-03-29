@@ -14,7 +14,9 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -72,6 +74,8 @@ class ArchiveFragment : Fragment() {
 
         binding.rvProjects.layoutManager = LinearLayoutManager(requireContext())
         binding.rvProjects.adapter = archiveAdapter
+        binding.rvProjects.layoutAnimation =
+            AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_rise_stagger)
 
         binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
         binding.etSearch.addTextChangedListener(object : TextWatcher {
@@ -124,6 +128,9 @@ class ArchiveFragment : Fragment() {
         binding.tvResultSummary.text = "${filtered.size}개 현장 · 최신 업데이트순"
         binding.layoutEmpty.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
         binding.rvProjects.visibility = if (filtered.isEmpty()) View.GONE else View.VISIBLE
+        if (filtered.isNotEmpty()) {
+            binding.rvProjects.scheduleLayoutAnimation()
+        }
     }
 
     private fun exportToPdf(siteTitle: String, posts: List<PostEntity>) {
@@ -235,7 +242,7 @@ class ArchiveFragment : Fragment() {
                             Toast.makeText(requireContext(), "파일 관리자를 열 수 없습니다.", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    snackbar.setActionTextColor(Color.parseColor("#FF6F00"))
+                    snackbar.setActionTextColor(ContextCompat.getColor(requireContext(), R.color.orange_primary))
                     snackbar.show()
                 }
             } catch (e: Exception) {

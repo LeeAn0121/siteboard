@@ -4,48 +4,75 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#16161A">
+    android:background="@drawable/bg_app_canvas">
 
     <!-- Header -->
     <LinearLayout
         android:id="@+id/layoutHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="8dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
         android:paddingTop="16dp"
         android:paddingBottom="12dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:src="@android:drawable/ic_menu_close_clear_cancel"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="#FFFFFF"
-            android:contentDescription="뒤로가기" />
-
-        <TextView
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="배치 편집"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:layout_marginStart="4dp" />
+            android:background="@drawable/bg_hero_panel"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="12dp">
 
-        <TextView
-            android:id="@+id/tvPhotoCount"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="0장"
-            android:textColor="#FF6F00"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginEnd="16dp" />
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@android:drawable/ic_menu_close_clear_cancel"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/text_primary"
+                android:contentDescription="뒤로가기" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="BATCH"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="배치 편집"
+                    android:textColor="@color/text_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvPhotoCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_widget_preview_pill"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="0장"
+                android:textColor="@color/orange_primary"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Scrollable content -->
@@ -75,8 +102,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="선택된 사진"
-                    android:textColor="#A0A0A5"
-                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.08"
                     android:layout_marginBottom="12dp" />
@@ -94,7 +121,7 @@
             </LinearLayout>
 
             <!-- Divider -->
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1EFFFFFF" />
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#12FFFFFF" />
 
             <!-- Project Context -->
             <LinearLayout
@@ -109,8 +136,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="프로젝트 정보"
-                    android:textColor="#A0A0A5"
-                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.08"
                     android:layout_marginBottom="12dp" />
@@ -120,7 +147,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:background="#1E2023"
+                    android:background="@drawable/bg_input_panel"
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="12dp">
 
@@ -128,7 +155,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="현장명"
-                        android:textColor="#606060"
+                        android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
 
                     <EditText
@@ -137,8 +164,8 @@
                         android:layout_height="wrap_content"
                         android:background="@null"
                         android:hint="현장명 입력"
-                        android:textColorHint="#404045"
-                        android:textColor="#EBEBEB"
+                        android:textColorHint="@color/text_tertiary"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp"
                         android:layout_marginTop="2dp"
                         android:inputType="text"
@@ -152,7 +179,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:background="#1E2023"
+                    android:background="@drawable/bg_input_panel"
                     android:paddingHorizontal="16dp"
                     android:paddingVertical="12dp">
 
@@ -160,7 +187,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="작업 내용 (선택)"
-                        android:textColor="#606060"
+                        android:textColor="@color/text_secondary"
                         android:textSize="11sp" />
 
                     <EditText
@@ -169,8 +196,8 @@
                         android:layout_height="wrap_content"
                         android:background="@null"
                         android:hint="작업 내용 입력"
-                        android:textColorHint="#404045"
-                        android:textColor="#EBEBEB"
+                        android:textColorHint="@color/text_tertiary"
+                        android:textColor="@color/text_primary"
                         android:textSize="15sp"
                         android:layout_marginTop="2dp"
                         android:inputType="textMultiLine"
@@ -179,7 +206,7 @@
             </LinearLayout>
 
             <!-- Divider -->
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1EFFFFFF" android:layout_marginTop="12dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#12FFFFFF" android:layout_marginTop="12dp"/>
 
             <!-- Watermark Theme -->
             <LinearLayout
@@ -202,8 +229,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="워터마크 테마"
-                        android:textColor="#A0A0A5"
-                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.08" />
 
@@ -211,10 +238,12 @@
                         android:id="@+id/btnDetailSettings"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="상세 설정 ›"
-                        android:textColor="#FF6F00"
-                        android:textSize="13sp"
-                        android:padding="4dp"
+                        android:text="상세 설정"
+                        android:textColor="@color/orange_primary"
+                        android:textSize="12sp"
+                        android:background="@drawable/bg_widget_preview_pill"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="6dp"
                         android:clickable="true"
                         android:focusable="true" />
                 </LinearLayout>
@@ -229,28 +258,28 @@
                         android:orientation="horizontal">
 
                         <LinearLayout android:id="@+id/layoutTheme0" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="10dp" android:clickable="true" android:focusable="true">
-                            <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme0" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                            <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme0" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="@color/orange_primary">
                                 <ImageView android:id="@+id/ivThemePreview0" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
                             </com.google.android.material.card.MaterialCardView>
                             <TextView android:id="@+id/tvThemeLabel0" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="미니멀" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
                         </LinearLayout>
 
                         <LinearLayout android:id="@+id/layoutTheme1" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="10dp" android:clickable="true" android:focusable="true">
-                            <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme1" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                            <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme1" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="@color/orange_primary">
                                 <ImageView android:id="@+id/ivThemePreview1" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
                             </com.google.android.material.card.MaterialCardView>
                             <TextView android:id="@+id/tvThemeLabel1" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="기술" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
                         </LinearLayout>
 
                         <LinearLayout android:id="@+id/layoutTheme2" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="10dp" android:clickable="true" android:focusable="true">
-                            <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme2" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                            <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme2" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="@color/orange_primary">
                                 <ImageView android:id="@+id/ivThemePreview2" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
                             </com.google.android.material.card.MaterialCardView>
                             <TextView android:id="@+id/tvThemeLabel2" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="전문" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
                         </LinearLayout>
 
                         <LinearLayout android:id="@+id/layoutTheme3" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:clickable="true" android:focusable="true">
-                            <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme3" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                            <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme3" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="@color/orange_primary">
                                 <ImageView android:id="@+id/ivThemePreview3" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
                             </com.google.android.material.card.MaterialCardView>
                             <TextView android:id="@+id/tvThemeLabel3" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="강조" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
@@ -261,7 +290,7 @@
             </LinearLayout>
 
             <!-- Divider -->
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1EFFFFFF" android:layout_marginTop="12dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#12FFFFFF" android:layout_marginTop="12dp"/>
 
             <!-- Anchor Point -->
             <LinearLayout
@@ -276,8 +305,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="워터마크 위치"
-                    android:textColor="#A0A0A5"
-                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.08"
                     android:layout_marginBottom="14dp" />
@@ -309,7 +338,7 @@
             </LinearLayout>
 
             <!-- Divider -->
-            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#1EFFFFFF" android:layout_marginTop="12dp"/>
+            <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#12FFFFFF" android:layout_marginTop="12dp"/>
 
             <!-- Overlay Opacity -->
             <LinearLayout
@@ -323,17 +352,20 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_surface_card_soft"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:layout_marginBottom="10dp">
+                    android:layout_marginBottom="10dp"
+                    android:paddingHorizontal="16dp"
+                    android:paddingVertical="14dp">
 
                     <TextView
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="배경 박스 투명도"
-                        android:textColor="#A0A0A5"
-                        android:textSize="13sp"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.08" />
 
@@ -342,8 +374,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="40%"
-                        android:textColor="#FF6F00"
-                        android:textSize="16sp"
+                        android:textColor="@color/orange_primary"
+                        android:textSize="15sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
@@ -353,8 +385,8 @@
                     android:layout_height="wrap_content"
                     android:max="100"
                     android:progress="40"
-                    android:progressTint="#FF6F00"
-                    android:thumbTint="#FF6F00" />
+                    android:progressTint="@color/orange_primary"
+                    android:thumbTint="@color/orange_primary" />
             </LinearLayout>
 
         </LinearLayout>
@@ -368,7 +400,7 @@
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingVertical="16dp"
-        android:background="#16161A"
+        android:background="@drawable/bg_bottom_nav_modern"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <Button
@@ -376,10 +408,10 @@
             android:layout_width="match_parent"
             android:layout_height="60dp"
             android:text="모든 사진에 적용"
-            android:textColor="#FFFFFF"
+            android:textColor="#0F1115"
             android:textSize="17sp"
             android:textStyle="bold"
-            android:backgroundTint="#FF6F00"
+            android:background="@drawable/bg_primary_button"
             android:textAllCaps="false"
             app:cornerRadius="16dp"
             android:insetTop="0dp"
@@ -391,7 +423,7 @@
         android:id="@+id/layoutLoading"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#CC000000"
+        android:background="#A60A0D12"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone"
@@ -403,7 +435,7 @@
         <ProgressBar
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:indeterminateTint="#FF6F00" />
+            android:indeterminateTint="@color/orange_primary" />
 
         <TextView
             android:id="@+id/tvLoadingMessage"

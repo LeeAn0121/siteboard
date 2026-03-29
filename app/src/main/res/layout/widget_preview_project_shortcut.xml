@@ -21,7 +21,8 @@
             android:text="현장 바로가기"
             android:textColor="#FFFFB36B"
             android:textSize="11sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
 
         <TextView
             android:layout_width="match_parent"
@@ -37,7 +38,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:text="사진 24장 · 최근 기록 오늘 17:42"
-            android:textColor="#B3C0D0"
+            android:textColor="#D6DEE8"
             android:textSize="12sp" />
 
         <TextView

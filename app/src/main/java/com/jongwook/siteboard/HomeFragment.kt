@@ -15,7 +15,9 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updateLayoutParams
@@ -23,6 +25,8 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.transition.AutoTransition
+import androidx.transition.TransitionManager
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
 import com.jongwook.siteboard.databinding.FragmentHomeBinding
@@ -77,6 +81,8 @@ class HomeFragment : Fragment() {
 
         binding.rvPostList.layoutManager = GridLayoutManager(requireContext(), 2)
         binding.rvPostList.adapter = postAdapter
+        binding.rvPostList.layoutAnimation =
+            AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_rise_stagger)
 
         binding.btnOpenSub.bringToFront()
         binding.btnOpenSub.setOnClickListener {
@@ -162,6 +168,9 @@ class HomeFragment : Fragment() {
     }
 
     private fun renderFilterPanel() {
+        TransitionManager.beginDelayedTransition(binding.layoutTop, AutoTransition().apply {
+            duration = 220
+        })
         binding.layoutFilterContent.visibility = if (isFilterExpanded) View.VISIBLE else View.GONE
         binding.tvFilterToggle.text = if (isFilterExpanded) "접기" else "펼치기"
     }
@@ -199,6 +208,9 @@ class HomeFragment : Fragment() {
         val isEmpty = filteredPosts.isEmpty()
         binding.layoutEmpty.visibility = if (isEmpty) View.VISIBLE else View.GONE
         binding.rvPostList.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        if (!isEmpty) {
+            binding.rvPostList.scheduleLayoutAnimation()
+        }
         binding.tvResultSummary.text =
             "${filteredPosts.size}개 기록 · ${currentFilter.label} · ${currentSort.label}"
     }
@@ -251,8 +263,9 @@ class HomeFragment : Fragment() {
             .create()
 
         dialog.setOnShowListener {
-            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(Color.parseColor("#FF6F00"))
-            dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(Color.parseColor("#FF6F00"))
+            val accentColor = ContextCompat.getColor(requireContext(), R.color.orange_primary)
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setTextColor(accentColor)
+            dialog.getButton(android.app.AlertDialog.BUTTON_NEGATIVE)?.setTextColor(accentColor)
         }
         dialog.show()
     }
@@ -363,7 +376,7 @@ class HomeFragment : Fragment() {
                     )
                     val snackbar = Snackbar.make(requireView(), "PDF 보고서가 저장되었습니다! 📄", Snackbar.LENGTH_LONG)
                     snackbar.setAction("폴더 열기") { openSiteboardFolder(siteboardDir) }
-                    snackbar.setActionTextColor(Color.parseColor("#FF6F00"))
+                    snackbar.setActionTextColor(ContextCompat.getColor(requireContext(), R.color.orange_primary))
                     snackbar.show()
                 }
             } catch (e: Exception) {

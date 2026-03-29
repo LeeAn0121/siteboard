@@ -7,7 +7,7 @@
     android:layout_marginHorizontal="6dp"
     android:layout_marginVertical="5dp"
     app:cardBackgroundColor="@color/surface_elevated"
-    app:cardCornerRadius="22dp"
+    app:cardCornerRadius="24dp"
     app:cardElevation="0dp"
     app:strokeColor="@color/stroke_subtle"
     app:strokeWidth="1dp">
@@ -18,7 +18,7 @@
         android:background="?attr/selectableItemBackground"
         android:gravity="center_vertical"
         android:orientation="horizontal"
-        android:padding="16dp">
+        android:padding="18dp">
 
         <LinearLayout
             android:layout_width="46dp"
@@ -26,19 +26,29 @@
             android:background="@drawable/bg_widget_metric_tile"
             android:gravity="center">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="📁"
-                android:textSize="20sp" />
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:src="@drawable/ic_folder_outline"
+                app:tint="@color/text_primary" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="14dp"
+            android:layout_marginStart="16dp"
             android:layout_weight="1"
             android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROJECT"
+                android:textColor="@color/orange_primary"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:layout_marginBottom="4dp" />
 
             <TextView
                 android:id="@+id/tvProjectItem"
@@ -47,14 +57,14 @@
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:textColor="@color/text_primary"
-                android:textSize="16sp"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvProjectMeta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
+                android:layout_marginTop="4dp"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 
@@ -62,21 +72,22 @@
                 android:id="@+id/tvProjectRecent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:textColor="@color/orange_primary"
-                android:textSize="11sp" />
+                android:textSize="11sp"
+                android:textStyle="bold" />
         </LinearLayout>
 
         <TextView
             android:id="@+id/btnExportPdf"
             android:layout_width="wrap_content"
-            android:layout_height="34dp"
-            android:layout_marginStart="10dp"
+            android:layout_height="36dp"
+            android:layout_marginStart="12dp"
             android:background="@drawable/bg_primary_button"
             android:clickable="true"
             android:focusable="true"
             android:gravity="center"
-            android:paddingHorizontal="12dp"
+            android:paddingHorizontal="14dp"
             android:text="PDF"
             android:textColor="#0F1115"
             android:textSize="11sp"

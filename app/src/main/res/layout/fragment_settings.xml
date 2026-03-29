@@ -20,33 +20,53 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_hero_panel"
-            android:orientation="vertical"
-            android:padding="18dp">
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CONTROL"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="설정"
+                    android:textSize="24sp"
+                    android:textColor="@color/text_primary"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="기능별 메뉴를 카드형으로 정리했습니다."
+                    android:textColor="@color/text_secondary"
+                    android:textSize="11sp" />
+            </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="CONTROL"
+                android:background="@drawable/bg_widget_preview_pill"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="SYSTEM"
                 android:textColor="@color/orange_primary"
                 android:textSize="11sp"
                 android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="설정"
-                android:textSize="28sp"
-                android:textColor="@color/text_primary"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="카테고리별로 들어가서 필요한 설정만 단계적으로 관리합니다."
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
         </LinearLayout>
     </LinearLayout>
 
@@ -71,7 +91,7 @@
                 android:layout_marginBottom="10dp"
                 android:text="카테고리"
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
 
             <LinearLayout
@@ -90,12 +110,11 @@
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     android:gravity="center"
-                    android:background="#1AFF6F00">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="✏️"
-                        android:textSize="18sp" />
+                    android:background="@color/orange_soft_overlay">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_edit_outline" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -120,12 +139,10 @@
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textSize="20sp"
-                    android:textColor="@color/text_tertiary" />
+                    android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
             <LinearLayout
@@ -146,11 +163,10 @@
                     android:layout_height="44dp"
                     android:gravity="center"
                     android:background="#1A26A69A">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🗂️"
-                        android:textSize="18sp" />
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_database_outline" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -175,12 +191,10 @@
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textSize="20sp"
-                    android:textColor="@color/text_tertiary" />
+                    android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
             <LinearLayout
@@ -202,11 +216,10 @@
                     android:background="#1A7DE5B2"
                     android:gravity="center">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="💾"
-                        android:textSize="18sp" />
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_download_outline" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -233,12 +246,10 @@
                         android:textSize="12sp" />
                 </LinearLayout>
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="@color/text_tertiary"
-                    android:textSize="20sp" />
+                    android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
             <LinearLayout
@@ -259,11 +270,10 @@
                     android:layout_height="44dp"
                     android:gravity="center"
                     android:background="#1A5C9AFF">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🛡️"
-                        android:textSize="18sp" />
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_shield_outline" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -288,12 +298,10 @@
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textSize="20sp"
-                    android:textColor="@color/text_tertiary" />
+                    android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
             <LinearLayout
@@ -314,11 +322,10 @@
                     android:layout_height="44dp"
                     android:gravity="center"
                     android:background="#1A7DE5B2">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ℹ️"
-                        android:textSize="18sp" />
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_info_outline" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -343,12 +350,10 @@
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textSize="20sp"
-                    android:textColor="@color/text_tertiary" />
+                    android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
             <LinearLayout
@@ -370,11 +375,10 @@
                     android:background="#1AFFB36B"
                     android:gravity="center">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="🔔"
-                        android:textSize="18sp" />
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_bell_outline" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -401,12 +405,65 @@
                         android:textSize="12sp" />
                 </LinearLayout>
 
-                <TextView
+                <ImageView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="›"
-                    android:textColor="@color/text_tertiary"
-                    android:textSize="20sp" />
+                    android:src="@drawable/ic_chevron_right" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnInspectionMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_action_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="16dp">
+
+                <LinearLayout
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@color/orange_soft_overlay"
+                    android:gravity="center">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_calendar_outline" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="14dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="점검 일정"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:text="월별, 분기별 현장 점검 주기와 사전 알림 관리"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
         </LinearLayout>

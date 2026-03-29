@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -18,6 +19,7 @@ class SplashActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
+        setupIntroMotion()
 
         lifecycleScope.launch {
             val isFirstInstall = AppDatabase.isFirstInstall(applicationContext)
@@ -48,6 +50,28 @@ class SplashActivity : AppCompatActivity() {
         }
     }
 
+    private fun setupIntroMotion() {
+        val splashCard = findViewById<View>(R.id.layoutSplashCard)
+        val splashCaption = findViewById<View>(R.id.tvSplashCaption)
+
+        splashCard.alpha = 0f
+        splashCard.translationY = 28f
+        splashCard.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(520L)
+            .start()
+
+        splashCaption.alpha = 0f
+        splashCaption.translationY = 16f
+        splashCaption.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setStartDelay(120L)
+            .setDuration(420L)
+            .start()
+    }
+
     private fun restoreBackupAndNavigate(backupUri: Uri) {
         lifecycleScope.launch {
             val success = withContext(Dispatchers.IO) {
@@ -71,6 +95,7 @@ class SplashActivity : AppCompatActivity() {
             ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
         }
         startActivity(Intent(this, if (allGranted) MainActivity::class.java else PermissionActivity::class.java))
+        overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
         finish()
     }
 }

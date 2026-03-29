@@ -5,6 +5,7 @@ import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.RemoteViews
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,7 @@ object SiteboardWidgetManager {
             updateQuickAddWidget(context)
             updateStatsWidget(context, snapshot)
             updateProjectWidget(context, posts, snapshot)
+            updateInspectionWidget(context)
         }
     }
 
@@ -40,7 +42,11 @@ object SiteboardWidgetManager {
         val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, QuickAddWidgetProvider::class.java))
         ids.forEach { appWidgetId ->
             val views = RemoteViews(context.packageName, R.layout.widget_quick_add)
-            val launchIntent = Intent(context, SubActivity::class.java)
+            val launchIntent = Intent(context, SubActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.quick_add.$appWidgetId"
+                data = Uri.parse("siteboard://widget/quick-add/$appWidgetId")
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
             val pendingIntent = PendingIntent.getActivity(
                 context,
                 appWidgetId,
@@ -48,7 +54,10 @@ object SiteboardWidgetManager {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             val archiveIntent = Intent(context, MainActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.quick_add.archive.$appWidgetId"
+                data = Uri.parse("siteboard://widget/quick-add/archive/$appWidgetId")
                 putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_ARCHIVE)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             }
             val archivePendingIntent = PendingIntent.getActivity(
                 context,
@@ -74,14 +83,23 @@ object SiteboardWidgetManager {
             views.setTextViewText(R.id.tvWidgetRecentProject, "최근 현장 · ${snapshot.recentProject}")
             views.setTextViewText(R.id.tvWidgetUpdatedAt, snapshot.lastUpdated)
 
-            val openIntent = Intent(context, MainActivity::class.java)
+            val openIntent = Intent(context, MainActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.stats.home.$appWidgetId"
+                data = Uri.parse("siteboard://widget/stats/home/$appWidgetId")
+                putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_HOME)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
             val homePendingIntent = PendingIntent.getActivity(
                 context,
                 appWidgetId + 1000,
                 openIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-            val addIntent = Intent(context, SubActivity::class.java)
+            val addIntent = Intent(context, SubActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.stats.add.$appWidgetId"
+                data = Uri.parse("siteboard://widget/stats/add/$appWidgetId")
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
             val addPendingIntent = PendingIntent.getActivity(
                 context,
                 appWidgetId + 1001,
@@ -89,7 +107,10 @@ object SiteboardWidgetManager {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             val archiveIntent = Intent(context, MainActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.stats.archive.$appWidgetId"
+                data = Uri.parse("siteboard://widget/stats/archive/$appWidgetId")
                 putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_ARCHIVE)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             }
             val archivePendingIntent = PendingIntent.getActivity(
                 context,
@@ -99,6 +120,7 @@ object SiteboardWidgetManager {
             )
             val refreshIntent = Intent(context, ProjectWidgetActionReceiver::class.java).apply {
                 action = ProjectWidgetActionReceiver.ACTION_REFRESH_WIDGETS
+                data = Uri.parse("siteboard://widget/stats/refresh/$appWidgetId")
             }
             val refreshPendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -134,7 +156,10 @@ object SiteboardWidgetManager {
             views.setTextViewText(R.id.tvWidgetProjectUpdatedAt, updatedAt)
 
             val openIntent = Intent(context, ProjectDetailActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.project.open.$appWidgetId"
+                data = Uri.parse("siteboard://widget/project/open/$appWidgetId")
                 putExtra("PROJECT_TITLE", title)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             }
             val openPendingIntent = PendingIntent.getActivity(
                 context,
@@ -143,7 +168,10 @@ object SiteboardWidgetManager {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
             val addIntent = Intent(context, SubActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.project.add.$appWidgetId"
+                data = Uri.parse("siteboard://widget/project/add/$appWidgetId")
                 putExtra(SubActivity.EXTRA_PREFILL_TITLE, title)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
             }
             val addPendingIntent = PendingIntent.getActivity(
                 context,
@@ -153,6 +181,7 @@ object SiteboardWidgetManager {
             )
             val exportIntent = Intent(context, ProjectWidgetActionReceiver::class.java).apply {
                 action = ProjectWidgetActionReceiver.ACTION_EXPORT_LATEST_PROJECT_PDF
+                data = Uri.parse("siteboard://widget/project/export/$appWidgetId")
                 putExtra(ProjectWidgetActionReceiver.EXTRA_PROJECT_TITLE, title)
             }
             val exportPendingIntent = PendingIntent.getBroadcast(
@@ -163,6 +192,7 @@ object SiteboardWidgetManager {
             )
             val refreshIntent = Intent(context, ProjectWidgetActionReceiver::class.java).apply {
                 action = ProjectWidgetActionReceiver.ACTION_REFRESH_WIDGETS
+                data = Uri.parse("siteboard://widget/project/refresh/$appWidgetId")
             }
             val refreshPendingIntent = PendingIntent.getBroadcast(
                 context,
@@ -171,12 +201,71 @@ object SiteboardWidgetManager {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
+            views.setOnClickPendingIntent(R.id.widgetProjectRoot, openPendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetOpenProject, openPendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetAddSameProject, addPendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetExportPdf, exportPendingIntent)
             views.setOnClickPendingIntent(R.id.btnWidgetProjectRefresh, refreshPendingIntent)
 
             applyProjectWidgetSizing(appWidgetManager.getAppWidgetOptions(appWidgetId), views)
+            appWidgetManager.updateAppWidget(appWidgetId, views)
+        }
+    }
+
+    fun updateInspectionWidget(context: Context) {
+        val appWidgetManager = AppWidgetManager.getInstance(context)
+        val ids = appWidgetManager.getAppWidgetIds(ComponentName(context, InspectionWidgetProvider::class.java))
+        val upcoming = InspectionScheduleStore.getUpcoming(context, limit = 3)
+        ids.forEach { appWidgetId ->
+            val views = RemoteViews(context.packageName, R.layout.widget_inspection_schedule)
+            views.setTextViewText(
+                R.id.tvInspectionWidgetHeadline,
+                if (upcoming.isEmpty()) "점검 일정을 등록해 주세요" else "다가오는 점검 ${upcoming.size}건"
+            )
+            views.setTextViewText(R.id.tvInspectionItemOne, formatInspectionLine(upcoming.getOrNull(0)))
+            views.setTextViewText(R.id.tvInspectionItemTwo, formatInspectionLine(upcoming.getOrNull(1)))
+            views.setTextViewText(R.id.tvInspectionItemThree, formatInspectionLine(upcoming.getOrNull(2)))
+
+            val manageIntent = Intent(context, InspectionScheduleActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.inspection.manage.$appWidgetId"
+                data = Uri.parse("siteboard://widget/inspection/manage/$appWidgetId")
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val managePendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 4000,
+                manageIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val archiveIntent = Intent(context, MainActivity::class.java).apply {
+                action = "com.jongwook.siteboard.widget.inspection.archive.$appWidgetId"
+                data = Uri.parse("siteboard://widget/inspection/archive/$appWidgetId")
+                putExtra(MainActivity.EXTRA_OPEN_TAB, MainActivity.TAB_ARCHIVE)
+                flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            val archivePendingIntent = PendingIntent.getActivity(
+                context,
+                appWidgetId + 4001,
+                archiveIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+            val refreshIntent = Intent(context, ProjectWidgetActionReceiver::class.java).apply {
+                action = ProjectWidgetActionReceiver.ACTION_REFRESH_WIDGETS
+                data = Uri.parse("siteboard://widget/inspection/refresh/$appWidgetId")
+            }
+            val refreshPendingIntent = PendingIntent.getBroadcast(
+                context,
+                appWidgetId + 4002,
+                refreshIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            )
+
+            views.setOnClickPendingIntent(R.id.widgetInspectionRoot, managePendingIntent)
+            views.setOnClickPendingIntent(R.id.btnInspectionOpenManager, managePendingIntent)
+            views.setOnClickPendingIntent(R.id.btnInspectionOpenArchive, archivePendingIntent)
+            views.setOnClickPendingIntent(R.id.btnInspectionRefresh, refreshPendingIntent)
+
+            applyInspectionWidgetSizing(appWidgetManager.getAppWidgetOptions(appWidgetId), views)
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
@@ -208,9 +297,9 @@ object SiteboardWidgetManager {
     }
 
     private fun applyStatsWidgetSizing(options: Bundle, views: RemoteViews) {
-        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
-        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
-        val showActionRow = minWidth >= 220 && minHeight >= 110
+        val columns = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0))
+        val rows = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0))
+        val showActionRow = columns >= 4 && rows >= 2
         views.setViewVisibility(R.id.btnWidgetOpenHome, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
         views.setViewVisibility(R.id.btnWidgetOpenArchiveMini, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
         views.setViewVisibility(R.id.btnWidgetAddRecordMini, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
@@ -218,10 +307,33 @@ object SiteboardWidgetManager {
     }
 
     private fun applyProjectWidgetSizing(options: Bundle, views: RemoteViews) {
-        val minWidth = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0)
-        val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
-        val showExtra = minWidth >= 240 && minHeight >= 130
+        val columns = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0))
+        val rows = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0))
+        val showExtra = columns >= 4 && rows >= 2
         views.setViewVisibility(R.id.btnWidgetAddSameProject, if (showExtra) android.view.View.VISIBLE else android.view.View.GONE)
         views.setViewVisibility(R.id.btnWidgetProjectRefresh, if (showExtra) android.view.View.VISIBLE else android.view.View.GONE)
+    }
+
+    private fun applyInspectionWidgetSizing(options: Bundle, views: RemoteViews) {
+        val columns = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0))
+        val rows = estimateSpan(options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0))
+        val showActionRow = columns >= 4 && rows >= 2
+        views.setViewVisibility(R.id.layoutInspectionWidgetActions, if (showActionRow) android.view.View.VISIBLE else android.view.View.GONE)
+    }
+
+    private fun estimateSpan(sizeDp: Int): Int {
+        if (sizeDp <= 0) return 1
+        return ((sizeDp + 30) / 70).coerceAtLeast(1)
+    }
+
+    private fun formatInspectionLine(snapshot: InspectionScheduleSnapshot?): String {
+        return snapshot?.let {
+            val countdown = when {
+                it.daysUntil > 0 -> "D-${it.daysUntil}"
+                it.daysUntil == 0L -> "오늘"
+                else -> "${kotlin.math.abs(it.daysUntil)}일 지남"
+            }
+            "${it.entry.projectTitle} · ${it.entry.note} · ${countdown}"
+        } ?: "-"
     }
 }

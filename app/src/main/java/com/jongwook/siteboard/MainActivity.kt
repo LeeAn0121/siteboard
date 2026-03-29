@@ -1,6 +1,7 @@
 package com.jongwook.siteboard
 
 import android.os.Bundle
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
@@ -41,7 +42,7 @@ class MainActivity : AppCompatActivity() {
 
         // 앱이 켜지면 기본으로 홈 프래그먼트를 보여줌
         if (savedInstanceState == null) {
-            replaceFragment(fragmentForTab(intent.getStringExtra(EXTRA_OPEN_TAB)))
+            openTabFromIntent(intent)
         }
         binding.bottomNavigationView.selectedItemId = menuIdForTab(intent.getStringExtra(EXTRA_OPEN_TAB))
 
@@ -62,11 +63,23 @@ class MainActivity : AppCompatActivity() {
         Thread { AppDatabase.backupToDownloads(applicationContext) }.start()
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        openTabFromIntent(intent)
+    }
+
     // 프래그먼트를 교체하는 공통 함수
     private fun replaceFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction()
             .replace(R.id.mainContainer, fragment)
             .commit()
+    }
+
+    private fun openTabFromIntent(intent: Intent?) {
+        val tab = intent?.getStringExtra(EXTRA_OPEN_TAB)
+        replaceFragment(fragmentForTab(tab))
+        binding.bottomNavigationView.selectedItemId = menuIdForTab(tab)
     }
 
     private fun fragmentForTab(tab: String?): Fragment {

@@ -55,7 +55,7 @@
                     android:layout_marginTop="4dp"
                     android:text="사진 상세"
                     android:textColor="@color/text_primary"
-                    android:textSize="22sp"
+                    android:textSize="24sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -70,7 +70,7 @@
                 android:paddingVertical="8dp"
                 android:text="원본 보기"
                 android:textColor="@color/orange_primary"
-                android:textSize="12sp"
+                android:textSize="11sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
@@ -133,9 +133,9 @@
                         android:id="@+id/tvDetailTitle"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="6dp"
                         android:textColor="@color/text_primary"
-                        android:textSize="24sp"
+                        android:textSize="25sp"
                         android:textStyle="bold" />
                 </LinearLayout>
 
@@ -169,7 +169,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:textColor="@color/text_primary"
-                            android:textSize="13sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
@@ -195,7 +195,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:textColor="@color/text_primary"
-                            android:textSize="13sp"
+                            android:textSize="14sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>
@@ -224,7 +224,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="6dp"
                         android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:textSize="14sp" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -250,7 +250,7 @@
                         android:layout_marginTop="8dp"
                         android:lineSpacingExtra="6dp"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp" />
+                        android:textSize="16sp" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -278,7 +278,7 @@
                         android:layout_marginTop="8dp"
                         android:lineSpacingExtra="4dp"
                         android:textColor="@color/text_primary"
-                        android:textSize="14sp" />
+                        android:textSize="15sp" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

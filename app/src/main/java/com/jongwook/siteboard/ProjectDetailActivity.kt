@@ -11,6 +11,7 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -200,7 +201,7 @@ class ProjectDetailActivity : AppCompatActivity() {
                             Toast.makeText(this@ProjectDetailActivity, "파일 관리자를 열 수 없습니다.", Toast.LENGTH_SHORT).show()
                         }
                     }
-                    snackbar.setActionTextColor(Color.parseColor("#FF6F00"))
+                    snackbar.setActionTextColor(ContextCompat.getColor(this@ProjectDetailActivity, R.color.orange_primary))
                     snackbar.show()
                 }
             } catch (e: Exception) {

@@ -4,50 +4,79 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#16161A">
+    android:background="@drawable/bg_app_canvas">
 
     <!-- 헤더 -->
     <LinearLayout
         android:id="@+id/layoutTop"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingHorizontal="8dp"
-        android:paddingTop="8dp"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="16dp"
         android:paddingBottom="12dp"
         app:layout_constraintTop_toTopOf="parent">
 
-        <ImageButton
-            android:id="@+id/btnBack"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:src="@android:drawable/ic_menu_revert"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="#EBEBEB" />
-
-        <TextView
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="워터마크 상세 설정"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:textColor="#EBEBEB"
-            android:layout_marginStart="8dp" />
-    </LinearLayout>
+            android:background="@drawable/bg_hero_panel"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="12dp">
 
-    <View
-        android:id="@+id/divider"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#1EFFFFFF"
-        app:layout_constraintTop_toBottomOf="@id/layoutTop" />
+            <ImageButton
+                android:id="@+id/btnBack"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:src="@android:drawable/ic_menu_revert"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="@color/text_primary" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="WATERMARK"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="워터마크 상세 설정"
+                    android:textSize="24sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_widget_preview_pill"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp"
+                android:text="PRO"
+                android:textColor="@color/orange_primary"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@id/divider"
+        app:layout_constraintTop_toBottomOf="@id/layoutTop"
         app:layout_constraintBottom_toTopOf="@id/btnSaveSettings"
         android:clipToPadding="false"
         android:paddingBottom="20dp">
@@ -73,7 +102,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="220dp"
-                android:background="#252529">
+                android:background="@drawable/bg_surface_card_soft">
                 <ImageView
                     android:id="@+id/ivPreview"
                     android:layout_width="match_parent"
@@ -103,28 +132,28 @@
                     android:orientation="horizontal">
 
                     <LinearLayout android:id="@+id/layoutTheme0" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="10dp" android:clickable="true" android:focusable="true">
-                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme0" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme0" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="@color/orange_primary">
                             <ImageView android:id="@+id/ivThemePreview0" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
                         </com.google.android.material.card.MaterialCardView>
                         <TextView android:id="@+id/tvThemeLabel0" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="미니멀" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
                     </LinearLayout>
 
                     <LinearLayout android:id="@+id/layoutTheme1" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="10dp" android:clickable="true" android:focusable="true">
-                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme1" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme1" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="@color/orange_primary">
                             <ImageView android:id="@+id/ivThemePreview1" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
                         </com.google.android.material.card.MaterialCardView>
                         <TextView android:id="@+id/tvThemeLabel1" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="기술" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
                     </LinearLayout>
 
                     <LinearLayout android:id="@+id/layoutTheme2" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginEnd="10dp" android:clickable="true" android:focusable="true">
-                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme2" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme2" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="@color/orange_primary">
                             <ImageView android:id="@+id/ivThemePreview2" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
                         </com.google.android.material.card.MaterialCardView>
                         <TextView android:id="@+id/tvThemeLabel2" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="전문" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
                     </LinearLayout>
 
                     <LinearLayout android:id="@+id/layoutTheme3" android:layout_width="80dp" android:layout_height="wrap_content" android:orientation="vertical" android:clickable="true" android:focusable="true">
-                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme3" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="#FF6F00">
+                        <com.google.android.material.card.MaterialCardView android:id="@+id/viewTheme3" android:layout_width="match_parent" android:layout_height="80dp" app:cardCornerRadius="14dp" app:cardElevation="0dp" app:cardBackgroundColor="#252529" app:strokeWidth="0dp" app:strokeColor="@color/orange_primary">
                             <ImageView android:id="@+id/ivThemePreview3" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop" />
                         </com.google.android.material.card.MaterialCardView>
                         <TextView android:id="@+id/tvThemeLabel3" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="강조" android:textColor="#A0A0A5" android:textSize="11sp" android:gravity="center" android:layout_marginTop="5dp" />
@@ -137,7 +166,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="POSITION"
-                android:textColor="#A0A0A5"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.12"
@@ -148,7 +177,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#1E2023"
+                android:background="@drawable/bg_surface_card_soft"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="14dp">
 
@@ -158,8 +187,8 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:layout_marginBottom="10dp">
-                    <RadioButton android:id="@+id/rbTop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="상단" android:textColor="#EBEBEB" android:buttonTint="#FF6F00" />
-                    <RadioButton android:id="@+id/rbBottom" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="하단" android:textColor="#EBEBEB" android:buttonTint="#FF6F00" />
+                    <RadioButton android:id="@+id/rbTop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="상단" android:textColor="@color/text_primary" android:textSize="13sp" android:buttonTint="@color/orange_primary" />
+                    <RadioButton android:id="@+id/rbBottom" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="하단" android:textColor="@color/text_primary" android:textSize="13sp" android:buttonTint="@color/orange_primary" />
                 </RadioGroup>
 
                 <RadioGroup
@@ -167,8 +196,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
-                    <RadioButton android:id="@+id/rbLeft" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="좌측" android:textColor="#EBEBEB" android:buttonTint="#FF6F00" />
-                    <RadioButton android:id="@+id/rbRight" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="우측" android:textColor="#EBEBEB" android:buttonTint="#FF6F00" />
+                    <RadioButton android:id="@+id/rbLeft" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="좌측" android:textColor="@color/text_primary" android:textSize="13sp" android:buttonTint="@color/orange_primary" />
+                    <RadioButton android:id="@+id/rbRight" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="우측" android:textColor="@color/text_primary" android:textSize="13sp" android:buttonTint="@color/orange_primary" />
                 </RadioGroup>
             </LinearLayout>
 
@@ -177,7 +206,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="FINE TUNE"
-                android:textColor="#A0A0A5"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.12"
@@ -188,33 +217,33 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#1E2023"
+                android:background="@drawable/bg_surface_card_soft"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="14dp">
 
                 <!-- 가로 여백 -->
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp">
-                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="가로 여백 (X)" android:textColor="#EBEBEB" android:textStyle="bold" android:textSize="14sp" />
-                    <EditText android:id="@+id/etMarginX" android:layout_width="60dp" android:layout_height="36dp" android:background="#252529" android:gravity="center" android:inputType="number" android:imeOptions="actionDone" android:textColor="#EBEBEB" android:textSize="14sp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" px" android:textColor="#606065" android:textSize="13sp" />
+                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="가로 여백 (X)" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="13sp" />
+                    <EditText android:id="@+id/etMarginX" android:layout_width="60dp" android:layout_height="36dp" android:background="@drawable/bg_input_panel" android:gravity="center" android:inputType="number" android:imeOptions="actionDone" android:textColor="@color/text_primary" android:textSize="13sp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" px" android:textColor="@color/text_tertiary" android:textSize="12sp" />
                 </LinearLayout>
-                <SeekBar android:id="@+id/sbMarginX" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" android:progressTint="#FF6F00" android:thumbTint="#FF6F00" android:layout_marginBottom="16dp" />
+                <SeekBar android:id="@+id/sbMarginX" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" android:progressTint="@color/orange_primary" android:thumbTint="@color/orange_primary" android:layout_marginBottom="16dp" />
 
                 <!-- 세로 여백 -->
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp">
-                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="세로 여백 (Y)" android:textColor="#EBEBEB" android:textStyle="bold" android:textSize="14sp" />
-                    <EditText android:id="@+id/etMarginY" android:layout_width="60dp" android:layout_height="36dp" android:background="#252529" android:gravity="center" android:inputType="number" android:imeOptions="actionDone" android:textColor="#EBEBEB" android:textSize="14sp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" px" android:textColor="#606065" android:textSize="13sp" />
+                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="세로 여백 (Y)" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="13sp" />
+                    <EditText android:id="@+id/etMarginY" android:layout_width="60dp" android:layout_height="36dp" android:background="@drawable/bg_input_panel" android:gravity="center" android:inputType="number" android:imeOptions="actionDone" android:textColor="@color/text_primary" android:textSize="13sp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" px" android:textColor="@color/text_tertiary" android:textSize="12sp" />
                 </LinearLayout>
-                <SeekBar android:id="@+id/sbMarginY" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" android:progressTint="#FF6F00" android:thumbTint="#FF6F00" android:layout_marginBottom="16dp" />
+                <SeekBar android:id="@+id/sbMarginY" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="300" android:progressTint="@color/orange_primary" android:thumbTint="@color/orange_primary" android:layout_marginBottom="16dp" />
 
                 <!-- 글씨 크기 -->
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="6dp">
-                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="글씨 크기" android:textColor="#EBEBEB" android:textStyle="bold" android:textSize="14sp" />
-                    <EditText android:id="@+id/etFontSize" android:layout_width="60dp" android:layout_height="36dp" android:background="#252529" android:gravity="center" android:inputType="number" android:imeOptions="actionDone" android:textColor="#EBEBEB" android:textSize="14sp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" pt" android:textColor="#606065" android:textSize="13sp" />
+                    <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="글씨 크기" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="13sp" />
+                    <EditText android:id="@+id/etFontSize" android:layout_width="60dp" android:layout_height="36dp" android:background="@drawable/bg_input_panel" android:gravity="center" android:inputType="number" android:imeOptions="actionDone" android:textColor="@color/text_primary" android:textSize="13sp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" pt" android:textColor="@color/text_tertiary" android:textSize="12sp" />
                 </LinearLayout>
-                <SeekBar android:id="@+id/sbFontSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progressTint="#FF6F00" android:thumbTint="#FF6F00" />
+                <SeekBar android:id="@+id/sbFontSize" android:layout_width="match_parent" android:layout_height="wrap_content" android:max="100" android:progressTint="@color/orange_primary" android:thumbTint="@color/orange_primary" />
             </LinearLayout>
 
             <!-- 글꼴 및 색상 -->
@@ -222,7 +251,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="FONT &amp; COLOR"
-                android:textColor="#A0A0A5"
+                android:textColor="@color/text_secondary"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.12"
@@ -233,21 +262,21 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:background="#1E2023"
+                android:background="@drawable/bg_surface_card_soft"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="14dp">
 
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="글꼴 선택" android:textColor="#EBEBEB" android:textStyle="bold" android:textSize="14sp" android:layout_marginBottom="8dp" />
-                <Spinner android:id="@+id/spinnerFont" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginBottom="20dp" android:background="#252529" android:popupBackground="#252529" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="글꼴 선택" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="13sp" android:layout_marginBottom="8dp" />
+                <Spinner android:id="@+id/spinnerFont" android:layout_width="match_parent" android:layout_height="48dp" android:layout_marginBottom="20dp" android:background="@drawable/bg_input_panel" android:popupBackground="#252529" />
 
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="글자 색상 (HEX)" android:textColor="#EBEBEB" android:textStyle="bold" android:textSize="14sp" android:layout_marginBottom="10dp" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="글자 색상 (HEX)" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="13sp" android:layout_marginBottom="10dp" />
 
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="14dp">
                     <androidx.cardview.widget.CardView android:layout_width="44dp" android:layout_height="44dp" app:cardCornerRadius="22dp" app:cardElevation="2dp">
                         <View android:id="@+id/viewColorPreview" android:layout_width="match_parent" android:layout_height="match_parent" android:background="#FFFF00" />
                     </androidx.cardview.widget.CardView>
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="14dp" android:text="# " android:textColor="#A0A0A5" android:textStyle="bold" android:textSize="15sp" />
-                    <EditText android:id="@+id/etHexColor" android:layout_width="100dp" android:layout_height="40dp" android:background="@null" android:inputType="textCapCharacters" android:maxLength="6" android:text="FFFF00" android:textColor="#EBEBEB" android:textSize="15sp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginStart="14dp" android:text="# " android:textColor="@color/text_secondary" android:textStyle="bold" android:textSize="14sp" />
+                    <EditText android:id="@+id/etHexColor" android:layout_width="100dp" android:layout_height="40dp" android:background="@null" android:inputType="textCapCharacters" android:maxLength="6" android:text="FFFF00" android:textColor="@color/text_primary" android:textSize="14sp" />
                 </LinearLayout>
 
                 <TextView android:id="@+id/tvRed" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Red: 255" android:textColor="#E05567" android:textStyle="bold" android:textSize="13sp" />
@@ -266,7 +295,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="#1E2023"
+                android:background="@drawable/bg_surface_card_soft"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="14dp"
                 android:layout_marginTop="12dp"
@@ -277,8 +306,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="반투명 배경 박스" android:textColor="#EBEBEB" android:textStyle="bold" android:textSize="15sp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="글씨 가독성을 높이는 박스를 활성화합니다" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="반투명 배경 박스" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="15sp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="글씨 가독성을 높이는 박스를 활성화합니다" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginTop="2dp" />
                 </LinearLayout>
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
@@ -293,7 +322,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="#1E2023"
+                android:background="@drawable/bg_surface_card_soft"
                 android:paddingHorizontal="16dp"
                 android:paddingVertical="14dp"
                 android:layout_marginTop="12dp"
@@ -304,8 +333,8 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:orientation="vertical">
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="워터마크 후 원본 삭제" android:textColor="#EBEBEB" android:textStyle="bold" android:textSize="15sp" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="OFF 권장, ON 시 워터마크 저장 후 원본을 삭제합니다" android:textColor="#606065" android:textSize="12sp" android:layout_marginTop="2dp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="워터마크 후 원본 삭제" android:textColor="@color/text_primary" android:textStyle="bold" android:textSize="15sp" />
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="OFF 권장, ON 시 워터마크 저장 후 원본을 삭제합니다" android:textColor="@color/text_secondary" android:textSize="12sp" android:layout_marginTop="2dp" />
                 </LinearLayout>
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
@@ -325,10 +354,10 @@
         android:layout_marginHorizontal="20dp"
         android:layout_marginBottom="16dp"
         android:text="설정 저장"
-        android:textColor="#FFFFFF"
+        android:textColor="#0F1115"
         android:textStyle="bold"
         android:textSize="16sp"
-        android:backgroundTint="#FF6F00"
+        android:background="@drawable/bg_primary_button"
         app:cornerRadius="16dp"
         android:insetTop="0dp"
         android:insetBottom="0dp"

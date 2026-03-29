@@ -5,23 +5,53 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_widget_actual_luxury"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="14dp">
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_widget_preview_pill"
-        android:paddingHorizontal="10dp"
-        android:paddingVertical="4dp"
         android:text="현장 대시보드"
-        android:textColor="#FFFFB36B"
+        android:textColor="#8F9FB0"
         android:textSize="10sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:letterSpacing="0.12" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="6dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvWidgetRecentProject"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="최근 현장 없음"
+            android:textColor="#E4E8EE"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvWidgetUpdatedAt"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_widget_action_tile_secondary"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:text="업데이트 00:00"
+            android:textColor="#E4E8EE"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:orientation="horizontal">
 
         <LinearLayout
@@ -46,7 +76,7 @@
                 android:layout_marginTop="4dp"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="20sp"
+                android:textSize="24sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -73,7 +103,7 @@
                 android:layout_marginTop="4dp"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="20sp"
+                android:textSize="24sp"
                 android:textStyle="bold" />
         </LinearLayout>
 
@@ -100,85 +130,65 @@
                 android:layout_marginTop="4dp"
                 android:text="0"
                 android:textColor="@android:color/white"
-                android:textSize="20sp"
+                android:textSize="24sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tvWidgetRecentProject"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:text="최근 현장 없음"
-        android:textColor="#E4E8EE"
-        android:textSize="12sp" />
-
-    <TextView
-        android:id="@+id/tvWidgetUpdatedAt"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:text="업데이트 00:00"
-        android:textColor="#8F9FB0"
-        android:textSize="11sp" />
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:orientation="horizontal">
 
         <TextView
             android:id="@+id/btnWidgetOpenHome"
             android:layout_width="0dp"
-            android:layout_height="34dp"
+            android:layout_height="44dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_primary_button"
+            android:background="@drawable/bg_widget_action_tile_primary"
             android:gravity="center"
-            android:text="홈"
+            android:text="홈 열기"
             android:textColor="#0F1115"
-            android:textSize="11sp"
+            android:textSize="13sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/btnWidgetOpenArchiveMini"
             android:layout_width="0dp"
-            android:layout_height="34dp"
+            android:layout_height="44dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_secondary_button"
+            android:background="@drawable/bg_widget_action_tile_secondary"
             android:gravity="center"
             android:text="보관함"
-            android:textColor="#FFFFB36B"
-            android:textSize="11sp"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/btnWidgetAddRecordMini"
             android:layout_width="0dp"
-            android:layout_height="34dp"
+            android:layout_height="44dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_secondary_button"
+            android:background="@drawable/bg_widget_action_tile_secondary"
             android:gravity="center"
             android:text="추가"
-            android:textColor="#FFFFB36B"
-            android:textSize="11sp"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/btnWidgetRefreshMini"
             android:layout_width="0dp"
-            android:layout_height="34dp"
+            android:layout_height="44dp"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:background="@drawable/bg_secondary_button"
+            android:background="@drawable/bg_widget_action_tile_secondary"
             android:gravity="center"
             android:text="새로고침"
-            android:textColor="#FFFFB36B"
+            android:textColor="@android:color/white"
             android:textSize="10sp"
             android:textStyle="bold" />
     </LinearLayout>
