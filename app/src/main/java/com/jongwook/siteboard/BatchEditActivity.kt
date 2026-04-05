@@ -311,7 +311,7 @@ class BatchEditActivity : AppCompatActivity() {
 
                     // 개인정보 마스킹 설정 확인
                     val siteboardPrefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-                    val isPrivacyBlurEnabled = siteboardPrefs.getBoolean("privacy_blur_mode", true)
+                    val isPrivacyBlurEnabled = siteboardPrefs.getBoolean("privacy_blur_mode", false)
 
                     val bitmapToStamp = if (isPrivacyBlurEnabled) {
                         detectAndBlurPrivacy(orientedBitmap).also {
@@ -349,13 +349,6 @@ class BatchEditActivity : AppCompatActivity() {
                 else
                     "${successCount}장 저장 완료, ${failCount}장 실패"
                 Toast.makeText(this@BatchEditActivity, msg, Toast.LENGTH_LONG).show()
-                if (successCount > 0) {
-                    SiteboardNotificationManager.showSaveSuccessNotification(
-                        this@BatchEditActivity,
-                        msg,
-                        4203
-                    )
-                }
                 if (successCount > 0) finish()
             }
         }
@@ -430,9 +423,11 @@ class BatchEditActivity : AppCompatActivity() {
             setShadowLayer(5f, 3f, 3f, Color.BLACK)
         }
 
-        val lines = mutableListOf("제목 : $title")
+        val label1 = FieldSettingsActivity.getLabel(this, 1)
+        val label2 = FieldSettingsActivity.getLabel(this, 2)
+        val lines = mutableListOf("$label1 : $title")
         if (loc.isNotEmpty()) lines.add("위치 : $loc")
-        if (desc.isNotEmpty()) lines.add("작업내용 : ${desc.replace("\n", " ")}")
+        if (desc.isNotEmpty() && FieldSettingsActivity.isEnabled(this, 2)) lines.add("$label2 : ${desc.replace("\n", " ")}")
         lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
 
         val fm = textPaint.fontMetrics
@@ -493,32 +488,57 @@ class BatchEditActivity : AppCompatActivity() {
     private suspend fun detectAndBlurPrivacy(originalBitmap: Bitmap): Bitmap = withContext(Dispatchers.IO) {
         val blurred = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(blurred)
+        val inputImage = com.google.mlkit.vision.common.InputImage.fromBitmap(originalBitmap, 0)
+        val faceDetector = com.google.mlkit.vision.face.FaceDetection.getClient(
+            com.google.mlkit.vision.face.FaceDetectorOptions.Builder()
+                .setPerformanceMode(com.google.mlkit.vision.face.FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setMinFaceSize(0.04f)
+                .build()
+        )
+        val textRecognizer = com.google.mlkit.vision.text.TextRecognition.getClient(
+            com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions.Builder().build()
+        )
+        val platePatterns = listOf(
+            "^\\d{2,3}[가-힣]\\d{4}$".toRegex(),
+            "^[가-힣]{2}\\d{2,3}[가-힣]\\d{4}$".toRegex()
+        )
         try {
-            val inputImage = com.google.mlkit.vision.common.InputImage.fromBitmap(originalBitmap, 0)
-            val faceDetector = com.google.mlkit.vision.face.FaceDetection.getClient(
-                com.google.mlkit.vision.face.FaceDetectorOptions.Builder()
-                    .setPerformanceMode(com.google.mlkit.vision.face.FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                    .build()
-            )
-            val textRecognizer = com.google.mlkit.vision.text.TextRecognition.getClient(
-                com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions.Builder().build()
-            )
-            val faces = faceDetector.process(inputImage).await()
+            val faces      = faceDetector.process(inputImage).await()
             val textResult = textRecognizer.process(inputImage).await()
 
-            for (face in faces) blurBitmapArea(blurred, canvas, face.boundingBox)
+            for (face in faces) {
+                val box  = face.boundingBox
+                val padX = (box.width()  * 0.15f).toInt()
+                val padY = (box.height() * 0.20f).toInt()
+                blurBitmapArea(blurred, canvas, android.graphics.Rect(
+                    maxOf(0, box.left   - padX),
+                    maxOf(0, box.top    - padY),
+                    minOf(originalBitmap.width,  box.right  + padX),
+                    minOf(originalBitmap.height, box.bottom + padY)
+                ))
+            }
 
             for (block in textResult.textBlocks) {
                 for (line in block.lines) {
-                    val text = line.text.replace(" ", "")
-                    val platePattern = "^(\\d{2,3}[가-힣]\\d{4})|([가-힣]{2}\\d{2}[가-힣]\\d{4})$".toRegex()
-                    if (text.matches(platePattern) || text.length in 7..9) {
-                        line.boundingBox?.let { blurBitmapArea(blurred, canvas, it) }
+                    val text = line.text.replace(" ", "").replace("\n", "")
+                    if (platePatterns.any { text.matches(it) }) {
+                        val box  = line.boundingBox ?: continue
+                        val padX = (box.width()  * 0.10f).toInt()
+                        val padY = (box.height() * 0.15f).toInt()
+                        blurBitmapArea(blurred, canvas, android.graphics.Rect(
+                            maxOf(0, box.left   - padX),
+                            maxOf(0, box.top    - padY),
+                            minOf(originalBitmap.width,  box.right  + padX),
+                            minOf(originalBitmap.height, box.bottom + padY)
+                        ))
                     }
                 }
             }
         } catch (e: Exception) {
             e.printStackTrace()
+        } finally {
+            faceDetector.close()
+            textRecognizer.close()
         }
         blurred
     }

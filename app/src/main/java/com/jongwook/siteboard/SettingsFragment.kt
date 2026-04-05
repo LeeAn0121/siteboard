@@ -48,11 +48,8 @@ class SettingsFragment : Fragment() {
         binding.btnAppInfoMenu.setOnClickListener {
             startActivity(Intent(requireContext(), AppInfoActivity::class.java))
         }
-        binding.btnNotificationMenu.setOnClickListener {
-            startActivity(Intent(requireContext(), NotificationSettingsActivity::class.java))
-        }
-        binding.btnInspectionMenu.setOnClickListener {
-            startActivity(Intent(requireContext(), InspectionScheduleActivity::class.java))
+        binding.btnFieldSettingsMenu.setOnClickListener {
+            startActivity(Intent(requireContext(), FieldSettingsActivity::class.java))
         }
 
         animateMenuRows()
@@ -65,8 +62,7 @@ class SettingsFragment : Fragment() {
             binding.btnSettingsBackupMenu,
             binding.btnCapturePrivacyMenu,
             binding.btnAppInfoMenu,
-            binding.btnNotificationMenu,
-            binding.btnInspectionMenu
+            binding.btnFieldSettingsMenu
         )
         rows.forEachIndexed { index, view ->
             view.alpha = 0f

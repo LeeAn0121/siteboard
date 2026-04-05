@@ -17,10 +17,10 @@ val versionProps = Properties()
 if (versionPropsFile.canRead()) {
     versionProps.load(FileInputStream(versionPropsFile))
 } else {
-    versionProps.setProperty("VERSION_MAJOR", "1")
+    versionProps.setProperty("VERSION_MAJOR", "2")
     versionProps.setProperty("VERSION_MINOR", "0")
     versionProps.setProperty("VERSION_PATCH", "0")
-    versionProps.setProperty("BUILD_NUMBER", "0")
+    versionProps.setProperty("BUILD_NUMBER", "400")
 }
 
 var vMajor = (versionProps.getProperty("VERSION_MAJOR") ?: "1").trim().toInt()

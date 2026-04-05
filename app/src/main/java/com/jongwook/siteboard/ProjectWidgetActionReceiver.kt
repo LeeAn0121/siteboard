@@ -23,24 +23,13 @@ class ProjectWidgetActionReceiver : BroadcastReceiver() {
                         val posts = AppDatabase.getDatabase(appContext).postDao().getAllPostsOnce()
                             .filter { it.title == projectTitle }
                         if (posts.isNotEmpty()) {
-                            val file = SiteboardPdfExporter.exportProjectPdf(appContext, projectTitle, posts)
-                            SiteboardNotificationManager.showPdfCompleteNotification(
-                                appContext,
-                                "[$projectTitle] 보고서를 ${file.name}으로 저장했습니다.",
-                                4101
-                            )
+                            SiteboardPdfExporter.exportProjectPdf(appContext, projectTitle, posts)
                         }
                     }
                     ACTION_COMPLETE_INSPECTION -> {
                         val entryId = intent.getLongExtra(EXTRA_INSPECTION_ENTRY_ID, -1L)
                         val updated = InspectionScheduleStore.markCompleted(appContext, entryId)
                         if (updated != null) {
-                            SiteboardNotificationManager.showStatusNotification(
-                                appContext,
-                                "점검 완료 처리",
-                                "[${updated.projectTitle}] 다음 ${updated.note} 일정을 ${updated.baseDate} 기준으로 갱신했습니다.",
-                                4102
-                            )
                             SiteboardWidgetManager.refreshAll(appContext)
                         }
                     }

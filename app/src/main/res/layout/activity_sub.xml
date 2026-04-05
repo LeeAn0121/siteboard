@@ -98,8 +98,6 @@
                 android:id="@+id/cardPreview"
                 android:layout_width="match_parent"
                 android:layout_height="220dp"
-                android:clickable="true"
-                android:focusable="true"
                 app:cardBackgroundColor="@color/surface_elevated"
                 app:cardCornerRadius="26dp"
                 app:cardElevation="0dp"
@@ -116,14 +114,12 @@
                     android:id="@+id/tvPreviewHint"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_gravity="bottom|start"
-                    android:layout_margin="14dp"
-                    android:background="@drawable/bg_widget_preview_pill"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="8dp"
-                    android:text="대표 사진 선택"
-                    android:textColor="@color/orange_primary"
-                    android:textSize="12sp" />
+                    android:layout_gravity="center"
+                    android:text="사진을 촬영하거나 선택하면 여기에 표시됩니다."
+                    android:textColor="@color/text_tertiary"
+                    android:textSize="12sp"
+                    android:gravity="center"
+                    android:padding="16dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -172,6 +168,7 @@
                     android:paddingTop="14dp">
 
                     <TextView
+                        android:id="@+id/tvLabel1"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="현장명"
@@ -194,12 +191,14 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/layoutField2"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:paddingTop="12dp">
 
                     <TextView
+                        android:id="@+id/tvLabel2"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="작업 내용"
@@ -303,15 +302,17 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/layoutField3"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:paddingTop="12dp">
 
                     <TextView
+                        android:id="@+id/tvLabel3"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="상세 위치 기록 (수기)"
+                        android:text="상세 위치 기록"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
                         android:textStyle="bold" />
@@ -331,15 +332,17 @@
                 </LinearLayout>
 
                 <LinearLayout
+                    android:id="@+id/layoutField4"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
                     android:paddingTop="12dp">
 
                     <TextView
+                        android:id="@+id/tvLabel4"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="메모 (비고)"
+                        android:text="메모"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp"
                         android:textStyle="bold" />

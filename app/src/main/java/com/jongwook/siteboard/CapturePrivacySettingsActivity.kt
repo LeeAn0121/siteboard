@@ -26,8 +26,8 @@ class CapturePrivacySettingsActivity : AppCompatActivity() {
 
         val prefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
         binding.switchPdfMode.isChecked = prefs.getBoolean("pdf_multi_mode", false)
-        binding.switchPrivacyBlur.isChecked = prefs.getBoolean("privacy_blur_mode", true)
-        binding.switchGpsEnabled.isChecked = prefs.getBoolean("gps_enabled", true)
+        binding.switchPrivacyBlur.isChecked = prefs.getBoolean("privacy_blur_mode", false)
+        binding.switchGpsEnabled.isChecked = prefs.getBoolean("gps_enabled", false)
 
         binding.switchPdfMode.setOnCheckedChangeListener { _, checked ->
             prefs.edit().putBoolean("pdf_multi_mode", checked).apply()

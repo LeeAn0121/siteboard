@@ -89,16 +89,6 @@ class SubActivity : AppCompatActivity() {
         }
     }
 
-    private val previewImagePickerLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let {
-            contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            lifecycleScope.launch(Dispatchers.IO) {
-                val bmp = loadOrientedBitmapFromUri(it)
-                withContext(Dispatchers.Main) { previewBitmap = bmp; updatePreview() }
-            }
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -175,11 +165,8 @@ class SubActivity : AppCompatActivity() {
         setupClearButton(binding.etDetailLocation)
         setupClearButton(binding.etMemo)
 
+        applyFieldLabels()
         updatePreview()
-
-        binding.cardPreview.setOnClickListener {
-            previewImagePickerLauncher.launch(arrayOf("image/*"))
-        }
 
         binding.btnDetailSettings.setOnClickListener {
             startActivity(android.content.Intent(this, WatermarkSettingsActivity::class.java))
@@ -213,9 +200,22 @@ class SubActivity : AppCompatActivity() {
         fetchCurrentLocationAndAddress()
     }
 
+    private fun applyFieldLabels() {
+        binding.tvLabel1.text = FieldSettingsActivity.getLabel(this, 1)
+        binding.tvLabel2.text = FieldSettingsActivity.getLabel(this, 2)
+        binding.tvLabel3.text = FieldSettingsActivity.getLabel(this, 3)
+        binding.tvLabel4.text = FieldSettingsActivity.getLabel(this, 4)
+
+        val v = android.view.View.VISIBLE
+        val g = android.view.View.GONE
+        binding.layoutField2.visibility = if (FieldSettingsActivity.isEnabled(this, 2)) v else g
+        binding.layoutField3.visibility = if (FieldSettingsActivity.isEnabled(this, 3)) v else g
+        binding.layoutField4.visibility = if (FieldSettingsActivity.isEnabled(this, 4)) v else g
+    }
+
     private fun applyGpsSetting() {
         val gpsEnabled = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-            .getBoolean("gps_enabled", true)
+            .getBoolean("gps_enabled", false)
         binding.layoutGpsSection.visibility = if (gpsEnabled) View.VISIBLE else View.GONE
         if (!gpsEnabled) {
             currentLocation = ""
@@ -224,6 +224,7 @@ class SubActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        applyFieldLabels()
         updatePreview()
     }
 
@@ -262,7 +263,8 @@ class SubActivity : AppCompatActivity() {
 
     private fun validateInputs(): Boolean {
         if (binding.etTitle.text.toString().trim().isEmpty()) {
-            Toast.makeText(this, "현장명을 입력해주세요.", Toast.LENGTH_SHORT).show()
+            val label = FieldSettingsActivity.getLabel(this, 1)
+            Toast.makeText(this, "${label}을(를) 입력해주세요.", Toast.LENGTH_SHORT).show()
             return false
         }
         return true
@@ -312,7 +314,7 @@ class SubActivity : AppCompatActivity() {
 
                 // 3. 개인정보 블러 처리
                 val isPrivacyBlurEnabled = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-                    .getBoolean("privacy_blur_mode", true)
+                    .getBoolean("privacy_blur_mode", false)
                 val bitmapToStamp = if (isPrivacyBlurEnabled) {
                     val blurred = detectAndBlurPrivacy(orientedBitmap)
                     if (orientedBitmap != blurred && !orientedBitmap.isRecycled) orientedBitmap.recycle()
@@ -357,11 +359,6 @@ class SubActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
                     Toast.makeText(this@SubActivity, "현장 기록이 안전하게 저장되었습니다.", Toast.LENGTH_SHORT).show()
-                    SiteboardNotificationManager.showSaveSuccessNotification(
-                        this@SubActivity,
-                        "[$title] 현장 기록이 저장되었습니다.",
-                        4201
-                    )
                     setResult(RESULT_OK)
                     finish()
                 }
@@ -394,7 +391,7 @@ class SubActivity : AppCompatActivity() {
                 }
                 // 원본 사진인 경우 개인정보 블러 재적용, 이미 워터마크된 이미지면 건너뜀
                 val isPrivacyBlurEnabled = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-                    .getBoolean("privacy_blur_mode", true)
+                    .getBoolean("privacy_blur_mode", false)
                 val bitmapToStamp = if (editPreviewIsOriginal && isPrivacyBlurEnabled) {
                     val blurred = detectAndBlurPrivacy(bmp)
                     if (bmp != blurred && !bmp.isRecycled) bmp.recycle()
@@ -438,11 +435,6 @@ class SubActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     binding.layoutLoading.visibility = View.GONE
                     Toast.makeText(this@SubActivity, "현장 기록이 안전하게 저장되었습니다.", Toast.LENGTH_SHORT).show()
-                    SiteboardNotificationManager.showSaveSuccessNotification(
-                        this@SubActivity,
-                        "[$title] 현장 기록이 수정 저장되었습니다.",
-                        4202
-                    )
                     setResult(RESULT_OK)
                     finish()
                 }
@@ -544,11 +536,15 @@ class SubActivity : AppCompatActivity() {
         val actualMarginX  = baseMarginX * scaleX
         val actualMarginY  = baseMarginY * scaleY
 
-        val lines = mutableListOf("제목 : $title")
+        val label1 = FieldSettingsActivity.getLabel(this, 1)
+        val label2 = FieldSettingsActivity.getLabel(this, 2)
+        val label3 = FieldSettingsActivity.getLabel(this, 3)
+        val label4 = FieldSettingsActivity.getLabel(this, 4)
+        val lines = mutableListOf("$label1 : $title")
         if (loc.isNotEmpty()) lines.add("위치(GPS) : $loc")
-        if (detailLoc.isNotEmpty()) lines.add("상세위치 : $detailLoc")
-        if (desc.isNotEmpty()) lines.add("작업내용 : ${desc.replace("\n", " ")}")
-        if (memo.isNotEmpty()) lines.add("메모 : $memo")
+        if (detailLoc.isNotEmpty() && FieldSettingsActivity.isEnabled(this, 3)) lines.add("$label3 : $detailLoc")
+        if (desc.isNotEmpty() && FieldSettingsActivity.isEnabled(this, 2)) lines.add("$label2 : ${desc.replace("\n", " ")}")
+        if (memo.isNotEmpty() && FieldSettingsActivity.isEnabled(this, 4)) lines.add("$label4 : $memo")
         lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
 
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -637,7 +633,7 @@ class SubActivity : AppCompatActivity() {
 
         // 설정에서 GPS 수집이 꺼져 있으면 스킵
         val gpsEnabled = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
-            .getBoolean("gps_enabled", true)
+            .getBoolean("gps_enabled", false)
         if (!gpsEnabled) {
             binding.tvGpsLocation.text = "GPS 수집 꺼짐 (설정에서 켜기)"
             currentLocation = ""
@@ -715,21 +711,68 @@ class SubActivity : AppCompatActivity() {
         val blurredBitmap = originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(blurredBitmap)
         val imageForMlKit = InputImage.fromBitmap(originalBitmap, 0)
-        val faceDetector = FaceDetection.getClient(FaceDetectorOptions.Builder().setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST).build())
-        val textRecognizer = TextRecognition.getClient(com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions.Builder().build())
+
+        // ACCURATE 모드 + 작은 얼굴(이미지 너비 4% 이상)까지 감지
+        val faceDetector = FaceDetection.getClient(
+            FaceDetectorOptions.Builder()
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setMinFaceSize(0.04f)
+                .build()
+        )
+        val textRecognizer = TextRecognition.getClient(
+            com.google.mlkit.vision.text.korean.KoreanTextRecognizerOptions.Builder().build()
+        )
+
+        // 한국 번호판 패턴 (공백 제거 후 매칭)
+        // 예) 12가1234 / 123가1234 / 가나12다3456 (영업용/이륜차 등)
+        val platePatterns = listOf(
+            "^\\d{2,3}[가-힣]\\d{4}$".toRegex(),         // 일반 승용: 12가1234, 123가1234
+            "^[가-힣]{2}\\d{2,3}[가-힣]\\d{4}$".toRegex() // 영업/특수: 서울12가1234 류
+        )
+
         try {
-            val faces = faceDetector.process(imageForMlKit).await()
+            val faces      = faceDetector.process(imageForMlKit).await()
             val textResult = textRecognizer.process(imageForMlKit).await()
-            for (face in faces) blurBitmapArea(blurredBitmap, canvas, face.boundingBox)
-            for (block in textResult.textBlocks) for (line in block.lines) {
-                val text = line.text.replace(" ", "")
-                val platePattern = "^(\\d{2,3}[가-힣]\\d{4})|([가-힣]{2}\\d{2}[가-힣]\\d{4})$".toRegex()
-                if (text.matches(platePattern) || text.length in 7..9) blurBitmapArea(blurredBitmap, canvas, line.boundingBox)
+
+            // 얼굴: bounding box를 가로 15%, 세로 20%(이마 포함) 확장
+            for (face in faces) {
+                val box     = face.boundingBox
+                val padX    = (box.width()  * 0.15f).toInt()
+                val padY    = (box.height() * 0.20f).toInt()
+                val expanded = android.graphics.Rect(
+                    maxOf(0, box.left   - padX),
+                    maxOf(0, box.top    - padY),
+                    minOf(originalBitmap.width,  box.right  + padX),
+                    minOf(originalBitmap.height, box.bottom + padY)
+                )
+                blurBitmapArea(blurredBitmap, canvas, expanded)
+            }
+
+            // 번호판: 패턴 매칭만 사용 (오탐 방지)
+            for (block in textResult.textBlocks) {
+                for (line in block.lines) {
+                    val text = line.text.replace(" ", "").replace("\n", "")
+                    if (platePatterns.any { text.matches(it) }) {
+                        val box  = line.boundingBox ?: continue
+                        val padX = (box.width()  * 0.10f).toInt()
+                        val padY = (box.height() * 0.15f).toInt()
+                        val expanded = android.graphics.Rect(
+                            maxOf(0, box.left   - padX),
+                            maxOf(0, box.top    - padY),
+                            minOf(originalBitmap.width,  box.right  + padX),
+                            minOf(originalBitmap.height, box.bottom + padY)
+                        )
+                        blurBitmapArea(blurredBitmap, canvas, expanded)
+                    }
+                }
             }
         } catch (e: Exception) {
             Log.e("SubActivity", "개인정보 감지 실패: ${e.message}")
             return@withContext originalBitmap
-        } finally { faceDetector.close(); textRecognizer.close() }
+        } finally {
+            faceDetector.close()
+            textRecognizer.close()
+        }
         blurredBitmap
     }
 

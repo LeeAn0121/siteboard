@@ -381,11 +381,6 @@ class HomeFragment : Fragment() {
                 pdfDocument.close()
 
                 withContext(Dispatchers.Main) {
-                    SiteboardNotificationManager.showPdfCompleteNotification(
-                        requireContext(),
-                        "${file.name} 파일로 전체 PDF를 저장했습니다.",
-                        4301
-                    )
                     val snackbar = Snackbar.make(requireView(), "PDF 보고서가 저장되었습니다! 📄", Snackbar.LENGTH_LONG)
                     snackbar.setAction("폴더 열기") { openSiteboardFolder(siteboardDir) }
                     snackbar.setActionTextColor(ContextCompat.getColor(requireContext(), R.color.orange_primary))

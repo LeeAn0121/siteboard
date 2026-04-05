@@ -6,7 +6,12 @@
       "Bash(grep -A 5 \"public class\\\\|interface\\\\|data class\" /c/Users/jmpar/AndroidStudioProjects/siteboard/app/src/main/java/com/jongwook/siteboard/*.kt)",
       "Bash(bash gradlew:*)",
       "Bash(curl:*)",
-      "Bash(wc -l /Users/junjonguk/Desktop/GITHUB/siteboard/app/src/main/java/com/jongwook/siteboard/*.kt)"
+      "Bash(wc -l /Users/junjonguk/Desktop/GITHUB/siteboard/app/src/main/java/com/jongwook/siteboard/*.kt)",
+      "Bash(find /Users/junjonguk/Desktop/GITHUB/siteboard -type f -name *Database* -o -name *Entity* -o -name *Dao*)",
+      "Bash(grep -E \"\\\\.kt$\")",
+      "Bash(./gradlew compileDebugKotlin)",
+      "Bash(chmod +x gradlew)",
+      "Bash(git rm:*)"
     ]
   }
 }
