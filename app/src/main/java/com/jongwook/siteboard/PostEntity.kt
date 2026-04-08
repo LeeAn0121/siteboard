@@ -16,7 +16,8 @@ data class PostEntity(
     val detailLocation: String? = null,   // 상세 위치 (수기 입력)
     val memo: String? = null,             // 메모 (비고)
     val originalUri: String? = null,      // 원본 사진 URI
-    val originalFileName: String? = null  // 원본 파일명
+    val originalFileName: String? = null, // 원본 파일명
+    val extraFields: String? = null       // 커스텀 입력 항목 (JSON)
 )
 
 @Entity(tableName = "preference_snapshots")
@@ -83,7 +84,13 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
-@Database(entities = [PostEntity::class, PreferenceSnapshotEntity::class], version = 3)
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(database: androidx.sqlite.db.SupportSQLiteDatabase) {
+        database.execSQL("ALTER TABLE site_posts ADD COLUMN extraFields TEXT")
+    }
+}
+
+@Database(entities = [PostEntity::class, PreferenceSnapshotEntity::class], version = 4)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun postDao(): PostDao
     abstract fun preferenceSnapshotDao(): PreferenceSnapshotDao
@@ -176,7 +183,7 @@ abstract class AppDatabase : RoomDatabase() {
         private fun buildDatabase(context: android.content.Context): AppDatabase {
             return Room.databaseBuilder(
                 context.applicationContext, AppDatabase::class.java, "siteboard.db"
-            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
             .setJournalMode(RoomDatabase.JournalMode.TRUNCATE) // WAL 비활성화 → .db 파일이 항상 최신 상태
             .build()
         }

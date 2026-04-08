@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/bg_app_canvas">
 
+    <!-- 헤더 -->
     <LinearLayout
         android:id="@+id/layoutFieldHeader"
         android:layout_width="match_parent"
@@ -33,26 +34,26 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:letterSpacing="0.12"
                     android:text="FIELDS"
                     android:textColor="@color/orange_primary"
                     android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.12" />
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="입력 항목 설정"
-                    android:textSize="24sp"
                     android:textColor="@color/text_primary"
+                    android:textSize="24sp"
                     android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:text="항목 이름 변경 및 표시 여부를 설정합니다."
+                    android:text="항목을 자유롭게 추가·삭제하고 드래그로 순서를 바꾸세요."
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
             </LinearLayout>
@@ -70,293 +71,40 @@
         </LinearLayout>
     </LinearLayout>
 
-    <androidx.core.widget.NestedScrollView
+    <!-- 항목 목록 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvFields"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipToPadding="false"
-        android:paddingBottom="32dp"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         app:layout_constraintTop_toBottomOf="@id/layoutFieldHeader"
+        app:layout_constraintBottom_toTopOf="@id/layoutAddField" />
+
+    <!-- 항목 추가 버튼 -->
+    <LinearLayout
+        android:id="@+id/layoutAddField"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_bottom_nav_modern"
+        android:orientation="vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/btnAddField"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingTop="12dp">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:text="항목 1은 항상 표시됩니다. 항목 2~4는 이름 변경 및 표시/숨김이 가능합니다."
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
-
-            <!-- Field 1 -->
-            <LinearLayout
-                android:id="@+id/rowField1"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@drawable/bg_action_row"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="14dp">
-
-                <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_primary_button"
-                    android:gravity="center"
-                    android:text="1"
-                    android:textColor="#091018"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvField1Label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="현장명"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="항상 표시 · 필수 입력"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/btnRenameField1"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_widget_preview_pill"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="7dp"
-                    android:text="이름 변경"
-                    android:textColor="@color/orange_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-            </LinearLayout>
-
-            <!-- Field 2 -->
-            <LinearLayout
-                android:id="@+id/rowField2"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/bg_action_row"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="14dp">
-
-                <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_primary_button"
-                    android:gravity="center"
-                    android:text="2"
-                    android:textColor="#091018"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvField2Label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="작업 내용"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvField2Status"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="표시 중"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/btnRenameField2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_widget_preview_pill"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="7dp"
-                    android:text="이름 변경"
-                    android:textColor="@color/orange_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/switchField2"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:checked="true" />
-            </LinearLayout>
-
-            <!-- Field 3 -->
-            <LinearLayout
-                android:id="@+id/rowField3"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/bg_action_row"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="14dp">
-
-                <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_primary_button"
-                    android:gravity="center"
-                    android:text="3"
-                    android:textColor="#091018"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvField3Label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="상세 위치 기록"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvField3Status"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="표시 중"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/btnRenameField3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_widget_preview_pill"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="7dp"
-                    android:text="이름 변경"
-                    android:textColor="@color/orange_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/switchField3"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:checked="true" />
-            </LinearLayout>
-
-            <!-- Field 4 -->
-            <LinearLayout
-                android:id="@+id/rowField4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/bg_action_row"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="14dp">
-
-                <TextView
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="@drawable/bg_primary_button"
-                    android:gravity="center"
-                    android:text="4"
-                    android:textColor="#091018"
-                    android:textSize="14sp"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvField4Label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="메모"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvField4Status"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="표시 중"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/btnRenameField4"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/bg_widget_preview_pill"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="7dp"
-                    android:text="이름 변경"
-                    android:textColor="@color/orange_primary"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/switchField4"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="10dp"
-                    android:checked="true" />
-            </LinearLayout>
-
-        </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
+            android:layout_height="54dp"
+            android:background="@drawable/bg_primary_button"
+            android:gravity="center"
+            android:text="+ 항목 추가"
+            android:textColor="#091018"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

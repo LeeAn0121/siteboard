@@ -117,4 +117,8 @@ dependencies {
 
     // Activity 확장 (ViewModel, Lifecycle 사용 위함)
     implementation("androidx.activity:activity-ktx:1.8.2")
+
+    // 🚀 [추가] Google Play In-App Update
+    implementation(libs.play.update)
+    implementation(libs.play.update.ktx)
 }

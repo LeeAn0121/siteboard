@@ -14,6 +14,8 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.widget.EditText
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.activity.result.contract.ActivityResultContracts
@@ -31,6 +33,7 @@ import com.google.mlkit.vision.face.FaceDetection
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import com.google.mlkit.vision.text.TextRecognition
 import com.jongwook.siteboard.databinding.ActivitySubBinding
+import org.json.JSONObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -41,6 +44,14 @@ import java.util.*
 
 class SubActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySubBinding
+
+    // 동적 필드 EditText – binding 대신 직접 참조
+    private lateinit var etTitle: EditText
+    private lateinit var etDesc: EditText
+    private lateinit var etDetailLocation: EditText
+    private lateinit var etMemo: EditText
+    private val customFieldEdits = mutableMapOf<String, EditText>()
+
     private var currentPhotoUri: Uri? = null
     private val db by lazy { AppDatabase.getDatabase(this) }
 
@@ -80,11 +91,11 @@ class SubActivity : AppCompatActivity() {
             }
             val intent = android.content.Intent(this, BatchEditActivity::class.java)
             intent.putParcelableArrayListExtra("selected_uris", ArrayList(uris))
-            intent.putExtra("edit_title", binding.etTitle.text.toString().trim())
-            intent.putExtra("edit_desc", binding.etDesc.text.toString().trim())
+            intent.putExtra("edit_title", etTitle.text.toString().trim())
+            intent.putExtra("edit_desc", etDesc.text.toString().trim())
             intent.putExtra("edit_loc", currentLocation)
-            intent.putExtra("edit_detail_loc", binding.etDetailLocation.text.toString().trim())
-            intent.putExtra("edit_memo", binding.etMemo.text.toString().trim())
+            intent.putExtra("edit_detail_loc", etDetailLocation.text.toString().trim())
+            intent.putExtra("edit_memo", etMemo.text.toString().trim())
             startActivity(intent)
         }
     }
@@ -108,13 +119,15 @@ class SubActivity : AppCompatActivity() {
             insets
         }
 
+        initFieldViews()
+
         if (intent.hasExtra("edit_id")) {
             isEditMode = true
             editPostId = intent.getIntExtra("edit_id", 0)
-            binding.etTitle.setText(intent.getStringExtra("edit_title"))
-            binding.etDesc.setText(intent.getStringExtra("edit_desc"))
-            binding.etDetailLocation.setText(intent.getStringExtra("edit_detail_loc") ?: "")
-            binding.etMemo.setText(intent.getStringExtra("edit_memo") ?: "")
+            etTitle.setText(intent.getStringExtra("edit_title"))
+            etDesc.setText(intent.getStringExtra("edit_desc"))
+            etDetailLocation.setText(intent.getStringExtra("edit_detail_loc") ?: "")
+            etMemo.setText(intent.getStringExtra("edit_memo") ?: "")
             currentLocation = intent.getStringExtra("edit_loc") ?: ""
             binding.tvGpsLocation.text = if (currentLocation.isEmpty()) "위치 정보 없음" else currentLocation
 
@@ -148,22 +161,17 @@ class SubActivity : AppCompatActivity() {
         } else {
             val prefs = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
             val savedSiteName = prefs.getString("last_site_name", "")
-            if (!savedSiteName.isNullOrEmpty()) binding.etTitle.setText(savedSiteName)
+            if (!savedSiteName.isNullOrEmpty()) etTitle.setText(savedSiteName)
             val savedWorkContent = prefs.getString("last_work_content", "")
-            if (!savedWorkContent.isNullOrEmpty()) binding.etDesc.setText(savedWorkContent)
+            if (!savedWorkContent.isNullOrEmpty()) etDesc.setText(savedWorkContent)
             val savedDetailLoc = prefs.getString("last_detail_loc", "")
-            if (!savedDetailLoc.isNullOrEmpty()) binding.etDetailLocation.setText(savedDetailLoc)
+            if (!savedDetailLoc.isNullOrEmpty()) etDetailLocation.setText(savedDetailLoc)
             val prefillTitle = intent.getStringExtra(EXTRA_PREFILL_TITLE).orEmpty()
             if (prefillTitle.isNotBlank()) {
-                binding.etTitle.setText(prefillTitle)
-                binding.etTitle.setSelection(prefillTitle.length)
+                etTitle.setText(prefillTitle)
+                etTitle.setSelection(prefillTitle.length)
             }
         }
-
-        setupClearButton(binding.etTitle)
-        setupClearButton(binding.etDesc)
-        setupClearButton(binding.etDetailLocation)
-        setupClearButton(binding.etMemo)
 
         applyFieldLabels()
         updatePreview()
@@ -201,17 +209,100 @@ class SubActivity : AppCompatActivity() {
     }
 
     private fun applyFieldLabels() {
-        binding.tvLabel1.text = FieldSettingsActivity.getLabel(this, 1)
-        binding.tvLabel2.text = FieldSettingsActivity.getLabel(this, 2)
-        binding.tvLabel3.text = FieldSettingsActivity.getLabel(this, 3)
-        binding.tvLabel4.text = FieldSettingsActivity.getLabel(this, 4)
+        val fields = FieldDefManager.getFields(this)
+        val container = binding.containerFields
+        container.removeAllViews()
+        val dp4  = dpToPx(4)
+        val dp12 = dpToPx(12)
+        var visibleCount = 0
 
-        val v = android.view.View.VISIBLE
-        val g = android.view.View.GONE
-        binding.layoutField2.visibility = if (FieldSettingsActivity.isEnabled(this, 2)) v else g
-        binding.layoutField3.visibility = if (FieldSettingsActivity.isEnabled(this, 3)) v else g
-        binding.layoutField4.visibility = if (FieldSettingsActivity.isEnabled(this, 4)) v else g
+        for (field in fields) {
+            if (!field.enabled) continue
+
+            val labelView = TextView(this).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                text = field.label
+                setTextColor(androidx.core.content.ContextCompat.getColor(this@SubActivity, R.color.text_secondary))
+                textSize = 12f
+                setTypeface(null, android.graphics.Typeface.BOLD)
+            }
+
+            val editView: EditText = when (field.id) {
+                FieldDefManager.ID_TITLE      -> etTitle
+                FieldDefManager.ID_DESC       -> etDesc
+                FieldDefManager.ID_DETAIL_LOC -> etDetailLocation
+                FieldDefManager.ID_MEMO       -> etMemo
+                else -> customFieldEdits.getOrPut(field.id) {
+                    createSingleLineEditText("여기에 입력하세요").also { setupClearButton(it) }
+                }
+            }
+
+            // 기존 부모에서 먼저 분리 (IllegalStateException 방지)
+            (editView.parent as? android.view.ViewGroup)?.removeView(editView)
+
+            val group = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).also { if (visibleCount > 0) it.topMargin = dp12 }
+            }
+            group.addView(labelView)
+            group.addView(editView)
+            container.addView(group)
+            visibleCount++
+        }
+
+        // 더 이상 필드 목록에 없는 커스텀 EditText 정리
+        val activeIds = fields.map { it.id }.toSet()
+        customFieldEdits.keys.retainAll(activeIds)
     }
+
+    private fun initFieldViews() {
+        etTitle = createSingleLineEditText("여기에 입력하세요")
+        etDesc  = createMultiLineEditText("여기에 입력하세요", 96, 3)
+        etDetailLocation = createSingleLineEditText("동/호수, 층, 구역 등 상세 위치")
+        etMemo  = createMultiLineEditText("특이사항, 참고내용 등", 96, 4)
+        setupClearButton(etTitle)
+        setupClearButton(etDesc)
+        setupClearButton(etDetailLocation)
+        setupClearButton(etMemo)
+    }
+
+    private fun createSingleLineEditText(hint: String): EditText = EditText(this).apply {
+        layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(52)
+        ).also { it.topMargin = dpToPx(4) }
+        background = androidx.core.content.ContextCompat.getDrawable(this@SubActivity, R.drawable.bg_input_panel)
+        this.hint = hint
+        inputType  = android.text.InputType.TYPE_CLASS_TEXT
+        isSingleLine = true
+        setPadding(dpToPx(14), 0, dpToPx(14), 0)
+        gravity = android.view.Gravity.CENTER_VERTICAL
+        setTextColor(androidx.core.content.ContextCompat.getColor(this@SubActivity, R.color.text_primary))
+        setHintTextColor(androidx.core.content.ContextCompat.getColor(this@SubActivity, R.color.text_tertiary))
+        textSize = 15f
+    }
+
+    private fun createMultiLineEditText(hint: String, heightDp: Int, maxLinesCount: Int): EditText = EditText(this).apply {
+        layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, dpToPx(heightDp)
+        ).also { it.topMargin = dpToPx(4) }
+        background = androidx.core.content.ContextCompat.getDrawable(this@SubActivity, R.drawable.bg_input_panel)
+        this.hint  = hint
+        inputType  = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE
+        maxLines   = maxLinesCount
+        gravity    = android.view.Gravity.TOP
+        setPadding(dpToPx(14), dpToPx(14), dpToPx(14), dpToPx(14))
+        setTextColor(androidx.core.content.ContextCompat.getColor(this@SubActivity, R.color.text_primary))
+        setHintTextColor(androidx.core.content.ContextCompat.getColor(this@SubActivity, R.color.text_tertiary))
+        textSize = 15f
+    }
+
+    private fun dpToPx(dp: Int): Int = (dp * resources.displayMetrics.density).toInt()
 
     private fun applyGpsSetting() {
         val gpsEnabled = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
@@ -262,12 +353,30 @@ class SubActivity : AppCompatActivity() {
     }
 
     private fun validateInputs(): Boolean {
-        if (binding.etTitle.text.toString().trim().isEmpty()) {
-            val label = FieldSettingsActivity.getLabel(this, 1)
+        if (etTitle.text.toString().trim().isEmpty()) {
+            val label = FieldDefManager.getLabel(this, FieldDefManager.ID_TITLE)
             Toast.makeText(this, "${label}을(를) 입력해주세요.", Toast.LENGTH_SHORT).show()
             return false
         }
         return true
+    }
+
+    private fun collectFieldValues(): Map<String, String> {
+        val map = mutableMapOf<String, String>()
+        map[FieldDefManager.ID_TITLE]      = etTitle.text.toString().trim()
+        map[FieldDefManager.ID_DESC]       = etDesc.text.toString().trim()
+        map[FieldDefManager.ID_DETAIL_LOC] = etDetailLocation.text.toString().trim()
+        map[FieldDefManager.ID_MEMO]       = etMemo.text.toString().trim()
+        for ((id, et) in customFieldEdits) map[id] = et.text.toString().trim()
+        return map
+    }
+
+    private fun buildCustomFieldsJson(values: Map<String, String>): String? {
+        val entries = values.entries.filter { !FieldDefManager.isBuiltIn(it.key) && it.value.isNotEmpty() }
+        if (entries.isEmpty()) return null
+        val obj = JSONObject()
+        entries.forEach { (k, v) -> obj.put(k, v) }
+        return obj.toString()
     }
 
     private fun launchCamera() {
@@ -282,11 +391,12 @@ class SubActivity : AppCompatActivity() {
     }
 
     private fun processAndSaveImage(uri: Uri) {
-        val title     = binding.etTitle.text.toString().trim()
-        val desc      = binding.etDesc.text.toString().trim()
+        val fieldValues = collectFieldValues()
+        val title     = fieldValues[FieldDefManager.ID_TITLE]      ?: ""
+        val desc      = fieldValues[FieldDefManager.ID_DESC]        ?: ""
         val loc       = currentLocation
-        val detailLoc = binding.etDetailLocation.text.toString().trim()
-        val memo      = binding.etMemo.text.toString().trim()
+        val detailLoc = fieldValues[FieldDefManager.ID_DETAIL_LOC] ?: ""
+        val memo      = fieldValues[FieldDefManager.ID_MEMO]        ?: ""
         // 원본 삭제 여부는 설정에서 읽어옴
         val shouldDeleteOriginal = getSharedPreferences("SiteboardPrefs", Context.MODE_PRIVATE)
             .getBoolean("delete_original_mode", false)
@@ -322,7 +432,7 @@ class SubActivity : AppCompatActivity() {
                 } else orientedBitmap
 
                 // 4. 워터마크 적용 (복사본에만)
-                val stampedBitmap = stampTextOnBitmap(bitmapToStamp, title, desc, loc, detailLoc, memo)
+                val stampedBitmap = stampTextOnBitmap(bitmapToStamp, fieldValues, loc)
                 if (bitmapToStamp != stampedBitmap && !bitmapToStamp.isRecycled) bitmapToStamp.recycle()
 
                 // 5. 워터마크 복사본 갤러리 저장
@@ -344,7 +454,8 @@ class SubActivity : AppCompatActivity() {
                     detailLocation = detailLoc.ifEmpty { null },
                     memo = memo.ifEmpty { null },
                     originalUri = if (shouldDeleteOriginal) null else originalUri?.toString(),
-                    originalFileName = originalFileName.ifEmpty { null }
+                    originalFileName = originalFileName.ifEmpty { null },
+                    extraFields = buildCustomFieldsJson(fieldValues)
                 )
                 if (isEditMode) db.postDao().update(post) else db.postDao().insert(post)
                 AppDatabase.backupNow(applicationContext)
@@ -378,11 +489,12 @@ class SubActivity : AppCompatActivity() {
             Toast.makeText(this, "미리보기 사진이 없습니다. 사진을 촬영하거나 선택해주세요.", Toast.LENGTH_SHORT).show()
             return
         }
-        val title     = binding.etTitle.text.toString().trim()
-        val desc      = binding.etDesc.text.toString().trim()
+        val fieldValues = collectFieldValues()
+        val title     = fieldValues[FieldDefManager.ID_TITLE]      ?: ""
+        val desc      = fieldValues[FieldDefManager.ID_DESC]        ?: ""
         val loc       = currentLocation
-        val detailLoc = binding.etDetailLocation.text.toString().trim()
-        val memo      = binding.etMemo.text.toString().trim()
+        val detailLoc = fieldValues[FieldDefManager.ID_DETAIL_LOC] ?: ""
+        val memo      = fieldValues[FieldDefManager.ID_MEMO]        ?: ""
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -399,7 +511,7 @@ class SubActivity : AppCompatActivity() {
                 } else bmp
 
                 // 워터마크 적용 후 갤러리 저장
-                val stampedBitmap = stampTextOnBitmap(bitmapToStamp, title, desc, loc, detailLoc, memo)
+                val stampedBitmap = stampTextOnBitmap(bitmapToStamp, fieldValues, loc)
                 if (bitmapToStamp != stampedBitmap && !bitmapToStamp.isRecycled) bitmapToStamp.recycle()
 
                 val newSavedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
@@ -420,7 +532,8 @@ class SubActivity : AppCompatActivity() {
                     detailLocation = detailLoc.ifEmpty { null },
                     memo = memo.ifEmpty { null },
                     originalUri = editOriginalUri.ifEmpty { null },
-                    originalFileName = editOriginalFileName.ifEmpty { null }
+                    originalFileName = editOriginalFileName.ifEmpty { null },
+                    extraFields = buildCustomFieldsJson(fieldValues)
                 )
                 db.postDao().update(post)
                 AppDatabase.backupNow(applicationContext)
@@ -515,8 +628,7 @@ class SubActivity : AppCompatActivity() {
     }
 
     private fun stampTextOnBitmap(
-        bitmap: Bitmap, title: String, desc: String, loc: String,
-        detailLoc: String = "", memo: String = ""
+        bitmap: Bitmap, fieldValues: Map<String, String>, loc: String
     ): Bitmap {
         val resultBitmap = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(resultBitmap)
@@ -536,15 +648,16 @@ class SubActivity : AppCompatActivity() {
         val actualMarginX  = baseMarginX * scaleX
         val actualMarginY  = baseMarginY * scaleY
 
-        val label1 = FieldSettingsActivity.getLabel(this, 1)
-        val label2 = FieldSettingsActivity.getLabel(this, 2)
-        val label3 = FieldSettingsActivity.getLabel(this, 3)
-        val label4 = FieldSettingsActivity.getLabel(this, 4)
-        val lines = mutableListOf("$label1 : $title")
+        // FieldDefManager 순서대로 워터마크 라인 구성
+        val fields = FieldDefManager.getFields(this)
+        val lines = mutableListOf<String>()
+        for (field in fields) {
+            if (!field.enabled) continue
+            val value = fieldValues[field.id] ?: ""
+            if (value.isNotEmpty()) lines.add("${field.label} : ${value.replace("\n", " ")}")
+        }
         if (loc.isNotEmpty()) lines.add("위치(GPS) : $loc")
-        if (detailLoc.isNotEmpty() && FieldSettingsActivity.isEnabled(this, 3)) lines.add("$label3 : $detailLoc")
-        if (desc.isNotEmpty() && FieldSettingsActivity.isEnabled(this, 2)) lines.add("$label2 : ${desc.replace("\n", " ")}")
-        if (memo.isNotEmpty() && FieldSettingsActivity.isEnabled(this, 4)) lines.add("$label4 : $memo")
+        if (lines.isEmpty()) lines.add(fieldValues[FieldDefManager.ID_TITLE] ?: "")
         lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
 
         val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -590,21 +703,21 @@ class SubActivity : AppCompatActivity() {
     }
 
     private fun applyTemplate(template: RecordTemplate) {
-        if (binding.etTitle.text.isNullOrBlank()) binding.etTitle.setText(template.title)
-        binding.etDesc.setText(template.description)
-        binding.etDetailLocation.setText(template.detailLocation)
-        binding.etMemo.setText(template.memo)
+        if (etTitle.text.isNullOrBlank()) etTitle.setText(template.title)
+        etDesc.setText(template.description)
+        etDetailLocation.setText(template.detailLocation)
+        etMemo.setText(template.memo)
     }
 
     private fun saveCurrentAsTemplate() {
-        val description = binding.etDesc.text.toString().trim()
+        val description = etDesc.text.toString().trim()
         if (description.isBlank()) {
             Toast.makeText(this, "작업 내용을 먼저 입력해 주세요.", Toast.LENGTH_SHORT).show()
             return
         }
         val input = EditText(this).apply {
             hint = "예: 월간 점검"
-            setText(binding.etTitle.text?.toString()?.trim().orEmpty().ifBlank { "새 템플릿" })
+            setText(etTitle.text?.toString()?.trim().orEmpty().ifBlank { "새 템플릿" })
         }
         androidx.appcompat.app.AlertDialog.Builder(this)
             .setTitle("템플릿 저장")
@@ -616,10 +729,10 @@ class SubActivity : AppCompatActivity() {
                     RecordTemplate(
                         id = RecordTemplateStore.nextId(),
                         name = name,
-                        title = binding.etTitle.text.toString().trim(),
+                        title = etTitle.text.toString().trim(),
                         description = description,
-                        detailLocation = binding.etDetailLocation.text.toString().trim(),
-                        memo = binding.etMemo.text.toString().trim()
+                        detailLocation = etDetailLocation.text.toString().trim(),
+                        memo = etMemo.text.toString().trim()
                     )
                 )
                 Toast.makeText(this, "템플릿을 저장했습니다.", Toast.LENGTH_SHORT).show()

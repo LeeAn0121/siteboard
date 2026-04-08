@@ -20,4 +20,3 @@ local.properties
 /app/release/siteboard.apk.txt
 /*.log
 /app/release/app-release.aab
-app/version.properties

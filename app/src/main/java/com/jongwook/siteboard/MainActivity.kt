@@ -9,6 +9,10 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
 import com.jongwook.siteboard.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,6 +20,8 @@ import kotlinx.coroutines.launch
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var db: AppDatabase
+    private lateinit var appUpdateManager: AppUpdateManager
+    private val UPDATE_REQUEST_CODE = 9001
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +30,8 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         SiteboardWidgetManager.refreshAll(applicationContext)
+
+        checkForUpdates()
 
         // 하단 네비게이션 바 패딩 처리
         ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNavigationView) { v, insets ->
@@ -64,6 +72,46 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         openTabFromIntent(intent)
+    }
+
+    private fun checkForUpdates() {
+        appUpdateManager = AppUpdateManagerFactory.create(this)
+        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+
+        appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                // 새로운 업데이트가 있는 경우 업데이트 흐름 시작
+                // 여기서는 IMMEDIATE(강제 업데이트) 방식을 예시로 사용합니다.
+                // 사용자가 업데이트를 수락하면 Play 스토어가 자동으로 처리합니다.
+                try {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        AppUpdateType.IMMEDIATE,
+                        this,
+                        UPDATE_REQUEST_CODE
+                    )
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 강제 업데이트가 중단된 경우 다시 시작
+        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                appUpdateManager.startUpdateFlowForResult(
+                    appUpdateInfo,
+                    AppUpdateType.IMMEDIATE,
+                    this,
+                    UPDATE_REQUEST_CODE
+                )
+            }
+        }
     }
 
     // 프래그먼트를 교체하는 공통 함수

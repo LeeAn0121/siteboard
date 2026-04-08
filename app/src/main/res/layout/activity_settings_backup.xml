@@ -127,7 +127,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="워터마크와 환경 설정을 JSON 파일로 저장합니다"
+                    android:text="워터마크, 입력 항목 설정, 환경 설정을 JSON 파일로 저장합니다"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
                     android:layout_marginTop="2dp" />
@@ -137,6 +137,43 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:src="@drawable/ic_chevron_right" />
+        </LinearLayout>
+
+        <!-- 포함 항목 안내 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_surface_card_soft"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="14dp"
+            android:layout_marginTop="10dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="백업 포함 항목"
+                android:textColor="@color/text_secondary"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.06" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="• 워터마크 스타일 (위치, 폰트, 색상, 크기)\n• 입력 항목 설정 (이름·순서·표시 여부·커스텀 항목)\n• 캡처 개인정보 보호 설정\n• GPS 수집 설정\n• 위젯 설정"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:lineSpacingExtra="3dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="* 기록 데이터(사진·현장 기록)는 포함되지 않습니다."
+                android:textColor="@color/text_tertiary"
+                android:textSize="11sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -179,7 +216,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="저장한 JSON 설정 파일을 불러와 현재 앱에 적용합니다"
+                    android:text="저장한 JSON 파일을 불러와 워터마크·입력 항목·환경 설정을 일괄 복원합니다"
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
                     android:layout_marginTop="2dp" />

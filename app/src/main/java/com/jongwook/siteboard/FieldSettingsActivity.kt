@@ -1,59 +1,27 @@
 package com.jongwook.siteboard
 
-import android.content.Context
 import android.os.Bundle
+import android.view.MotionEvent
+import android.view.View
 import android.widget.EditText
-import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SwitchCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.jongwook.siteboard.databinding.ActivityFieldSettingsBinding
+import com.jongwook.siteboard.databinding.ItemFieldSettingsRowBinding
+import java.util.Collections
 
 class FieldSettingsActivity : AppCompatActivity() {
 
-    companion object {
-        const val PREFS_NAME = "SiteboardPrefs"
-        const val KEY_LABEL_1 = "field_label_1"
-        const val KEY_LABEL_2 = "field_label_2"
-        const val KEY_LABEL_3 = "field_label_3"
-        const val KEY_LABEL_4 = "field_label_4"
-        const val KEY_ENABLED_2 = "field_enabled_2"
-        const val KEY_ENABLED_3 = "field_enabled_3"
-        const val KEY_ENABLED_4 = "field_enabled_4"
-
-        const val DEFAULT_LABEL_1 = "현장명"
-        const val DEFAULT_LABEL_2 = "작업 내용"
-        const val DEFAULT_LABEL_3 = "상세 위치 기록"
-        const val DEFAULT_LABEL_4 = "메모"
-
-        fun getLabel(context: Context, index: Int): String {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            return when (index) {
-                1 -> prefs.getString(KEY_LABEL_1, DEFAULT_LABEL_1) ?: DEFAULT_LABEL_1
-                2 -> prefs.getString(KEY_LABEL_2, DEFAULT_LABEL_2) ?: DEFAULT_LABEL_2
-                3 -> prefs.getString(KEY_LABEL_3, DEFAULT_LABEL_3) ?: DEFAULT_LABEL_3
-                4 -> prefs.getString(KEY_LABEL_4, DEFAULT_LABEL_4) ?: DEFAULT_LABEL_4
-                else -> ""
-            }
-        }
-
-        fun isEnabled(context: Context, index: Int): Boolean {
-            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            return when (index) {
-                1 -> true
-                2 -> prefs.getBoolean(KEY_ENABLED_2, true)
-                3 -> prefs.getBoolean(KEY_ENABLED_3, true)
-                4 -> prefs.getBoolean(KEY_ENABLED_4, true)
-                else -> false
-            }
-        }
-    }
-
     private lateinit var binding: ActivityFieldSettingsBinding
+    private lateinit var adapter: FieldAdapter
+    private lateinit var itemTouchHelper: ItemTouchHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,102 +34,193 @@ class FieldSettingsActivity : AppCompatActivity() {
             v.updatePadding(top = sb.top + (16 * resources.displayMetrics.density).toInt())
             insets
         }
+        ViewCompat.setOnApplyWindowInsetsListener(binding.layoutAddField) { v, insets ->
+            val nb = insets.getInsets(WindowInsetsCompat.Type.navigationBars())
+            v.updatePadding(bottom = nb.bottom + (16 * resources.displayMetrics.density).toInt())
+            insets
+        }
 
-        loadAndDisplay()
-        setupListeners()
+        setupRecyclerView()
+
+        binding.btnAddField.setOnClickListener { showAddFieldDialog() }
     }
 
     override fun onResume() {
         super.onResume()
-        loadAndDisplay()
+        adapter.reload()
     }
 
-    private fun loadAndDisplay() {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    private fun setupRecyclerView() {
+        val fields = FieldDefManager.getFields(this).toMutableList()
+        adapter = FieldAdapter(fields)
 
-        binding.tvField1Label.text = prefs.getString(KEY_LABEL_1, DEFAULT_LABEL_1) ?: DEFAULT_LABEL_1
+        val callback = object : ItemTouchHelper.Callback() {
+            override fun getMovementFlags(rv: RecyclerView, vh: RecyclerView.ViewHolder) =
+                makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
 
-        val label2 = prefs.getString(KEY_LABEL_2, DEFAULT_LABEL_2) ?: DEFAULT_LABEL_2
-        val enabled2 = prefs.getBoolean(KEY_ENABLED_2, true)
-        binding.tvField2Label.text = label2
-        binding.switchField2.isChecked = enabled2
-        binding.tvField2Status.text = if (enabled2) "표시 중" else "숨김"
+            override fun isLongPressDragEnabled() = false
 
-        val label3 = prefs.getString(KEY_LABEL_3, DEFAULT_LABEL_3) ?: DEFAULT_LABEL_3
-        val enabled3 = prefs.getBoolean(KEY_ENABLED_3, true)
-        binding.tvField3Label.text = label3
-        binding.switchField3.isChecked = enabled3
-        binding.tvField3Status.text = if (enabled3) "표시 중" else "숨김"
+            override fun onMove(rv: RecyclerView, src: RecyclerView.ViewHolder, dst: RecyclerView.ViewHolder): Boolean {
+                adapter.onItemMoved(src.adapterPosition, dst.adapterPosition)
+                return true
+            }
 
-        val label4 = prefs.getString(KEY_LABEL_4, DEFAULT_LABEL_4) ?: DEFAULT_LABEL_4
-        val enabled4 = prefs.getBoolean(KEY_ENABLED_4, true)
-        binding.tvField4Label.text = label4
-        binding.switchField4.isChecked = enabled4
-        binding.tvField4Status.text = if (enabled4) "표시 중" else "숨김"
+            override fun onSwiped(vh: RecyclerView.ViewHolder, dir: Int) {}
+        }
+
+        itemTouchHelper = ItemTouchHelper(callback)
+        itemTouchHelper.attachToRecyclerView(binding.rvFields)
+
+        binding.rvFields.layoutManager = LinearLayoutManager(this)
+        binding.rvFields.adapter = adapter
     }
 
-    private fun setupListeners() {
-        binding.btnRenameField1.setOnClickListener {
-            showRenameDialog(1, binding.tvField1Label)
-        }
-        binding.btnRenameField2.setOnClickListener {
-            showRenameDialog(2, binding.tvField2Label)
-        }
-        binding.btnRenameField3.setOnClickListener {
-            showRenameDialog(3, binding.tvField3Label)
-        }
-        binding.btnRenameField4.setOnClickListener {
-            showRenameDialog(4, binding.tvField4Label)
-        }
-
-        binding.switchField2.setOnCheckedChangeListener { _, checked ->
-            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-                .putBoolean(KEY_ENABLED_2, checked).apply()
-            binding.tvField2Status.text = if (checked) "표시 중" else "숨김"
-        }
-        binding.switchField3.setOnCheckedChangeListener { _, checked ->
-            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-                .putBoolean(KEY_ENABLED_3, checked).apply()
-            binding.tvField3Status.text = if (checked) "표시 중" else "숨김"
-        }
-        binding.switchField4.setOnCheckedChangeListener { _, checked ->
-            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-                .putBoolean(KEY_ENABLED_4, checked).apply()
-            binding.tvField4Status.text = if (checked) "표시 중" else "숨김"
-        }
-    }
-
-    private fun showRenameDialog(fieldIndex: Int, labelView: TextView) {
-        val currentLabel = labelView.text.toString()
-        val input = EditText(this).apply {
-            setText(currentLabel)
-            setSelection(currentLabel.length)
-            hint = "항목 이름 입력"
-        }
+    private fun showAddFieldDialog() {
+        val input = EditText(this).apply { hint = "새 항목 이름 입력" }
         val padding = (20 * resources.displayMetrics.density).toInt()
         val container = android.widget.FrameLayout(this).apply {
             setPadding(padding, padding / 2, padding, 0)
             addView(input)
         }
-
         AlertDialog.Builder(this)
-            .setTitle("항목 ${fieldIndex} 이름 변경")
+            .setTitle("항목 추가")
             .setView(container)
-            .setPositiveButton("저장") { _, _ ->
-                val newLabel = input.text.toString().trim()
-                if (newLabel.isBlank()) return@setPositiveButton
-                val key = when (fieldIndex) {
-                    1 -> KEY_LABEL_1
-                    2 -> KEY_LABEL_2
-                    3 -> KEY_LABEL_3
-                    4 -> KEY_LABEL_4
-                    else -> return@setPositiveButton
-                }
-                getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit()
-                    .putString(key, newLabel).apply()
-                labelView.text = newLabel
+            .setPositiveButton("추가") { _, _ ->
+                val label = input.text.toString().trim()
+                if (label.isBlank()) return@setPositiveButton
+                adapter.addField(FieldDef(id = FieldDefManager.generateCustomId(), label = label, enabled = true))
             }
             .setNegativeButton("취소", null)
             .show()
+        input.requestFocus()
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // RecyclerView Adapter
+    // ─────────────────────────────────────────────────────────
+    inner class FieldAdapter(
+        private val items: MutableList<FieldDef>
+    ) : RecyclerView.Adapter<FieldAdapter.VH>() {
+
+        inner class VH(val b: ItemFieldSettingsRowBinding) : RecyclerView.ViewHolder(b.root)
+
+        override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): VH {
+            val b = ItemFieldSettingsRowBinding.inflate(layoutInflater, parent, false)
+            return VH(b)
+        }
+
+        override fun getItemCount() = items.size
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val field = items[position]
+            val b = holder.b
+            val isRequired = FieldDefManager.isRequired(field.id)
+            val isBuiltIn  = FieldDefManager.isBuiltIn(field.id)
+
+            b.tvFieldIndex.text = (position + 1).toString()
+            b.tvFieldLabel.text = field.label
+
+            // 상태 텍스트
+            b.tvFieldStatus.text = when {
+                isRequired -> "항상 표시 · 필수"
+                field.enabled -> "표시 중"
+                else -> "숨김"
+            }
+
+            // 삭제 버튼 – 커스텀 항목만
+            b.btnDelete.visibility = if (isBuiltIn) View.GONE else View.VISIBLE
+            b.btnDelete.setOnClickListener { showDeleteConfirm(holder.adapterPosition) }
+
+            // 스위치 – 필수 항목은 숨김
+            b.switchEnabled.visibility = if (isRequired) View.GONE else View.VISIBLE
+            b.switchEnabled.setOnCheckedChangeListener(null)
+            b.switchEnabled.isChecked = field.enabled
+            b.switchEnabled.setOnCheckedChangeListener { _, checked ->
+                val pos = holder.adapterPosition
+                if (pos == RecyclerView.NO_ID.toInt()) return@setOnCheckedChangeListener
+                items[pos] = items[pos].copy(enabled = checked)
+                b.tvFieldStatus.text = if (checked) "표시 중" else "숨김"
+                save()
+            }
+
+            // 이름 변경
+            b.btnRename.setOnClickListener { showRenameDialog(holder.adapterPosition) }
+
+            // 드래그 핸들
+            b.ivDragHandle.setOnTouchListener { _, event ->
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                    itemTouchHelper.startDrag(holder)
+                }
+                false
+            }
+        }
+
+        fun onItemMoved(from: Int, to: Int) {
+            Collections.swap(items, from, to)
+            notifyItemMoved(from, to)
+            // 번호 뱃지 갱신
+            notifyItemChanged(from)
+            notifyItemChanged(to)
+            save()
+        }
+
+        fun addField(field: FieldDef) {
+            items.add(field)
+            notifyItemInserted(items.lastIndex)
+            save()
+        }
+
+        fun reload() {
+            val fresh = FieldDefManager.getFields(this@FieldSettingsActivity).toMutableList()
+            items.clear()
+            items.addAll(fresh)
+            notifyDataSetChanged()
+        }
+
+        private fun showRenameDialog(position: Int) {
+            if (position == RecyclerView.NO_ID.toInt() || position >= items.size) return
+            val current = items[position].label
+            val input = EditText(this@FieldSettingsActivity).apply {
+                setText(current)
+                setSelection(current.length)
+                hint = "항목 이름 입력"
+            }
+            val padding = (20 * resources.displayMetrics.density).toInt()
+            val container = android.widget.FrameLayout(this@FieldSettingsActivity).apply {
+                setPadding(padding, padding / 2, padding, 0)
+                addView(input)
+            }
+            AlertDialog.Builder(this@FieldSettingsActivity)
+                .setTitle("이름 변경")
+                .setView(container)
+                .setPositiveButton("저장") { _, _ ->
+                    val newLabel = input.text.toString().trim()
+                    if (newLabel.isBlank()) return@setPositiveButton
+                    items[position] = items[position].copy(label = newLabel)
+                    notifyItemChanged(position)
+                    save()
+                }
+                .setNegativeButton("취소", null)
+                .show()
+        }
+
+        private fun showDeleteConfirm(position: Int) {
+            if (position == RecyclerView.NO_ID.toInt() || position >= items.size) return
+            AlertDialog.Builder(this@FieldSettingsActivity)
+                .setTitle("항목 삭제")
+                .setMessage("'${items[position].label}' 항목을 삭제하시겠습니까?")
+                .setPositiveButton("삭제") { _, _ ->
+                    items.removeAt(position)
+                    notifyItemRemoved(position)
+                    notifyItemRangeChanged(position, items.size)
+                    save()
+                }
+                .setNegativeButton("취소", null)
+                .show()
+        }
+
+        private fun save() {
+            FieldDefManager.saveFields(this@FieldSettingsActivity, items)
+        }
     }
 }

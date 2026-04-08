@@ -423,11 +423,11 @@ class BatchEditActivity : AppCompatActivity() {
             setShadowLayer(5f, 3f, 3f, Color.BLACK)
         }
 
-        val label1 = FieldSettingsActivity.getLabel(this, 1)
-        val label2 = FieldSettingsActivity.getLabel(this, 2)
+        val label1 = FieldDefManager.getLabel(this, FieldDefManager.ID_TITLE)
+        val label2 = FieldDefManager.getLabel(this, FieldDefManager.ID_DESC)
         val lines = mutableListOf("$label1 : $title")
         if (loc.isNotEmpty()) lines.add("위치 : $loc")
-        if (desc.isNotEmpty() && FieldSettingsActivity.isEnabled(this, 2)) lines.add("$label2 : ${desc.replace("\n", " ")}")
+        if (desc.isNotEmpty() && FieldDefManager.isEnabled(this, FieldDefManager.ID_DESC)) lines.add("$label2 : ${desc.replace("\n", " ")}")
         lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
 
         val fm = textPaint.fontMetrics

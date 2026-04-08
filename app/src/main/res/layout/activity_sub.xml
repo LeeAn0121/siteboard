@@ -164,67 +164,6 @@
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingTop="14dp">
-
-                    <TextView
-                        android:id="@+id/tvLabel1"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="현장명"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <EditText
-                        android:id="@+id/etTitle"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="4dp"
-                        android:background="@drawable/bg_input_panel"
-                        android:hint="여기에 입력하세요"
-                        android:inputType="text"
-                        android:paddingHorizontal="14dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_tertiary"
-                        android:textSize="15sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/layoutField2"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingTop="12dp">
-
-                    <TextView
-                        android:id="@+id/tvLabel2"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="작업 내용"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <EditText
-                        android:id="@+id/etDesc"
-                        android:layout_width="match_parent"
-                        android:layout_height="96dp"
-                        android:layout_marginTop="4dp"
-                        android:background="@drawable/bg_input_panel"
-                        android:gravity="top"
-                        android:hint="여기에 입력하세요"
-                        android:inputType="textMultiLine"
-                        android:maxLines="3"
-                        android:padding="14dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_tertiary"
-                        android:textSize="15sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
                     android:orientation="horizontal">
 
@@ -301,67 +240,13 @@
                         android:textSize="13sp" />
                 </LinearLayout>
 
+                <!-- 동적 입력 항목 컨테이너 (FieldDefManager 순서대로 생성) -->
                 <LinearLayout
-                    android:id="@+id/layoutField3"
+                    android:id="@+id/containerFields"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingTop="12dp">
-
-                    <TextView
-                        android:id="@+id/tvLabel3"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="상세 위치 기록"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <EditText
-                        android:id="@+id/etDetailLocation"
-                        android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="4dp"
-                        android:background="@drawable/bg_input_panel"
-                        android:hint="동/호수, 층, 구역 등 상세 위치"
-                        android:inputType="text"
-                        android:paddingHorizontal="14dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_tertiary"
-                        android:textSize="15sp" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:id="@+id/layoutField4"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:paddingTop="12dp">
-
-                    <TextView
-                        android:id="@+id/tvLabel4"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="메모"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:textStyle="bold" />
-
-                    <EditText
-                        android:id="@+id/etMemo"
-                        android:layout_width="match_parent"
-                        android:layout_height="96dp"
-                        android:layout_marginTop="4dp"
-                        android:background="@drawable/bg_input_panel"
-                        android:gravity="top"
-                        android:hint="특이사항, 참고내용 등"
-                        android:inputType="textMultiLine"
-                        android:maxLines="4"
-                        android:padding="14dp"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_tertiary"
-                        android:textSize="15sp" />
-                </LinearLayout>
+                    android:paddingTop="4dp" />
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

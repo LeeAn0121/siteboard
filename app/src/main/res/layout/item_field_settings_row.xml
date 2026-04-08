@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_action_row"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="14dp">
+
+    <!-- 드래그 핸들 -->
+    <ImageView
+        android:id="@+id/ivDragHandle"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:padding="2dp"
+        android:src="@drawable/ic_drag_handle"
+        android:contentDescription="드래그하여 순서 변경" />
+
+    <!-- 순서 번호 뱃지 -->
+    <TextView
+        android:id="@+id/tvFieldIndex"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/bg_primary_button"
+        android:gravity="center"
+        android:textColor="#091018"
+        android:textSize="13sp"
+        android:textStyle="bold" />
+
+    <!-- 라벨 + 상태 -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvFieldLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvFieldStatus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textColor="@color/text_secondary"
+            android:textSize="11sp" />
+    </LinearLayout>
+
+    <!-- 이름 변경 버튼 -->
+    <TextView
+        android:id="@+id/btnRename"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_widget_preview_pill"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="6dp"
+        android:text="변경"
+        android:textColor="@color/orange_primary"
+        android:textSize="11sp"
+        android:textStyle="bold" />
+
+    <!-- 삭제 버튼 (커스텀 항목만 표시) -->
+    <TextView
+        android:id="@+id/btnDelete"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:background="@drawable/bg_widget_preview_pill"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="6dp"
+        android:text="삭제"
+        android:textColor="#FF6B6B"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- 표시/숨김 스위치 (필수 항목 제외) -->
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/switchEnabled"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp" />
+
+</LinearLayout>
