@@ -72,6 +72,7 @@ class PostAdapter(
                         putExtra("memo", post.memo)
                         putExtra("originalFileName", post.originalFileName)
                         putExtra("originalUri", post.originalUri ?: "")
+                        putExtra("extraFields", post.extraFields ?: "")
                     }
                     context.startActivity(intent)
                 }

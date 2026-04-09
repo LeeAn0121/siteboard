@@ -11,7 +11,8 @@
       "Bash(grep -E \"\\\\.kt$\")",
       "Bash(./gradlew compileDebugKotlin)",
       "Bash(chmod +x gradlew)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(./gradlew :app:compileDebugKotlin)"
     ]
   }
 }

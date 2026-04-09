@@ -96,6 +96,7 @@ class SubActivity : AppCompatActivity() {
             intent.putExtra("edit_loc", currentLocation)
             intent.putExtra("edit_detail_loc", etDetailLocation.text.toString().trim())
             intent.putExtra("edit_memo", etMemo.text.toString().trim())
+            intent.putExtra("edit_extra_fields", buildCustomFieldsJson(collectFieldValues()))
             startActivity(intent)
         }
     }
@@ -174,6 +175,20 @@ class SubActivity : AppCompatActivity() {
         }
 
         applyFieldLabels()
+
+        // 수정 모드: 커스텀 필드값 복원 (applyFieldLabels() 이후에 customFieldEdits가 생성됨)
+        if (isEditMode) {
+            val extraJson = intent.getStringExtra("edit_extraFields")
+            if (!extraJson.isNullOrEmpty()) {
+                try {
+                    val obj = org.json.JSONObject(extraJson)
+                    for ((id, et) in customFieldEdits) {
+                        if (obj.has(id)) et.setText(obj.getString(id))
+                    }
+                } catch (_: Exception) { }
+            }
+        }
+
         updatePreview()
 
         binding.btnDetailSettings.setOnClickListener {

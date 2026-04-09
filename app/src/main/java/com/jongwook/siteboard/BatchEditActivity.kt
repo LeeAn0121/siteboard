@@ -31,6 +31,9 @@ class BatchEditActivity : AppCompatActivity() {
     private var anchorPosition = 6 // default: bottom-left
     private var bgOpacity = 40     // 0-100
     private var savedLocation: String = ""
+    private var savedDetailLoc: String = ""
+    private var savedMemo: String = ""
+    private var savedExtraFields: String = ""
 
     private lateinit var themePreviewViews: List<ImageView>
     private lateinit var anchorViews: List<View>
@@ -59,6 +62,9 @@ class BatchEditActivity : AppCompatActivity() {
         binding.etTitle.setText(intent.getStringExtra("edit_title") ?: "")
         savedLocation = intent.getStringExtra("edit_loc") ?: ""
         binding.etDesc.setText(intent.getStringExtra("edit_desc") ?: "")
+        savedDetailLoc = intent.getStringExtra("edit_detail_loc") ?: ""
+        savedMemo = intent.getStringExtra("edit_memo") ?: ""
+        savedExtraFields = intent.getStringExtra("edit_extra_fields") ?: ""
 
         binding.tvPhotoCount.text = "${selectedUris.size}장 선택"
 
@@ -289,6 +295,25 @@ class BatchEditActivity : AppCompatActivity() {
         val desc = binding.etDesc.text.toString().trim()
         val loc = savedLocation
 
+        // 필드값 맵 구성 (FieldDefManager 순서대로 워터마크에 출력하기 위함)
+        val fieldValues = mutableMapOf(
+            FieldDefManager.ID_TITLE      to title,
+            FieldDefManager.ID_DESC       to desc,
+            FieldDefManager.ID_DETAIL_LOC to savedDetailLoc,
+            FieldDefManager.ID_MEMO       to savedMemo
+        )
+        // 커스텀 필드값 추가
+        if (savedExtraFields.isNotEmpty()) {
+            try {
+                val obj = org.json.JSONObject(savedExtraFields)
+                val keys = obj.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    fieldValues[key] = obj.getString(key)
+                }
+            } catch (_: Exception) { }
+        }
+
         // 앵커 위치와 투명도 저장
         val prefs = getSharedPreferences("WatermarkPrefs", Context.MODE_PRIVATE).edit()
         prefs.putInt("wm_anchor_pos", anchorPosition)
@@ -321,7 +346,7 @@ class BatchEditActivity : AppCompatActivity() {
                         orientedBitmap
                     }
 
-                    val stampedBitmap = stampTextOnBitmap(bitmapToStamp, title, desc, loc)
+                    val stampedBitmap = stampTextOnBitmap(bitmapToStamp, fieldValues, loc)
                     if (bitmapToStamp != stampedBitmap && !bitmapToStamp.isRecycled) bitmapToStamp.recycle()
 
                     val savedUri = saveBitmapToGallery(stampedBitmap, title) ?: throw Exception("저장 실패")
@@ -389,7 +414,7 @@ class BatchEditActivity : AppCompatActivity() {
         }
     }
 
-    private fun stampTextOnBitmap(bitmap: Bitmap, title: String, desc: String, loc: String): Bitmap {
+    private fun stampTextOnBitmap(bitmap: Bitmap, fieldValues: Map<String, String>, loc: String): Bitmap {
         val result = bitmap.copy(Bitmap.Config.ARGB_8888, true)
         val canvas = Canvas(result)
 
@@ -423,11 +448,16 @@ class BatchEditActivity : AppCompatActivity() {
             setShadowLayer(5f, 3f, 3f, Color.BLACK)
         }
 
-        val label1 = FieldDefManager.getLabel(this, FieldDefManager.ID_TITLE)
-        val label2 = FieldDefManager.getLabel(this, FieldDefManager.ID_DESC)
-        val lines = mutableListOf("$label1 : $title")
-        if (loc.isNotEmpty()) lines.add("위치 : $loc")
-        if (desc.isNotEmpty() && FieldDefManager.isEnabled(this, FieldDefManager.ID_DESC)) lines.add("$label2 : ${desc.replace("\n", " ")}")
+        // FieldDefManager 순서대로 워터마크 라인 구성 (SubActivity와 동일 로직)
+        val fields = FieldDefManager.getFields(this)
+        val lines = mutableListOf<String>()
+        for (field in fields) {
+            if (!field.enabled) continue
+            val value = fieldValues[field.id] ?: ""
+            if (value.isNotEmpty()) lines.add("${field.label} : ${value.replace("\n", " ")}")
+        }
+        if (loc.isNotEmpty()) lines.add("위치(GPS) : $loc")
+        if (lines.isEmpty()) lines.add(fieldValues[FieldDefManager.ID_TITLE] ?: "")
         lines.add("날짜 : " + SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date()))
 
         val fm = textPaint.fontMetrics

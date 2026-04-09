@@ -53,6 +53,7 @@ class DetailActivity : AppCompatActivity() {
         val detailLoc       = intent.getStringExtra("detailLoc") ?: ""
         val memo            = intent.getStringExtra("memo") ?: ""
         val originalUri     = intent.getStringExtra("originalUri") ?: ""
+        val extraFields     = intent.getStringExtra("extraFields") ?: ""
 
         binding.tvDetailTitle.text    = title
         binding.tvDetailDate.text     = "📅 $date"
@@ -139,6 +140,7 @@ class DetailActivity : AppCompatActivity() {
                 putExtra("edit_imageUri", imageUri)
                 putExtra("edit_originalUri", originalUri)
                 putExtra("edit_date", date)
+                putExtra("edit_extraFields", extraFields)
             })
             finish()
         }
