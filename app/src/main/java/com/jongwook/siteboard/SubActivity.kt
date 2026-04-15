@@ -149,7 +149,7 @@ class SubActivity : AppCompatActivity() {
                         bmp = try { loadOrientedBitmapFromUri(Uri.parse(editImageUri)) } catch (e: Exception) { null }
                     }
                     withContext(Dispatchers.Main) {
-                        if (bmp != null) { previewBitmap = bmp; updatePreview() }
+                        if (bmp != null) { previewBitmap = bmp }
                     }
                 }
             }
@@ -188,8 +188,6 @@ class SubActivity : AppCompatActivity() {
                 } catch (_: Exception) { }
             }
         }
-
-        updatePreview()
 
         binding.btnDetailSettings.setOnClickListener {
             startActivity(android.content.Intent(this, WatermarkSettingsActivity::class.java))
@@ -331,18 +329,6 @@ class SubActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         applyFieldLabels()
-        updatePreview()
-    }
-
-    private fun updatePreview() {
-        binding.ivPreview.imageTintList = null
-        if (previewBitmap != null) {
-            binding.ivPreview.setImageBitmap(previewBitmap)
-            binding.tvPreviewHint.visibility = View.GONE
-        } else {
-            binding.ivPreview.setImageDrawable(null)
-            binding.tvPreviewHint.visibility = View.VISIBLE
-        }
     }
 
     private fun resolveTypeface(fontType: String): Typeface = when (fontType) {
@@ -794,7 +780,6 @@ class SubActivity : AppCompatActivity() {
     private fun setGpsLocation(loc: String) {
         currentLocation = loc
         binding.tvGpsLocation.text = loc
-        updatePreview()
     }
 
     private fun convertLocationToAddress(lat: Double, lng: Double) {
