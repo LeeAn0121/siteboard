@@ -60,12 +60,12 @@ class SettingsFragment : Fragment() {
 
     private fun animateMenuRows() {
         val rows = listOf(
-            binding.btnWatermarkMenu,
-            binding.btnExportCsvMenu,
-            binding.btnSettingsBackupMenu,
             binding.btnCloudBackupMenu,
-            binding.btnCapturePrivacyMenu,
+            binding.btnSettingsBackupMenu,
+            binding.btnExportCsvMenu,
             binding.btnFieldSettingsMenu,
+            binding.btnWatermarkMenu,
+            binding.btnCapturePrivacyMenu,
             binding.btnAppInfoMenu
         )
         rows.forEachIndexed { index, view ->

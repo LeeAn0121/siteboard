@@ -274,6 +274,45 @@ object CloudBackupManager {
         }
     }
 
+    suspend fun listSettingsBackups(context: Context, token: String): List<DriveFile> {
+        val settingsFolderId = findOrCreateBackupFolders(context, token).settingsId
+        val q = java.net.URLEncoder.encode(
+            "name contains 'siteboard_settings_' and trashed=false and '$settingsFolderId' in parents",
+            "UTF-8"
+        )
+        val url = java.net.URL(
+            "https://www.googleapis.com/drive/v3/files" +
+                "?q=$q" +
+                "&orderBy=createdTime+desc" +
+                "&fields=files(id,name,createdTime,size)" +
+                "&pageSize=20"
+        )
+        val conn = url.openConnection() as java.net.HttpURLConnection
+        try {
+            conn.requestMethod = "GET"
+            conn.connectTimeout = 15_000
+            conn.readTimeout = 15_000
+            conn.setRequestProperty("Authorization", "Bearer $token")
+            if (conn.responseCode !in 200..299) throw Exception("HTTP ${conn.responseCode}")
+            val root = JSONObject(conn.inputStream.bufferedReader().readText())
+            val files = root.optJSONArray("files") ?: return emptyList()
+            return (0 until files.length()).map { i ->
+                val f = files.getJSONObject(i)
+                DriveFile(
+                    id = f.getString("id"),
+                    name = f.getString("name"),
+                    createdTime = f.optString("createdTime", ""),
+                    size = f.optLong("size", 0L)
+                )
+            }
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    suspend fun findLatestSettingsBackup(context: Context, token: String): DriveFile? =
+        listSettingsBackups(context, token).firstOrNull()
+
     // ── Drive 파일 다운로드 (텍스트) ──────────────────────────────────────────
     suspend fun downloadFile(token: String, fileId: String): String {
         val url = java.net.URL(

@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="설정 백업 및 복원"
-                    android:textSize="28sp"
+                    android:textSize="31sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
 
@@ -63,7 +63,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="설정 파일을 저장하거나 다시 불러옵니다."
-                    android:textSize="11sp"
+                    android:textSize="13sp"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
 
@@ -94,7 +94,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="16dp"
+                android:paddingVertical="18dp"
             android:background="@drawable/bg_action_row"
             android:clickable="true"
             android:focusable="true"
@@ -122,14 +122,66 @@
                     android:layout_height="wrap_content"
                     android:text="설정 내보내기"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="워터마크, 입력 항목 설정, 환경 설정을 JSON 파일로 저장합니다"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_chevron_right" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnDriveExportSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="18dp"
+            android:background="@drawable/bg_action_row"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginTop="10dp">
+
+            <LinearLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:gravity="center"
+                android:background="#1A4285F4">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_upload_outline" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Drive 설정 백업"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="현재 설정을 Google Drive settings 폴더에 바로 저장합니다"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
 
@@ -154,7 +206,7 @@
                 android:layout_height="wrap_content"
                 android:text="백업 포함 항목"
                 android:textColor="@color/text_secondary"
-                android:textSize="11sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.06" />
 
@@ -164,7 +216,7 @@
                 android:layout_marginTop="6dp"
                 android:text="• 워터마크 스타일 (위치, 폰트, 색상, 크기)\n• 입력 항목 설정 (이름·순서·표시 여부·커스텀 항목)\n• 캡처 개인정보 보호 설정\n• GPS 수집 설정\n• 위젯 설정"
                 android:textColor="@color/text_secondary"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 android:lineSpacingExtra="3dp" />
 
             <TextView
@@ -173,7 +225,7 @@
                 android:layout_marginTop="8dp"
                 android:text="* 기록 데이터(사진·현장 기록)는 포함되지 않습니다."
                 android:textColor="@color/text_tertiary"
-                android:textSize="11sp" />
+                android:textSize="12sp" />
         </LinearLayout>
 
         <LinearLayout
@@ -183,7 +235,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="16dp"
+                android:paddingVertical="18dp"
             android:background="@drawable/bg_action_row"
             android:clickable="true"
             android:focusable="true"
@@ -211,14 +263,66 @@
                     android:layout_height="wrap_content"
                     android:text="설정 불러오기"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="저장한 JSON 파일을 불러와 워터마크·입력 항목·환경 설정을 일괄 복원합니다"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
+                    android:layout_marginTop="2dp" />
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/ic_chevron_right" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnDriveImportSettings"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="18dp"
+            android:background="@drawable/bg_action_row"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginTop="10dp">
+
+            <LinearLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:gravity="center"
+                android:background="#1A7E57C2">
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_download_outline" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="14dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Drive 최신 설정 복원"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Google Drive settings 폴더의 최신 설정 백업을 불러옵니다"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
 

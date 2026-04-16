@@ -55,7 +55,7 @@
                     android:layout_marginTop="4dp"
                     android:text="클라우드 백업"
                     android:textColor="@color/text_primary"
-                    android:textSize="28sp"
+                    android:textSize="31sp"
                     android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
@@ -90,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:text="구글 계정 연동"
                     android:textColor="@color/text_primary"
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -99,7 +99,7 @@
                     android:layout_marginTop="8dp"
                     android:text="구글 계정으로 로그인하면 현장 목록과 설정을 Google Drive에 안전하게 백업하고 복원할 수 있습니다."
                     android:textColor="@color/text_secondary"
-                    android:textSize="13sp"
+                    android:textSize="14sp"
                     android:lineSpacingExtra="3dp" />
 
                 <Button
@@ -141,7 +141,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
                     android:textColor="@color/text_primary"
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -150,7 +150,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textSize="14sp" />
 
                 <Button
                     android:id="@+id/btnSignOut"
@@ -160,7 +160,7 @@
                     android:backgroundTint="@android:color/transparent"
                     android:text="로그아웃"
                     android:textColor="#E05567"
-                    android:textSize="13sp"
+                    android:textSize="14sp"
                     app:strokeColor="#E05567"
                     app:strokeWidth="1dp"
                     app:cornerRadius="10dp"
@@ -184,7 +184,7 @@
                     android:layout_height="wrap_content"
                     android:text="Drive 백업 폴더"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <LinearLayout
@@ -202,7 +202,7 @@
                         android:background="@drawable/bg_hero_panel"
                         android:paddingHorizontal="14dp"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="16sp"
                         android:hint="폴더명 (기본: SITEBOARD)"
                         android:inputType="text"
                         android:imeOptions="actionDone"
@@ -217,7 +217,7 @@
                         android:text="저장"
                         android:textColor="#10141B"
                         android:textStyle="bold"
-                        android:textSize="14sp"
+                        android:textSize="15sp"
                         app:cornerRadius="10dp"
                         android:insetTop="0dp"
                         android:insetBottom="0dp" />
@@ -240,7 +240,7 @@
                     android:layout_height="wrap_content"
                     android:text="수동 백업 (이미지 포함)"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <Button
@@ -277,7 +277,7 @@
                         android:layout_marginStart="10dp"
                         android:text="업로드 중..."
                         android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:textSize="14sp" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -304,7 +304,7 @@
                         android:layout_weight="1"
                         android:text="Drive 백업 목록"
                         android:textColor="@color/text_primary"
-                        android:textSize="16sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
 
                     <Button
@@ -314,7 +314,7 @@
                         android:backgroundTint="@android:color/transparent"
                         android:text="새로고침"
                         android:textColor="@color/orange_primary"
-                        android:textSize="13sp"
+                        android:textSize="14sp"
                         app:strokeColor="@color/orange_primary"
                         app:strokeWidth="1dp"
                         app:cornerRadius="8dp"
@@ -354,7 +354,7 @@
                     android:layout_height="wrap_content"
                     android:text="안내"
                     android:textColor="@color/orange_primary"
-                    android:textSize="11sp"
+                    android:textSize="12sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -363,7 +363,7 @@
                     android:layout_marginTop="8dp"
                     android:text="• 수동 백업은 이미지 파일을 포함하여 업로드합니다.\n• 데이터가 변경되면 백그라운드에서 자동 백업이 실행됩니다.\n• 복원 시 기존 데이터를 덮어씁니다.\n• 이미지가 없는 경우 Drive에서 자동으로 다운로드합니다."
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="13sp"
                     android:lineSpacingExtra="4dp" />
             </LinearLayout>
 
