@@ -38,7 +38,8 @@ class CloudBackupActivity : AppCompatActivity() {
         GoogleSignIn.getSignedInAccountFromIntent(result.data)
             .addOnSuccessListener { account -> updateUI(account) }
             .addOnFailureListener { e ->
-                Toast.makeText(this, "로그인 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                val message = GoogleSignInErrorFormatter.format(e)
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show()
             }
     }
 
