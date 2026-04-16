@@ -86,7 +86,7 @@ class HomeFragment : Fragment() {
 
         binding.btnOpenSub.bringToFront()
         binding.btnOpenSub.setOnClickListener {
-            startActivity(Intent(requireContext(), SubActivity::class.java))
+            openSubActivity()
         }
         binding.btnExportPdf.setOnClickListener {
             if (allPosts.isEmpty()) {
@@ -131,13 +131,7 @@ class HomeFragment : Fragment() {
 
     private fun setupFilterChips() {
         binding.chipFilterAll.setOnClickListener { setFilter(HomeFilter.ALL) }
-        binding.chipFilterToday.setOnClickListener { setFilter(HomeFilter.TODAY) }
-        binding.chipFilterMemo.setOnClickListener { setFilter(HomeFilter.MEMO) }
         binding.chipFilterFavorite.setOnClickListener { setFilter(HomeFilter.FAVORITE) }
-        binding.chipFilterMissingDetail.setOnClickListener { setFilter(HomeFilter.MISSING_DETAIL) }
-        binding.chipFilterRepair.setOnClickListener { setFilter(HomeFilter.REPAIR) }
-        binding.chipFilterCheck.setOnClickListener { setFilter(HomeFilter.CHECK) }
-        binding.chipFilterDone.setOnClickListener { setFilter(HomeFilter.DONE) }
         setFilter(HomeFilter.ALL)
     }
 
@@ -157,13 +151,7 @@ class HomeFragment : Fragment() {
     private fun setFilter(filter: HomeFilter) {
         currentFilter = filter
         updateChipState(binding.chipFilterAll, filter == HomeFilter.ALL)
-        updateChipState(binding.chipFilterToday, filter == HomeFilter.TODAY)
-        updateChipState(binding.chipFilterMemo, filter == HomeFilter.MEMO)
         updateChipState(binding.chipFilterFavorite, filter == HomeFilter.FAVORITE)
-        updateChipState(binding.chipFilterMissingDetail, filter == HomeFilter.MISSING_DETAIL)
-        updateChipState(binding.chipFilterRepair, filter == HomeFilter.REPAIR)
-        updateChipState(binding.chipFilterCheck, filter == HomeFilter.CHECK)
-        updateChipState(binding.chipFilterDone, filter == HomeFilter.DONE)
         applyFilters()
     }
 
@@ -198,13 +186,7 @@ class HomeFragment : Fragment() {
         val filterApplied = searchFiltered.filter { post ->
             when (currentFilter) {
                 HomeFilter.ALL -> true
-                HomeFilter.TODAY -> todayPatterns().any { post.date.contains(it) }
-                HomeFilter.MEMO -> !post.memo.isNullOrBlank()
                 HomeFilter.FAVORITE -> ProjectMetaStore.get(context = requireContext(), projectTitle = post.title).favorite
-                HomeFilter.MISSING_DETAIL -> post.detailLocation.isNullOrBlank()
-                HomeFilter.REPAIR -> ProjectMetaStore.get(requireContext(), post.title).status == ProjectMeta.STATUS_REPAIR
-                HomeFilter.CHECK -> ProjectMetaStore.get(requireContext(), post.title).status == ProjectMeta.STATUS_CHECK
-                HomeFilter.DONE -> ProjectMetaStore.get(requireContext(), post.title).status == ProjectMeta.STATUS_DONE
             }
         }
 
@@ -220,11 +202,17 @@ class HomeFragment : Fragment() {
         val isEmpty = filteredPosts.isEmpty()
         binding.layoutEmpty.visibility = if (isEmpty) View.VISIBLE else View.GONE
         binding.rvPostList.visibility = if (isEmpty) View.GONE else View.VISIBLE
+        renderEmptyState(isEmpty, query)
         if (!isEmpty) {
             binding.rvPostList.scheduleLayoutAnimation()
         }
         binding.tvResultSummary.text =
             "${filteredPosts.size}개 기록 · ${currentFilter.label} · ${currentSort.label}"
+    }
+
+    private fun renderEmptyState(isEmpty: Boolean, query: String) {
+        if (!isEmpty) return
+        binding.tvEmptyTitle.text = "아직 저장된 기록이 없습니다"
     }
 
     private fun updateSelectionUi(selectedCount: Int) {
@@ -438,13 +426,8 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private fun todayPatterns(): List<String> {
-        val now = Date()
-        return listOf(
-            SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(now),
-            SimpleDateFormat("yyyy.MM.dd", Locale.getDefault()).format(now),
-            SimpleDateFormat("yyyy/MM/dd", Locale.getDefault()).format(now)
-        )
+    private fun openSubActivity() {
+        startActivity(Intent(requireContext(), SubActivity::class.java))
     }
 
     override fun onDestroyView() {
@@ -455,13 +438,7 @@ class HomeFragment : Fragment() {
 
 private enum class HomeFilter(val label: String) {
     ALL("전체"),
-    TODAY("오늘 기록"),
-    MEMO("메모 포함"),
-    FAVORITE("즐겨찾기"),
-    MISSING_DETAIL("상세 위치 미입력"),
-    REPAIR("보수 필요"),
-    CHECK("점검 예정"),
-    DONE("완료")
+    FAVORITE("즐겨찾기")
 }
 
 private enum class HomeSort(val label: String) {

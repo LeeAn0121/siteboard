@@ -205,8 +205,11 @@
             android:padding="12dp">
 
             <LinearLayout
+                android:id="@+id/layoutFilterHeader"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -228,120 +231,117 @@
                     android:text="현장별 기록을 최신 업데이트순으로 보고 있습니다"
                     android:textColor="@color/text_secondary"
                     android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tvFilterToggle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:background="@drawable/bg_widget_preview_pill"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="6dp"
+                    android:text="펼치기"
+                    android:textColor="@color/orange_primary"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
             </LinearLayout>
 
-            <com.google.android.material.chip.ChipGroup
-                android:id="@+id/chipArchiveFilters"
+            <LinearLayout
+                android:id="@+id/layoutFilterContent"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                app:chipSpacingHorizontal="6dp"
-                app:chipSpacingVertical="6dp"
-                app:singleLine="false">
+                android:orientation="vertical"
+                android:visibility="gone">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipArchiveAll"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/chipArchiveFilters"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="전체"
-                    android:checked="true"
-                    app:chipBackgroundColor="@color/surface_dark"
-                    app:chipStrokeColor="@color/stroke_subtle"
-                    app:chipStrokeWidth="1dp"
-                    app:checkedIconVisible="false"
-                    android:textColor="@color/text_primary" />
+                    android:layout_marginTop="10dp"
+                    app:chipSpacingHorizontal="6dp"
+                    app:chipSpacingVertical="6dp"
+                    app:singleLine="false">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipArchiveFavorite"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipArchiveAll"
+                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="전체"
+                        android:checked="true"
+                        app:chipBackgroundColor="@color/surface_dark"
+                        app:chipStrokeColor="@color/stroke_subtle"
+                        app:chipStrokeWidth="1dp"
+                        app:checkedIconVisible="false"
+                        android:textColor="@color/text_primary" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipArchiveFavorite"
+                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="즐겨찾기"
+                        app:chipBackgroundColor="@color/surface_dark"
+                        app:chipStrokeColor="@color/stroke_subtle"
+                        app:chipStrokeWidth="1dp"
+                        app:checkedIconVisible="false"
+                        android:textColor="@color/text_primary" />
+                </com.google.android.material.chip.ChipGroup>
+
+                <com.google.android.material.button.MaterialButtonToggleGroup
+                    android:id="@+id/toggleArchiveSort"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="즐겨찾기"
-                    app:chipBackgroundColor="@color/surface_dark"
-                    app:chipStrokeColor="@color/stroke_subtle"
-                    app:chipStrokeWidth="1dp"
-                    app:checkedIconVisible="false"
-                    android:textColor="@color/text_primary" />
+                    android:layout_marginTop="10dp"
+                    app:singleSelection="true"
+                    app:selectionRequired="true">
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipArchiveRepair"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="보수 필요"
-                    app:chipBackgroundColor="@color/surface_dark"
-                    app:chipStrokeColor="@color/stroke_subtle"
-                    app:chipStrokeWidth="1dp"
-                    app:checkedIconVisible="false"
-                    android:textColor="@color/text_primary" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnArchiveSortRecent"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="8dp"
+                        android:text="최신순"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        app:backgroundTint="@android:color/transparent"
+                        app:strokeColor="@color/stroke_subtle" />
 
-                <com.google.android.material.chip.Chip
-                    android:id="@+id/chipArchiveCheck"
-                    style="@style/Widget.MaterialComponents.Chip.Choice"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="점검 예정"
-                    app:chipBackgroundColor="@color/surface_dark"
-                    app:chipStrokeColor="@color/stroke_subtle"
-                    app:chipStrokeWidth="1dp"
-                    app:checkedIconVisible="false"
-                    android:textColor="@color/text_primary" />
-            </com.google.android.material.chip.ChipGroup>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnArchiveSortName"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="8dp"
+                        android:text="이름순"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        app:backgroundTint="@android:color/transparent"
+                        app:strokeColor="@color/stroke_subtle" />
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
-                android:id="@+id/toggleArchiveSort"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                app:singleSelection="true"
-                app:selectionRequired="true">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnArchiveSortFavorite"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="8dp"
-                    android:text="즐겨찾기 우선"
-                    android:textAllCaps="false"
-                    android:textColor="@color/text_primary"
-                    android:textSize="11sp"
-                    app:backgroundTint="@android:color/transparent"
-                    app:strokeColor="@color/stroke_subtle" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnArchiveSortRecent"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="8dp"
-                    android:text="최신순"
-                    android:textAllCaps="false"
-                    android:textColor="@color/text_primary"
-                    android:textSize="11sp"
-                    app:backgroundTint="@android:color/transparent"
-                    app:strokeColor="@color/stroke_subtle" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnArchiveSortName"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="42dp"
-                    android:layout_weight="1"
-                    android:minWidth="0dp"
-                    android:paddingHorizontal="8dp"
-                    android:text="이름순"
-                    android:textAllCaps="false"
-                    android:textColor="@color/text_primary"
-                    android:textSize="11sp"
-                    app:backgroundTint="@android:color/transparent"
-                    app:strokeColor="@color/stroke_subtle" />
-            </com.google.android.material.button.MaterialButtonToggleGroup>
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnArchiveSortOldest"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="42dp"
+                        android:layout_weight="1"
+                        android:minWidth="0dp"
+                        android:paddingHorizontal="8dp"
+                        android:text="오래된순"
+                        android:textAllCaps="false"
+                        android:textColor="@color/text_primary"
+                        android:textSize="11sp"
+                        app:backgroundTint="@android:color/transparent"
+                        app:strokeColor="@color/stroke_subtle" />
+                </com.google.android.material.button.MaterialButtonToggleGroup>
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
@@ -364,14 +364,15 @@
     <LinearLayout
         android:id="@+id/layoutEmpty"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:orientation="vertical"
+        android:background="@drawable/bg_empty_state_panel"
         android:gravity="center"
-        android:background="@drawable/bg_surface_card_soft"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="20dp"
-        android:paddingHorizontal="28dp"
-        android:paddingVertical="28dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="18dp"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="24dp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/layoutHeader"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -379,27 +380,41 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.32">
 
-        <ImageView
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginBottom="14dp"
-            android:src="@drawable/ic_folder_outline"
-            app:tint="@color/orange_primary" />
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="등록된 현장이 없습니다"
-            android:textSize="17sp"
-            android:textColor="@color/text_primary"
-            android:textStyle="bold" />
+            android:gravity="center"
+            android:orientation="vertical">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="현장 기록이 쌓이면 이곳에서 현장명 단위로 모아볼 수 있습니다"
-            android:textSize="13sp"
-            android:textColor="@color/text_secondary"
-            android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/bg_widget_preview_pill"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:src="@drawable/ic_folder_outline"
+                    app:tint="@color/orange_primary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvEmptyTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="아직 저장된 기록이 없습니다"
+                    android:textColor="@color/text_primary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

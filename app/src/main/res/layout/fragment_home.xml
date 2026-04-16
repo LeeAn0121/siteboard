@@ -196,32 +196,8 @@
                         style="@style/Widget.MaterialComponents.Chip.Choice"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="전체 기록"
+                        android:text="전체"
                         android:checked="true"
-                        app:chipBackgroundColor="@color/surface_dark"
-                        app:chipStrokeColor="@color/stroke_subtle"
-                        app:chipStrokeWidth="1dp"
-                        app:checkedIconVisible="false"
-                        android:textColor="@color/text_primary" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipFilterToday"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="오늘 추가"
-                        app:chipBackgroundColor="@color/surface_dark"
-                        app:chipStrokeColor="@color/stroke_subtle"
-                        app:chipStrokeWidth="1dp"
-                        app:checkedIconVisible="false"
-                        android:textColor="@color/text_primary" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipFilterMemo"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="메모 있음"
                         app:chipBackgroundColor="@color/surface_dark"
                         app:chipStrokeColor="@color/stroke_subtle"
                         app:chipStrokeWidth="1dp"
@@ -234,54 +210,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="즐겨찾기"
-                        app:chipBackgroundColor="@color/surface_dark"
-                        app:chipStrokeColor="@color/stroke_subtle"
-                        app:chipStrokeWidth="1dp"
-                        app:checkedIconVisible="false"
-                        android:textColor="@color/text_primary" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipFilterMissingDetail"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="위치 미입력"
-                        app:chipBackgroundColor="@color/surface_dark"
-                        app:chipStrokeColor="@color/stroke_subtle"
-                        app:chipStrokeWidth="1dp"
-                        app:checkedIconVisible="false"
-                        android:textColor="@color/text_primary" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipFilterRepair"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="보수 필요"
-                        app:chipBackgroundColor="@color/surface_dark"
-                        app:chipStrokeColor="@color/stroke_subtle"
-                        app:chipStrokeWidth="1dp"
-                        app:checkedIconVisible="false"
-                        android:textColor="@color/text_primary" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipFilterCheck"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="점검 예정"
-                        app:chipBackgroundColor="@color/surface_dark"
-                        app:chipStrokeColor="@color/stroke_subtle"
-                        app:chipStrokeWidth="1dp"
-                        app:checkedIconVisible="false"
-                        android:textColor="@color/text_primary" />
-
-                    <com.google.android.material.chip.Chip
-                        android:id="@+id/chipFilterDone"
-                        style="@style/Widget.MaterialComponents.Chip.Choice"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="완료"
                         app:chipBackgroundColor="@color/surface_dark"
                         app:chipStrokeColor="@color/stroke_subtle"
                         app:chipStrokeWidth="1dp"
@@ -427,14 +355,15 @@
     <LinearLayout
         android:id="@+id/layoutEmpty"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:orientation="vertical"
+        android:background="@drawable/bg_empty_state_panel"
         android:gravity="center"
-        android:background="@drawable/bg_surface_card_soft"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="24dp"
-        android:paddingHorizontal="26dp"
-        android:paddingVertical="26dp"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="18dp"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="24dp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/layoutTop"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -442,26 +371,41 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.35">
 
-        <ImageView
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginBottom="14dp"
-            android:src="@drawable/ic_image_outline"
-            app:tint="@color/orange_primary" />
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="기록된 사진이 없습니다"
-            android:textSize="17sp"
-            android:textColor="@color/text_primary"
-            android:textStyle="bold" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="하단 추가 버튼으로 첫 현장을 기록해 보세요"
-            android:textSize="13sp"
-            android:textColor="@color/text_secondary"
-            android:layout_marginTop="6dp" />
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="72dp"
+                android:layout_height="72dp"
+                android:background="@drawable/bg_widget_preview_pill"
+                android:gravity="center">
+
+                <ImageView
+                    android:layout_width="34dp"
+                    android:layout_height="34dp"
+                    android:src="@drawable/ic_image_outline"
+                    app:tint="@color/orange_primary" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvEmptyTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="아직 저장된 기록이 없습니다"
+                    android:textColor="@color/text_primary"
+                    android:textSize="17sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 
     <!-- FAB -->

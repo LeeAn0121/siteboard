@@ -23,6 +23,8 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.transition.AutoTransition
+import androidx.transition.TransitionManager
 import com.google.android.material.chip.Chip
 import com.google.android.material.snackbar.Snackbar
 import com.jongwook.siteboard.databinding.FragmentArchiveBinding
@@ -43,8 +45,9 @@ class ArchiveFragment : Fragment() {
 
     private var allProjects: List<ProjectSummary> = emptyList()
     private var currentFilter = ArchiveFilter.ALL
-    private var currentSort = ArchiveSort.FAVORITE
+    private var currentSort = ArchiveSort.RECENT
     private var pendingInitialFilter: ArchiveFilter? = null
+    private var isFilterExpanded = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentArchiveBinding.inflate(inflater, container, false)
@@ -84,10 +87,9 @@ class ArchiveFragment : Fragment() {
         binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
         setupArchiveFilters()
         setupArchiveSort()
+        setupFilterPanel()
         pendingInitialFilter = when (arguments?.getString(ARG_INITIAL_FILTER)) {
             ArchiveFilter.FAVORITE.name -> ArchiveFilter.FAVORITE
-            ArchiveFilter.REPAIR.name -> ArchiveFilter.REPAIR
-            ArchiveFilter.CHECK.name -> ArchiveFilter.CHECK
             else -> ArchiveFilter.ALL
         }
         pendingInitialFilter?.let { setArchiveFilter(it) }
@@ -136,19 +138,26 @@ class ArchiveFragment : Fragment() {
     private fun setupArchiveFilters() {
         binding.chipArchiveAll.setOnClickListener { setArchiveFilter(ArchiveFilter.ALL) }
         binding.chipArchiveFavorite.setOnClickListener { setArchiveFilter(ArchiveFilter.FAVORITE) }
-        binding.chipArchiveRepair.setOnClickListener { setArchiveFilter(ArchiveFilter.REPAIR) }
-        binding.chipArchiveCheck.setOnClickListener { setArchiveFilter(ArchiveFilter.CHECK) }
         setArchiveFilter(ArchiveFilter.ALL)
     }
 
+    private fun setupFilterPanel() {
+        binding.layoutFilterHeader.setOnClickListener {
+            isFilterExpanded = !isFilterExpanded
+            renderFilterPanel()
+        }
+        renderFilterPanel()
+    }
+
     private fun setupArchiveSort() {
-        binding.toggleArchiveSort.check(R.id.btnArchiveSortFavorite)
+        binding.toggleArchiveSort.check(R.id.btnArchiveSortRecent)
         binding.toggleArchiveSort.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (!isChecked) return@addOnButtonCheckedListener
             currentSort = when (checkedId) {
                 R.id.btnArchiveSortRecent -> ArchiveSort.RECENT
                 R.id.btnArchiveSortName -> ArchiveSort.NAME
-                else -> ArchiveSort.FAVORITE
+                R.id.btnArchiveSortOldest -> ArchiveSort.OLDEST
+                else -> ArchiveSort.RECENT
             }
             applyFilter(binding.etSearch.text?.toString().orEmpty())
         }
@@ -158,8 +167,6 @@ class ArchiveFragment : Fragment() {
         currentFilter = filter
         updateChipState(binding.chipArchiveAll, filter == ArchiveFilter.ALL)
         updateChipState(binding.chipArchiveFavorite, filter == ArchiveFilter.FAVORITE)
-        updateChipState(binding.chipArchiveRepair, filter == ArchiveFilter.REPAIR)
-        updateChipState(binding.chipArchiveCheck, filter == ArchiveFilter.CHECK)
         applyFilter(binding.etSearch.text?.toString().orEmpty())
     }
 
@@ -169,6 +176,14 @@ class ArchiveFragment : Fragment() {
         val textColor = if (checked) R.color.bg_dark else R.color.text_primary
         chip.setChipBackgroundColorResource(bgColor)
         chip.setTextColor(resources.getColor(textColor, null))
+    }
+
+    private fun renderFilterPanel() {
+        TransitionManager.beginDelayedTransition(binding.layoutHeader, AutoTransition().apply {
+            duration = 220
+        })
+        binding.layoutFilterContent.visibility = if (isFilterExpanded) View.VISIBLE else View.GONE
+        binding.tvFilterToggle.text = if (isFilterExpanded) "접기" else "펼치기"
     }
 
     private fun applyFilter(query: String) {
@@ -185,27 +200,27 @@ class ArchiveFragment : Fragment() {
             when (currentFilter) {
                 ArchiveFilter.ALL -> true
                 ArchiveFilter.FAVORITE -> it.favorite
-                ArchiveFilter.REPAIR -> it.status == ProjectMeta.STATUS_REPAIR
-                ArchiveFilter.CHECK -> it.status == ProjectMeta.STATUS_CHECK
             }
         }
         val sorted = when (currentSort) {
-            ArchiveSort.FAVORITE -> filtered.sortedWith(
-                compareByDescending<ProjectSummary> { it.favorite }
-                    .thenByDescending { it.recentPostId }
-                    .thenBy { it.title.lowercase(Locale.getDefault()) }
-            )
             ArchiveSort.RECENT -> filtered.sortedByDescending { it.recentPostId }
             ArchiveSort.NAME -> filtered.sortedBy { it.title.lowercase(Locale.getDefault()) }
+            ArchiveSort.OLDEST -> filtered.sortedBy { it.recentPostId }
         }
 
         archiveAdapter.submitList(sorted)
         binding.tvResultSummary.text = "${sorted.size}개 현장 · ${currentFilter.label} · ${currentSort.label}"
         binding.layoutEmpty.visibility = if (sorted.isEmpty()) View.VISIBLE else View.GONE
         binding.rvProjects.visibility = if (sorted.isEmpty()) View.GONE else View.VISIBLE
+        renderEmptyState(sorted.isEmpty(), trimmed)
         if (sorted.isNotEmpty()) {
             binding.rvProjects.scheduleLayoutAnimation()
         }
+    }
+
+    private fun renderEmptyState(isEmpty: Boolean, query: String) {
+        if (!isEmpty) return
+        binding.tvEmptyTitle.text = "아직 저장된 기록이 없습니다"
     }
 
     private fun exportToPdf(siteTitle: String, posts: List<PostEntity>) {
@@ -343,13 +358,11 @@ class ArchiveFragment : Fragment() {
 
 private enum class ArchiveFilter(val label: String) {
     ALL("전체"),
-    FAVORITE("즐겨찾기"),
-    REPAIR("보수 필요"),
-    CHECK("점검 예정")
+    FAVORITE("즐겨찾기")
 }
 
 private enum class ArchiveSort(val label: String) {
-    FAVORITE("즐겨찾기 우선"),
     RECENT("최신순"),
-    NAME("이름순")
+    NAME("이름순"),
+    OLDEST("오래된순")
 }
