@@ -44,17 +44,9 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="설정"
-                    android:textSize="24sp"
+                    android:textSize="28sp"
                     android:textColor="@color/text_primary"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="기능별 메뉴를 카드형으로 정리했습니다."
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
             </LinearLayout>
 
             <TextView
@@ -94,6 +86,7 @@
                 android:textSize="11sp"
                 android:textStyle="bold" />
 
+            <!-- 워터마크 -->
             <LinearLayout
                 android:id="@+id/btnWatermarkMenu"
                 android:layout_width="match_parent"
@@ -101,7 +94,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="16dp"
-                android:paddingVertical="16dp"
+                android:paddingVertical="18dp"
                 android:background="@drawable/bg_action_row"
                 android:clickable="true"
                 android:focusable="true">
@@ -117,27 +110,15 @@
                         android:src="@drawable/ic_edit_outline" />
                 </LinearLayout>
 
-                <LinearLayout
+                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="워터마크"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="테마, 폰트, 위치, 여백, 저장 옵션"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="2dp" />
-                </LinearLayout>
+                    android:layout_marginStart="14dp"
+                    android:text="워터마크"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <ImageView
                     android:layout_width="wrap_content"
@@ -145,6 +126,7 @@
                     android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
+            <!-- 기록 데이터 내보내기 -->
             <LinearLayout
                 android:id="@+id/btnExportCsvMenu"
                 android:layout_width="match_parent"
@@ -152,7 +134,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="16dp"
-                android:paddingVertical="16dp"
+                android:paddingVertical="18dp"
                 android:background="@drawable/bg_action_row"
                 android:clickable="true"
                 android:focusable="true"
@@ -169,27 +151,15 @@
                         android:src="@drawable/ic_chart_outline" />
                 </LinearLayout>
 
-                <LinearLayout
+                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="기록 데이터 내보내기"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="저장된 모든 현장 기록을 CSV 파일로 추출합니다"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="2dp" />
-                </LinearLayout>
+                    android:layout_marginStart="14dp"
+                    android:text="기록 데이터 내보내기"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <ImageView
                     android:layout_width="wrap_content"
@@ -197,6 +167,7 @@
                     android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
+            <!-- 설정 백업 -->
             <LinearLayout
                 android:id="@+id/btnSettingsBackupMenu"
                 android:layout_width="match_parent"
@@ -208,43 +179,28 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal"
                 android:paddingHorizontal="16dp"
-                android:paddingVertical="16dp">
+                android:paddingVertical="18dp">
 
                 <LinearLayout
                     android:layout_width="44dp"
                     android:layout_height="44dp"
                     android:background="#1A7DE5B2"
                     android:gravity="center">
-
                     <ImageView
                         android:layout_width="22dp"
                         android:layout_height="22dp"
                         android:src="@drawable/ic_download_outline" />
                 </LinearLayout>
 
-                <LinearLayout
+                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="14dp"
                     android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="설정 백업"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="설정 파일을 저장하거나 복원합니다"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
+                    android:layout_marginStart="14dp"
+                    android:text="설정 백업"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <ImageView
                     android:layout_width="wrap_content"
@@ -252,6 +208,48 @@
                     android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
+            <!-- 클라우드 백업 (Google Drive) -->
+            <LinearLayout
+                android:id="@+id/btnCloudBackupMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_action_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="18dp">
+
+                <LinearLayout
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="#1A4285F4"
+                    android:gravity="center">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_upload_outline" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:text="클라우드 백업"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_chevron_right" />
+            </LinearLayout>
+
+            <!-- 촬영 및 개인정보 -->
             <LinearLayout
                 android:id="@+id/btnCapturePrivacyMenu"
                 android:layout_width="match_parent"
@@ -259,7 +257,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="16dp"
-                android:paddingVertical="16dp"
+                android:paddingVertical="18dp"
                 android:background="@drawable/bg_action_row"
                 android:clickable="true"
                 android:focusable="true"
@@ -276,27 +274,15 @@
                         android:src="@drawable/ic_shield_outline" />
                 </LinearLayout>
 
-                <LinearLayout
+                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="촬영 및 개인정보"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="PDF 모드, 개인정보 마스킹, GPS 수집"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="2dp" />
-                </LinearLayout>
+                    android:layout_marginStart="14dp"
+                    android:text="촬영 및 개인정보"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <ImageView
                     android:layout_width="wrap_content"
@@ -304,6 +290,48 @@
                     android:src="@drawable/ic_chevron_right" />
             </LinearLayout>
 
+            <!-- 입력 항목 설정 (앱 정보보다 위) -->
+            <LinearLayout
+                android:id="@+id/btnFieldSettingsMenu"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_action_row"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="18dp">
+
+                <LinearLayout
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="#1A5C9AFF"
+                    android:gravity="center">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:src="@drawable/ic_edit_outline" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="14dp"
+                    android:text="입력 항목 설정"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:src="@drawable/ic_chevron_right" />
+            </LinearLayout>
+
+            <!-- 앱 정보 (맨 아래) -->
             <LinearLayout
                 android:id="@+id/btnAppInfoMenu"
                 android:layout_width="match_parent"
@@ -311,7 +339,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="16dp"
-                android:paddingVertical="16dp"
+                android:paddingVertical="18dp"
                 android:background="@drawable/bg_action_row"
                 android:clickable="true"
                 android:focusable="true"
@@ -328,82 +356,15 @@
                         android:src="@drawable/ic_info_outline" />
                 </LinearLayout>
 
-                <LinearLayout
+                <TextView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical"
-                    android:layout_marginStart="14dp">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="앱 정보"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="현재 버전과 앱 정보 확인"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:layout_marginTop="2dp" />
-                </LinearLayout>
-
-                <ImageView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:src="@drawable/ic_chevron_right" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:id="@+id/btnFieldSettingsMenu"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:background="@drawable/bg_action_row"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="16dp">
-
-                <LinearLayout
-                    android:layout_width="44dp"
-                    android:layout_height="44dp"
-                    android:background="#1A5C9AFF"
-                    android:gravity="center">
-
-                    <ImageView
-                        android:layout_width="22dp"
-                        android:layout_height="22dp"
-                        android:src="@drawable/ic_edit_outline" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
                     android:layout_marginStart="14dp"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="입력 항목 설정"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="입력 항목 갯수와 이름을 자유롭게 설정"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
+                    android:text="앱 정보"
+                    android:textColor="@color/text_primary"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
                 <ImageView
                     android:layout_width="wrap_content"

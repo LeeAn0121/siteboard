@@ -54,7 +54,7 @@
                     android:layout_marginTop="4dp"
                     android:text="기록 템플릿"
                     android:textColor="@color/text_primary"
-                    android:textSize="24sp"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
 
                 <TextView

@@ -291,6 +291,7 @@ abstract class AppDatabase : RoomDatabase() {
             } catch (e: Exception) {
                 android.util.Log.e("SiteboardDB", "Immediate backup failed: ${e.message}")
             }
+            CloudBackupManager.triggerAutoBackup(context.applicationContext)
         }
 
         private fun saveDbToDownloads(ctx: android.content.Context, file: java.io.File) {

@@ -121,4 +121,7 @@ dependencies {
     // 🚀 [추가] Google Play In-App Update
     implementation(libs.play.update)
     implementation(libs.play.update.ktx)
+
+    // 구글 계정 로그인 + Drive 백업
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
 }

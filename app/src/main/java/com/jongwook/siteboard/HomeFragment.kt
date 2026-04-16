@@ -230,7 +230,7 @@ class HomeFragment : Fragment() {
     private fun updateSelectionUi(selectedCount: Int) {
         if (selectedCount > 0) {
             binding.layoutSelectionMode.visibility = View.VISIBLE
-            binding.layoutTop.visibility = View.GONE
+            binding.layoutTop.visibility = View.INVISIBLE
             binding.btnOpenSub.hide()
             binding.tvSelectedCount.text = "${selectedCount}개 선택됨"
             binding.btnSelectAll.text = if (selectedCount == filteredPosts.size && filteredPosts.isNotEmpty()) "해제" else "전체"

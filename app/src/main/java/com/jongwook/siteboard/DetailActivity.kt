@@ -58,18 +58,51 @@ class DetailActivity : AppCompatActivity() {
         binding.tvDetailTitle.text    = title
         binding.tvDetailDate.text     = "📅 $date"
         binding.tvDetailLocation.text = if (loc.isBlank()) "📍 위치 미입력" else "📍 $loc"
-        binding.tvDetailDesc.text     = if (desc.isBlank()) "작업 내용 없음" else desc
 
-        // 상세 위치 표시
-        if (detailLoc.isNotBlank()) {
-            binding.layoutDetailLocation.visibility = android.view.View.VISIBLE
-            binding.tvDetailDetailLocation.text = "📌 $detailLoc"
+        val fields    = FieldDefManager.getFields(this)
+        val fieldMap  = fields.associateBy { it.id }
+
+        // 작업 내용
+        val descField = fieldMap[FieldDefManager.ID_DESC]
+        if (descField != null && descField.enabled) {
+            binding.layoutDesc.visibility = android.view.View.VISIBLE
+            binding.tvDetailDescLabel.text = descField.label
+            binding.tvDetailDesc.text = if (desc.isBlank()) "${descField.label} 없음" else desc
+        } else {
+            binding.layoutDesc.visibility = android.view.View.GONE
         }
 
-        // 메모 표시
-        if (memo.isNotBlank()) {
+        // 상세 위치
+        val detailLocField = fieldMap[FieldDefManager.ID_DETAIL_LOC]
+        if (detailLocField != null && detailLocField.enabled && detailLoc.isNotBlank()) {
+            binding.layoutDetailLocation.visibility = android.view.View.VISIBLE
+            binding.tvDetailDetailLocationLabel.text = detailLocField.label
+            binding.tvDetailDetailLocation.text = "📌 $detailLoc"
+        } else {
+            binding.layoutDetailLocation.visibility = android.view.View.GONE
+        }
+
+        // 메모
+        val memoField = fieldMap[FieldDefManager.ID_MEMO]
+        if (memoField != null && memoField.enabled && memo.isNotBlank()) {
             binding.layoutMemo.visibility = android.view.View.VISIBLE
+            binding.tvDetailMemoLabel.text = memoField.label
             binding.tvDetailMemo.text = memo
+        } else {
+            binding.layoutMemo.visibility = android.view.View.GONE
+        }
+
+        // 커스텀 필드 표시
+        if (extraFields.isNotBlank()) {
+            try {
+                val extraObj = org.json.JSONObject(extraFields)
+                for (field in fields) {
+                    if (FieldDefManager.isBuiltIn(field.id) || !field.enabled) continue
+                    val value = extraObj.optString(field.id, "")
+                    if (value.isBlank()) continue
+                    addExtraFieldCard(field.label, value)
+                }
+            } catch (_: Exception) { }
         }
 
         binding.tvDetailLocation.setOnClickListener {
@@ -166,6 +199,42 @@ class DetailActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    private fun addExtraFieldCard(label: String, value: String) {
+        val dp = resources.displayMetrics.density
+        val card = android.widget.LinearLayout(this).apply {
+            orientation = android.widget.LinearLayout.VERTICAL
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.topMargin = (14 * dp).toInt() }
+            background = androidx.core.content.ContextCompat.getDrawable(
+                this@DetailActivity, R.drawable.bg_surface_card_soft)
+            val p = (14 * dp).toInt()
+            setPadding(p, p, p, p)
+        }
+        val labelView = android.widget.TextView(this).apply {
+            text = label
+            setTextColor(androidx.core.content.ContextCompat.getColor(
+                this@DetailActivity, R.color.orange_primary))
+            textSize = 11f
+            setTypeface(null, android.graphics.Typeface.BOLD)
+        }
+        val valueView = android.widget.TextView(this).apply {
+            this.text = value
+            setTextColor(androidx.core.content.ContextCompat.getColor(
+                this@DetailActivity, R.color.text_primary))
+            textSize = 15f
+            layoutParams = android.widget.LinearLayout.LayoutParams(
+                android.widget.LinearLayout.LayoutParams.MATCH_PARENT,
+                android.widget.LinearLayout.LayoutParams.WRAP_CONTENT
+            ).also { it.topMargin = (6 * dp).toInt() }
+            setLineSpacing(4f * dp, 1f)
+        }
+        card.addView(labelView)
+        card.addView(valueView)
+        binding.containerExtraFields.addView(card)
     }
 
     /** 이미지를 고정 영역(fitCenter)에 맞게 초기 matrix 세팅 */

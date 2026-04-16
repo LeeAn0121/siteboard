@@ -12,7 +12,8 @@
       "Bash(./gradlew compileDebugKotlin)",
       "Bash(chmod +x gradlew)",
       "Bash(git rm:*)",
-      "Bash(./gradlew :app:compileDebugKotlin)"
+      "Bash(./gradlew :app:compileDebugKotlin)",
+      "Bash(grep -n \"textSize=\\\\\"24sp\\\\\"\" /Users/junjonguk/Desktop/GITHUB/siteboard/app/src/main/res/layout/*.xml)"
     ]
   }
 }

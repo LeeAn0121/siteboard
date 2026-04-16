@@ -48,17 +48,8 @@
                     android:layout_marginTop="4dp"
                     android:text="현장 기록"
                     android:textColor="@color/text_primary"
-                    android:textSize="24sp"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
-
-                <TextView
-                    android:id="@+id/tvTitle"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:text="검색과 PDF 내보내기를 빠르게 처리합니다"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
             </LinearLayout>
 
             <TextView

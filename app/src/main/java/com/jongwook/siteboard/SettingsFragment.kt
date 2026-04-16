@@ -42,14 +42,17 @@ class SettingsFragment : Fragment() {
         binding.btnSettingsBackupMenu.setOnClickListener {
             startActivity(Intent(requireContext(), SettingsBackupActivity::class.java))
         }
+        binding.btnCloudBackupMenu.setOnClickListener {
+            startActivity(Intent(requireContext(), CloudBackupActivity::class.java))
+        }
         binding.btnCapturePrivacyMenu.setOnClickListener {
             startActivity(Intent(requireContext(), CapturePrivacySettingsActivity::class.java))
         }
-        binding.btnAppInfoMenu.setOnClickListener {
-            startActivity(Intent(requireContext(), AppInfoActivity::class.java))
-        }
         binding.btnFieldSettingsMenu.setOnClickListener {
             startActivity(Intent(requireContext(), FieldSettingsActivity::class.java))
+        }
+        binding.btnAppInfoMenu.setOnClickListener {
+            startActivity(Intent(requireContext(), AppInfoActivity::class.java))
         }
 
         animateMenuRows()
@@ -60,9 +63,10 @@ class SettingsFragment : Fragment() {
             binding.btnWatermarkMenu,
             binding.btnExportCsvMenu,
             binding.btnSettingsBackupMenu,
+            binding.btnCloudBackupMenu,
             binding.btnCapturePrivacyMenu,
-            binding.btnAppInfoMenu,
-            binding.btnFieldSettingsMenu
+            binding.btnFieldSettingsMenu,
+            binding.btnAppInfoMenu
         )
         rows.forEachIndexed { index, view ->
             view.alpha = 0f

@@ -55,7 +55,7 @@
                     android:layout_marginTop="4dp"
                     android:text="위젯 현장 선택"
                     android:textColor="@color/text_primary"
-                    android:textSize="24sp"
+                    android:textSize="28sp"
                     android:textStyle="bold" />
 
                 <TextView

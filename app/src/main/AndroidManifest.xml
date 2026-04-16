@@ -116,6 +116,10 @@
             android:screenOrientation="portrait"
             android:exported="false" />
 
+        <activity android:name=".CloudBackupActivity"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
         <receiver
             android:name=".ReminderReceiver"
             android:exported="false" />
