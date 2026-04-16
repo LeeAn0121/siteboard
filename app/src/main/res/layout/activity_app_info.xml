@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="앱 정보"
-                    android:textSize="28sp"
+                    android:textSize="31sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
 
@@ -63,7 +63,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="현재 설치된 앱 버전을 확인합니다."
-                    android:textSize="11sp"
+                    android:textSize="13sp"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
 
@@ -98,13 +98,13 @@
             android:layout_marginTop="8dp">
 
             <LinearLayout
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                 android:gravity="center"
                 android:background="#1A2196F3">
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
                     android:src="@drawable/ic_info_outline" />
             </LinearLayout>
 
@@ -119,14 +119,14 @@
                     android:layout_height="wrap_content"
                     android:text="현재 버전"
                     android:textColor="@color/text_primary"
-                    android:textSize="15sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
                 <TextView
                     android:id="@+id/tvAppVersion"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
                     android:layout_marginTop="2dp"
                     android:text="불러오는 중..." />
             </LinearLayout>
@@ -146,13 +146,13 @@
             android:focusable="true">
 
             <LinearLayout
-                android:layout_width="40dp"
-                android:layout_height="40dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                 android:gravity="center"
                 android:background="#1A7DE5B2">
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
                     android:src="@drawable/ic_lock_outline" />
             </LinearLayout>
 
@@ -167,14 +167,14 @@
                     android:layout_height="wrap_content"
                     android:text="사용 권한"
                     android:textColor="@color/text_primary"
-                    android:textSize="15sp"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="카메라, 사진, 위치 권한 상태와 시스템 설정 이동"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
 

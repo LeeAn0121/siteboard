@@ -46,7 +46,7 @@
                     android:layout_marginTop="4dp"
                     android:text="입력 항목 설정"
                     android:textColor="@color/text_primary"
-                    android:textSize="28sp"
+                    android:textSize="31sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -55,7 +55,7 @@
                     android:layout_marginTop="2dp"
                     android:text="항목을 자유롭게 추가·삭제하고 드래그로 순서를 바꾸세요."
                     android:textColor="@color/text_secondary"
-                    android:textSize="11sp" />
+                    android:textSize="13sp" />
             </LinearLayout>
 
             <TextView
@@ -103,7 +103,7 @@
             android:gravity="center"
             android:text="+ 항목 추가"
             android:textColor="#091018"
-            android:textSize="15sp"
+            android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
 

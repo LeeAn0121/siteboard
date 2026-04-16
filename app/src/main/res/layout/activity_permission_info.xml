@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="사용 권한"
-                    android:textSize="28sp"
+                    android:textSize="31sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
 
@@ -63,7 +63,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="앱이 사용하는 핵심 권한 상태를 확인합니다."
-                    android:textSize="11sp"
+                    android:textSize="13sp"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
 
@@ -105,13 +105,13 @@
                 android:layout_marginTop="8dp">
 
                 <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:gravity="center"
                     android:background="#1AF06D7D">
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
                         android:src="@drawable/ic_image_outline" />
                 </LinearLayout>
 
@@ -126,14 +126,14 @@
                         android:layout_height="wrap_content"
                         android:text="카메라"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView
                         android:id="@+id/tvCameraPermissionDetail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="14sp"
                         android:layout_marginTop="2dp"
                         android:text="확인 중..." />
                 </LinearLayout>
@@ -143,7 +143,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="확인 중"
-                    android:textSize="13sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
@@ -159,13 +159,13 @@
                 android:layout_marginTop="10dp">
 
                 <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:gravity="center"
                     android:background="#1A5C9AFF">
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
                         android:src="@drawable/ic_folder_outline" />
                 </LinearLayout>
 
@@ -180,14 +180,14 @@
                         android:layout_height="wrap_content"
                         android:text="사진 및 저장소"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView
                         android:id="@+id/tvPhotoPermissionDetail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="14sp"
                         android:layout_marginTop="2dp"
                         android:text="확인 중..." />
                 </LinearLayout>
@@ -197,7 +197,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="확인 중"
-                    android:textSize="13sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
@@ -213,13 +213,13 @@
                 android:layout_marginTop="10dp">
 
                 <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:gravity="center"
                     android:background="#1A7DE5B2">
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
                         android:src="@drawable/ic_location_outline" />
                 </LinearLayout>
 
@@ -234,14 +234,14 @@
                         android:layout_height="wrap_content"
                         android:text="위치"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView
                         android:id="@+id/tvLocationPermissionDetail"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="14sp"
                         android:layout_marginTop="2dp"
                         android:text="확인 중..." />
                 </LinearLayout>
@@ -251,7 +251,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="확인 중"
-                    android:textSize="13sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>

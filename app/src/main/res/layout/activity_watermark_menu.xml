@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="워터마크"
-                    android:textSize="28sp"
+                    android:textSize="31sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
 
@@ -63,7 +63,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="스타일과 저장 옵션 메뉴로 들어갑니다."
-                    android:textSize="11sp"
+                    android:textSize="13sp"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
 
@@ -94,7 +94,7 @@
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:paddingHorizontal="16dp"
-            android:paddingVertical="16dp"
+                android:paddingVertical="18dp"
             android:background="@drawable/bg_action_row"
             android:clickable="true"
             android:focusable="true">
@@ -121,14 +121,14 @@
                     android:layout_height="wrap_content"
                     android:text="워터마크 상세 설정"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:textSize="19sp"
                     android:textStyle="bold" />
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="테마, 폰트, 위치, 여백, 배경 박스, 원본 삭제"
                     android:textColor="@color/text_secondary"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
                     android:layout_marginTop="2dp" />
             </LinearLayout>
 

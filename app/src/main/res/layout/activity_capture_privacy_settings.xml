@@ -54,7 +54,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="촬영 및 개인정보"
-                    android:textSize="28sp"
+                    android:textSize="31sp"
                     android:textStyle="bold"
                     android:textColor="@color/text_primary" />
 
@@ -63,7 +63,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
                     android:text="촬영 결과물과 민감 정보 처리 방식을 정합니다."
-                    android:textSize="11sp"
+                    android:textSize="13sp"
                     android:textColor="@color/text_secondary" />
             </LinearLayout>
 
@@ -104,13 +104,13 @@
                 android:layout_marginTop="8dp">
 
                 <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:gravity="center"
                     android:background="#1AF44336">
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
                         android:src="@drawable/ic_insert_drive_file_outline" />
                 </LinearLayout>
 
@@ -125,14 +125,14 @@
                         android:layout_height="wrap_content"
                         android:text="A4 1장에 사진 2장 출력 모드"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="용지 절약을 위해 이미지를 압축하여 배치합니다"
                         android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="14sp"
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
@@ -154,13 +154,13 @@
                 android:layout_marginTop="10dp">
 
                 <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:gravity="center"
                     android:background="#1A9C27B0">
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
                         android:src="@drawable/ic_shield_outline" />
                 </LinearLayout>
 
@@ -175,14 +175,14 @@
                         android:layout_height="wrap_content"
                         android:text="개인정보 자동 마스킹"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="얼굴, 번호판 등 민감한 정보를 자동으로 가립니다"
                         android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="14sp"
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
@@ -204,13 +204,13 @@
                 android:layout_marginTop="10dp">
 
                 <LinearLayout
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
                     android:gravity="center"
                     android:background="#1A4CAF50">
                     <ImageView
-                        android:layout_width="20dp"
-                        android:layout_height="20dp"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
                         android:src="@drawable/ic_location_outline" />
                 </LinearLayout>
 
@@ -225,14 +225,14 @@
                         android:layout_height="wrap_content"
                         android:text="GPS 위치 수집"
                         android:textColor="@color/text_primary"
-                        android:textSize="15sp"
+                        android:textSize="18sp"
                         android:textStyle="bold" />
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="OFF 시 워터마크에 위치 정보를 포함하지 않습니다"
                         android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
+                        android:textSize="14sp"
                         android:layout_marginTop="2dp" />
                 </LinearLayout>
 
