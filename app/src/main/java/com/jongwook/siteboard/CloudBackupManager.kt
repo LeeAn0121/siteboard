@@ -19,12 +19,11 @@ import java.util.Locale
 object CloudBackupManager {
 
     private const val PREFS_NAME = "SiteboardPrefs"
-    private const val KEY_AUTO_BACKUP = "cloud_auto_backup_enabled"
-    private const val KEY_LAST_AUTO_BACKUP_TS = "cloud_last_auto_backup_ts"
     private const val KEY_BACKUP_FOLDER_NAME = "cloud_backup_folder_name"
     private const val KEY_BACKUP_FOLDER_ID = "cloud_backup_folder_id"
     private const val DEFAULT_FOLDER_NAME = "SITEBOARD"
-    private const val AUTO_BACKUP_MIN_INTERVAL_MS = 5 * 60 * 1000L
+    private const val SETTINGS_FOLDER_NAME = "settings"
+    private const val IMAGES_FOLDER_NAME = "images"
     val DRIVE_SCOPE = Scope("https://www.googleapis.com/auth/drive.file")
 
     private val bgScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
@@ -36,13 +35,11 @@ object CloudBackupManager {
         val size: Long
     )
 
-    // ── 자동 백업 설정 ─────────────────────────────────────────────────────────
-    fun isAutoBackupEnabled(context: Context): Boolean =
-        prefs(context).getBoolean(KEY_AUTO_BACKUP, false)
-
-    fun setAutoBackupEnabled(context: Context, enabled: Boolean) {
-        prefs(context).edit().putBoolean(KEY_AUTO_BACKUP, enabled).apply()
-    }
+    data class BackupFolders(
+        val rootId: String,
+        val settingsId: String,
+        val imagesId: String
+    )
 
     // ── 백업 폴더 설정 ─────────────────────────────────────────────────────────
     fun getBackupFolderName(context: Context): String =
@@ -67,14 +64,8 @@ object CloudBackupManager {
 
     // ── 자동 백업 트리거 (JSON + 사진 모두 업로드) ──────────────────────────────
     fun triggerAutoBackup(context: Context) {
-        if (!isAutoBackupEnabled(context)) return
         val account = GoogleSignIn.getLastSignedInAccount(context) ?: return
         if (!GoogleSignIn.hasPermissions(account, DRIVE_SCOPE)) return
-
-        val p = prefs(context)
-        val last = p.getLong(KEY_LAST_AUTO_BACKUP_TS, 0L)
-        // 자동 백업은 하루에 한 번 또는 최소 1시간 간격 등으로 조정 가능 (현재는 5분)
-        if (System.currentTimeMillis() - last < AUTO_BACKUP_MIN_INTERVAL_MS) return
 
         bgScope.launch {
             try {
@@ -86,19 +77,17 @@ object CloudBackupManager {
                     return@launch
                 }
 
-                val parentId = findOrCreateFolder(context, token)
+                val folders = findOrCreateBackupFolders(context, token)
                 val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-                
-                // 백업용 서브 폴더 생성 (선택 사항, 여기서는 기존처럼 파일명에 날짜 포함)
-                // 1. 이미지 업로드
-                val imageIdMap = uploadImages(context, token, parentId)
-                
-                // 2. JSON 업로드 (이미지 ID 포함)
-                upload(token, "siteboard_sites_$ts.json", buildSiteListJson(context, imageIdMap), parentId)
-                upload(token, "siteboard_settings_$ts.json",
-                    SettingsBackupManager.buildSettingsBackupJson(context), parentId)
 
-                p.edit().putLong(KEY_LAST_AUTO_BACKUP_TS, System.currentTimeMillis()).apply()
+                // 1. 이미지 업로드
+                val imageIdMap = uploadImages(context, token, folders.imagesId)
+
+                // 2. JSON 업로드 (이미지 ID 포함)
+                upload(token, "siteboard_sites_$ts.json", buildSiteListJson(context, imageIdMap), folders.settingsId)
+                upload(token, "siteboard_settings_$ts.json",
+                    SettingsBackupManager.buildSettingsBackupJson(context), folders.settingsId)
+
                 Log.d("CloudBackup", "Auto-backup completed: $ts")
             } catch (e: Exception) {
                 Log.e("CloudBackup", "Auto-backup failed: ${e.message}")
@@ -147,8 +136,16 @@ object CloudBackupManager {
     }
 
     private fun findFolder(token: String, name: String): String? {
+        return findFolder(token, name, null)
+    }
+
+    private fun findFolder(token: String, name: String, parentFolderId: String?): String? {
+        val query = buildString {
+            append("name='$name' and mimeType='application/vnd.google-apps.folder' and trashed=false")
+            if (parentFolderId != null) append(" and '$parentFolderId' in parents")
+        }
         val q = java.net.URLEncoder.encode(
-            "name='$name' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+            query,
             "UTF-8"
         )
         val url = java.net.URL(
@@ -172,9 +169,26 @@ object CloudBackupManager {
         }
     }
 
+    suspend fun findOrCreateBackupFolders(context: Context, token: String): BackupFolders {
+        val rootId = findOrCreateFolder(context, token)
+        val settingsId = findFolder(token, SETTINGS_FOLDER_NAME, rootId)
+            ?: createFolderOnDrive(token, SETTINGS_FOLDER_NAME, rootId)
+        val imagesId = findFolder(token, IMAGES_FOLDER_NAME, rootId)
+            ?: createFolderOnDrive(token, IMAGES_FOLDER_NAME, rootId)
+        return BackupFolders(rootId = rootId, settingsId = settingsId, imagesId = imagesId)
+    }
+
     fun findFileByName(token: String, name: String): String? {
+        return findFileByName(token, name, null)
+    }
+
+    fun findFileByName(token: String, name: String, parentFolderId: String?): String? {
+        val query = buildString {
+            append("name='$name' and trashed=false")
+            if (parentFolderId != null) append(" and '$parentFolderId' in parents")
+        }
         val q = java.net.URLEncoder.encode(
-            "name='$name' and trashed=false",
+            query,
             "UTF-8"
         )
         val url = java.net.URL(
@@ -196,6 +210,10 @@ object CloudBackupManager {
     }
 
     private fun createFolderOnDrive(token: String, name: String): String {
+        return createFolderOnDrive(token, name, null)
+    }
+
+    private fun createFolderOnDrive(token: String, name: String, parentFolderId: String?): String {
         val url = java.net.URL("https://www.googleapis.com/drive/v3/files?fields=id")
         val conn = url.openConnection() as java.net.HttpURLConnection
         try {
@@ -205,7 +223,11 @@ object CloudBackupManager {
             conn.readTimeout = 15_000
             conn.setRequestProperty("Authorization", "Bearer $token")
             conn.setRequestProperty("Content-Type", "application/json")
-            val body = """{"name":"$name","mimeType":"application/vnd.google-apps.folder"}"""
+            val body = if (parentFolderId != null) {
+                """{"name":"$name","mimeType":"application/vnd.google-apps.folder","parents":["$parentFolderId"]}"""
+            } else {
+                """{"name":"$name","mimeType":"application/vnd.google-apps.folder"}"""
+            }
             conn.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
             if (conn.responseCode !in 200..299)
                 throw Exception("HTTP ${conn.responseCode}")
@@ -216,10 +238,15 @@ object CloudBackupManager {
     }
 
     // ── Drive 파일 목록 조회 ──────────────────────────────────────────────────
-    suspend fun listSiteBackups(token: String): List<DriveFile> {
+    suspend fun listSiteBackups(context: Context, token: String): List<DriveFile> {
+        val settingsFolderId = findOrCreateBackupFolders(context, token).settingsId
+        val q = java.net.URLEncoder.encode(
+            "name contains 'siteboard_sites_' and trashed=false and '$settingsFolderId' in parents",
+            "UTF-8"
+        )
         val url = java.net.URL(
             "https://www.googleapis.com/drive/v3/files" +
-            "?q=name+contains+%27siteboard_sites%27" +
+            "?q=$q" +
             "&orderBy=createdTime+desc" +
             "&fields=files(id,name,createdTime,size)" +
             "&pageSize=20"
@@ -487,6 +514,23 @@ object CloudBackupManager {
             val code = conn.responseCode
             if (code !in 200..299)
                 throw Exception(conn.errorStream?.bufferedReader()?.readText() ?: "HTTP $code")
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    fun deleteFile(token: String, fileId: String) {
+        val url = java.net.URL("https://www.googleapis.com/drive/v3/files/$fileId")
+        val conn = url.openConnection() as java.net.HttpURLConnection
+        try {
+            conn.requestMethod = "DELETE"
+            conn.connectTimeout = 15_000
+            conn.readTimeout = 15_000
+            conn.setRequestProperty("Authorization", "Bearer $token")
+            val code = conn.responseCode
+            if (code !in 200..299 && code != 204) {
+                throw Exception(conn.errorStream?.bufferedReader()?.readText() ?: "HTTP $code")
+            }
         } finally {
             conn.disconnect()
         }

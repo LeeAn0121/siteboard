@@ -168,48 +168,6 @@
                     android:insetBottom="0dp" />
             </LinearLayout>
 
-            <!-- 자동 백업 토글 -->
-            <LinearLayout
-                android:id="@+id/layoutAutoBackup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:background="@drawable/bg_surface_card_soft"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:padding="18dp"
-                android:visibility="gone">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="자동 백업"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="3dp"
-                        android:text="데이터 변경 시 Drive에 자동 업로드 (JSON, 5분 간격)"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-
-                <Switch
-                    android:id="@+id/switchAutoBackup"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp" />
-            </LinearLayout>
-
             <!-- 백업 경로 설정 -->
             <LinearLayout
                 android:id="@+id/layoutFolderSetting"
@@ -403,7 +361,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="• 수동 백업은 이미지 파일을 포함하여 업로드합니다.\n• 자동 백업은 데이터(JSON)만 업로드합니다 (빠른 처리).\n• 복원 시 기존 데이터를 덮어씁니다.\n• 이미지가 없는 경우 Drive에서 자동으로 다운로드합니다."
+                    android:text="• 수동 백업은 이미지 파일을 포함하여 업로드합니다.\n• 데이터가 변경되면 백그라운드에서 자동 백업이 실행됩니다.\n• 복원 시 기존 데이터를 덮어씁니다.\n• 이미지가 없는 경우 Drive에서 자동으로 다운로드합니다."
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
                     android:lineSpacingExtra="4dp" />

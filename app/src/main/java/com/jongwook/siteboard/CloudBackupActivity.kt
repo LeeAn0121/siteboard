@@ -25,6 +25,7 @@ import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
 class CloudBackupActivity : AppCompatActivity() {
 
@@ -70,10 +71,6 @@ class CloudBackupActivity : AppCompatActivity() {
             val account = GoogleSignIn.getLastSignedInAccount(this) ?: return@setOnClickListener
             loadBackupList(account)
         }
-        binding.switchAutoBackup.setOnCheckedChangeListener { _, checked ->
-            CloudBackupManager.setAutoBackupEnabled(this, checked)
-        }
-
         updateUI(GoogleSignIn.getLastSignedInAccount(this))
     }
 
@@ -82,17 +79,14 @@ class CloudBackupActivity : AppCompatActivity() {
             binding.layoutSignedOut.visibility = View.GONE
             binding.layoutSignedIn.visibility = View.VISIBLE
             binding.layoutUpload.visibility = View.VISIBLE
-            binding.layoutAutoBackup.visibility = View.VISIBLE
             binding.layoutBackupList.visibility = View.VISIBLE
             binding.tvDisplayName.text = account.displayName ?: account.email ?: ""
             binding.tvEmail.text = account.email ?: ""
-            binding.switchAutoBackup.isChecked = CloudBackupManager.isAutoBackupEnabled(this)
             loadBackupList(account)
         } else {
             binding.layoutSignedOut.visibility = View.VISIBLE
             binding.layoutSignedIn.visibility = View.GONE
             binding.layoutUpload.visibility = View.GONE
-            binding.layoutAutoBackup.visibility = View.GONE
             binding.layoutBackupList.visibility = View.GONE
         }
     }
@@ -119,8 +113,8 @@ class CloudBackupActivity : AppCompatActivity() {
                     ?: throw Exception("토큰을 가져올 수 없습니다.")
                 
                 // 1. 이미지 업로드 (진행률 표시 가능)
-                val folderId = CloudBackupManager.findOrCreateFolder(applicationContext, token)
-                val imageIdMap = CloudBackupManager.uploadImages(applicationContext, token, folderId) { current, total ->
+                val folders = CloudBackupManager.findOrCreateBackupFolders(applicationContext, token)
+                val imageIdMap = CloudBackupManager.uploadImages(applicationContext, token, folders.imagesId) { current, total ->
                     lifecycleScope.launch(Dispatchers.Main) {
                         binding.tvProgressMessage.text = "이미지 업로드 중... ($current/$total)"
                     }
@@ -128,9 +122,9 @@ class CloudBackupActivity : AppCompatActivity() {
 
                 val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                 CloudBackupManager.upload(token, "siteboard_sites_$ts.json",
-                    CloudBackupManager.buildSiteListJson(applicationContext, imageIdMap), folderId)
+                    CloudBackupManager.buildSiteListJson(applicationContext, imageIdMap), folders.settingsId)
                 CloudBackupManager.upload(token, "siteboard_settings_$ts.json",
-                    SettingsBackupManager.buildSettingsBackupJson(applicationContext), folderId)
+                    SettingsBackupManager.buildSettingsBackupJson(applicationContext), folders.settingsId)
 
                 withContext(Dispatchers.Main) {
                     binding.layoutProgress.visibility = View.GONE
@@ -169,7 +163,7 @@ class CloudBackupActivity : AppCompatActivity() {
             try {
                 val token = CloudBackupManager.getToken(applicationContext, account)
                     ?: return@launch
-                val files = CloudBackupManager.listSiteBackups(token)
+                val files = CloudBackupManager.listSiteBackups(applicationContext, token)
 
                 withContext(Dispatchers.Main) {
                     if (files.isEmpty()) {
@@ -209,12 +203,7 @@ class CloudBackupActivity : AppCompatActivity() {
             textSize = 13f
         }
 
-        // Parse ISO 8601 date to readable format
-        val dateStr = try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.getDefault())
-            val parsed = sdf.parse(file.createdTime)
-            SimpleDateFormat("yyyy.MM.dd HH:mm", Locale.getDefault()).format(parsed ?: Date())
-        } catch (_: Exception) { file.createdTime }
+        val dateStr = formatBackupTimestamp(file)
 
         val dateView = TextView(this).apply {
             text = dateStr
@@ -244,7 +233,7 @@ class CloudBackupActivity : AppCompatActivity() {
         val deleteBtn = Button(this).apply {
             text = "삭제"
             textSize = 12f
-            setTextColor(androidx.core.content.ContextCompat.getColor(this@CloudBackupActivity, R.color.red_primary))
+            setTextColor(androidx.core.content.ContextCompat.getColor(this@CloudBackupActivity, android.R.color.holo_red_light))
             background = null
             layoutParams = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.WRAP_CONTENT,
@@ -271,6 +260,33 @@ class CloudBackupActivity : AppCompatActivity() {
         binding.containerBackupItems.addView(row)
     }
 
+    private fun formatBackupTimestamp(file: CloudBackupManager.DriveFile): String {
+        val fileNameTimestamp = file.name
+            .substringAfter("siteboard_sites_", "")
+            .substringBefore(".json", "")
+
+        try {
+            if (fileNameTimestamp.matches(Regex("\\d{8}_\\d{6}"))) {
+                val parsed = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault())
+                    .parse(fileNameTimestamp)
+                if (parsed != null) {
+                    return SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.getDefault()).format(parsed)
+                }
+            }
+        } catch (_: Exception) {
+        }
+
+        return try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US).apply {
+                timeZone = TimeZone.getTimeZone("UTC")
+            }
+            val parsed = sdf.parse(file.createdTime)
+            SimpleDateFormat("yyyy.MM.dd HH:mm:ss", Locale.getDefault()).format(parsed ?: Date())
+        } catch (_: Exception) {
+            file.createdTime
+        }
+    }
+
     private fun confirmRestore(file: CloudBackupManager.DriveFile, token: String) {
         AlertDialog.Builder(this)
             .setTitle("백업 복원")
@@ -295,7 +311,8 @@ class CloudBackupActivity : AppCompatActivity() {
                 val ts = file.name.substringAfter("siteboard_sites_", "").substringBefore(".json", "")
                 if (ts.isNotEmpty()) {
                     val settingsFileName = "siteboard_settings_$ts.json"
-                    val settingsFile = CloudBackupManager.findFileByName(token, settingsFileName)
+                    val settingsFolderId = CloudBackupManager.findOrCreateBackupFolders(applicationContext, token).settingsId
+                    val settingsFile = CloudBackupManager.findFileByName(token, settingsFileName, settingsFolderId)
                     if (settingsFile != null) {
                         val settingsJson = CloudBackupManager.downloadFile(token, settingsFile)
                         SettingsBackupManager.applySettingsBackupJson(applicationContext, settingsJson)
@@ -341,7 +358,8 @@ class CloudBackupActivity : AppCompatActivity() {
                 val ts = file.name.substringAfter("siteboard_sites_", "").substringBefore(".json", "")
                 if (ts.isNotEmpty()) {
                     val settingsFileName = "siteboard_settings_$ts.json"
-                    val settingsFileId = CloudBackupManager.findFileByName(token, settingsFileName)
+                    val settingsFolderId = CloudBackupManager.findOrCreateBackupFolders(applicationContext, token).settingsId
+                    val settingsFileId = CloudBackupManager.findFileByName(token, settingsFileName, settingsFolderId)
                     if (settingsFileId != null) {
                         CloudBackupManager.deleteFile(token, settingsFileId)
                     }
@@ -365,4 +383,4 @@ class CloudBackupActivity : AppCompatActivity() {
             }
         }
     }
-}}
+}
