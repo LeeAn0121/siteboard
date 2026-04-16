@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.OvershootInterpolator
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
@@ -87,18 +88,25 @@ class SettingsFragment : Fragment() {
     }
 
     private fun exportCsv() {
-        Toast.makeText(requireContext(), "데이터 추출 중...", Toast.LENGTH_SHORT).show()
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                DataExportManager.exportPostsToCsv(requireContext().applicationContext)
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "CSV(엑셀) 데이터가 저장되었습니다.", Toast.LENGTH_LONG).show()
-                }
-            } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(requireContext(), "CSV 저장 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+        AlertDialog.Builder(requireContext())
+            .setTitle("기록 데이터 내보내기")
+            .setMessage("CSV(엑셀) 파일로 기록 데이터를 내보냅니다.\n계속하시겠습니까?")
+            .setPositiveButton("확인") { _, _ ->
+                Toast.makeText(requireContext(), "데이터 추출을 시작합니다.", Toast.LENGTH_SHORT).show()
+                viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                    try {
+                        DataExportManager.exportPostsToCsv(requireContext().applicationContext)
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(requireContext(), "CSV(엑셀) 데이터가 저장되었습니다.", Toast.LENGTH_LONG).show()
+                        }
+                    } catch (e: Exception) {
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(requireContext(), "CSV 저장 실패: ${e.message}", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             }
-        }
+            .setNegativeButton("취소", null)
+            .show()
     }
 }
