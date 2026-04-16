@@ -153,6 +153,15 @@ object SiteboardNotificationManager {
         showStatusNotification(context, "PDF 저장 완료", message, notificationId)
     }
 
+    fun showStorageFullNotification(context: Context) {
+        showStatusNotification(
+            context,
+            "구글 드라이브 용량 부족",
+            "용량이 꽉 차서 백업을 완료할 수 없습니다. 드라이브 공간을 확보해주세요.",
+            3001
+        )
+    }
+
     private fun buildMissingProjectMessages(context: Context, posts: List<PostEntity>): List<String> {
         val grouped = posts.groupBy { it.title }
         return ProjectMetaStore.getFavoriteProjects(context).mapNotNull { title ->
@@ -170,3 +179,4 @@ object SiteboardNotificationManager {
         return ((System.currentTimeMillis() - parsed.time) / (24L * 60L * 60L * 1000L)).coerceAtLeast(0)
     }
 }
+

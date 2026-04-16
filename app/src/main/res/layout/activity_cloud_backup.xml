@@ -198,7 +198,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:text="데이터 변경 시 Drive에 자동 업로드 (5분 간격)"
+                        android:text="데이터 변경 시 Drive에 자동 업로드 (JSON, 5분 간격)"
                         android:textColor="@color/text_secondary"
                         android:textSize="12sp" />
                 </LinearLayout>
@@ -210,7 +210,63 @@
                     android:layout_marginStart="12dp" />
             </LinearLayout>
 
-            <!-- 업로드 섹션 -->
+            <!-- 백업 경로 설정 -->
+            <LinearLayout
+                android:id="@+id/layoutFolderSetting"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_surface_card_soft"
+                android:orientation="vertical"
+                android:padding="18dp"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Drive 백업 폴더"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <EditText
+                        android:id="@+id/etFolderName"
+                        android:layout_width="0dp"
+                        android:layout_height="48dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_hero_panel"
+                        android:paddingHorizontal="14dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:hint="폴더명 (기본: SITEBOARD)"
+                        android:inputType="text"
+                        android:imeOptions="actionDone"
+                        android:singleLine="true" />
+
+                    <Button
+                        android:id="@+id/btnSaveFolder"
+                        android:layout_width="wrap_content"
+                        android:layout_height="48dp"
+                        android:layout_marginStart="10dp"
+                        android:background="@drawable/bg_primary_button"
+                        android:text="저장"
+                        android:textColor="#10141B"
+                        android:textStyle="bold"
+                        android:textSize="14sp"
+                        app:cornerRadius="10dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 수동 업로드 섹션 -->
             <LinearLayout
                 android:id="@+id/layoutUpload"
                 android:layout_width="match_parent"
@@ -224,7 +280,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="수동 업로드"
+                    android:text="수동 백업 (이미지 포함)"
                     android:textColor="@color/text_primary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
@@ -347,7 +403,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
-                    android:text="• 현장 목록(JSON)과 설정 파일을 Google Drive에 백업합니다.\n• 복원 시 기존 데이터를 덮어씁니다.\n• 이미지 파일은 백업에 포함되지 않습니다 (같은 기기에서만 표시됨)."
+                    android:text="• 수동 백업은 이미지 파일을 포함하여 업로드합니다.\n• 자동 백업은 데이터(JSON)만 업로드합니다 (빠른 처리).\n• 복원 시 기존 데이터를 덮어씁니다.\n• 이미지가 없는 경우 Drive에서 자동으로 다운로드합니다."
                     android:textColor="@color/text_secondary"
                     android:textSize="12sp"
                     android:lineSpacingExtra="4dp" />

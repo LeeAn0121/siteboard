@@ -117,11 +117,20 @@ class CloudBackupActivity : AppCompatActivity() {
             try {
                 val token = CloudBackupManager.getToken(applicationContext, account)
                     ?: throw Exception("토큰을 가져올 수 없습니다.")
+                
+                // 1. 이미지 업로드 (진행률 표시 가능)
+                val folderId = CloudBackupManager.findOrCreateFolder(applicationContext, token)
+                val imageIdMap = CloudBackupManager.uploadImages(applicationContext, token, folderId) { current, total ->
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        binding.tvProgressMessage.text = "이미지 업로드 중... ($current/$total)"
+                    }
+                }
+
                 val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
                 CloudBackupManager.upload(token, "siteboard_sites_$ts.json",
-                    CloudBackupManager.buildSiteListJson(applicationContext))
+                    CloudBackupManager.buildSiteListJson(applicationContext, imageIdMap), folderId)
                 CloudBackupManager.upload(token, "siteboard_settings_$ts.json",
-                    SettingsBackupManager.buildSettingsBackupJson(applicationContext))
+                    SettingsBackupManager.buildSettingsBackupJson(applicationContext), folderId)
 
                 withContext(Dispatchers.Main) {
                     binding.layoutProgress.visibility = View.GONE
@@ -140,8 +149,13 @@ class CloudBackupActivity : AppCompatActivity() {
                 withContext(Dispatchers.Main) {
                     binding.layoutProgress.visibility = View.GONE
                     binding.btnUpload.isEnabled = true
-                    Toast.makeText(this@CloudBackupActivity,
-                        "업로드 실패: ${e.message}", Toast.LENGTH_LONG).show()
+                    val msg = e.message ?: ""
+                    if (msg.contains("quota", ignoreCase = true) || msg.contains("full", ignoreCase = true)) {
+                        SiteboardNotificationManager.showStorageFullNotification(this@CloudBackupActivity)
+                        Toast.makeText(this@CloudBackupActivity, "드라이브 용량이 부족합니다.", Toast.LENGTH_LONG).show()
+                    } else {
+                        Toast.makeText(this@CloudBackupActivity, "업로드 실패: $msg", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         }
@@ -227,8 +241,21 @@ class CloudBackupActivity : AppCompatActivity() {
             setOnClickListener { confirmRestore(file, token) }
         }
 
+        val deleteBtn = Button(this).apply {
+            text = "삭제"
+            textSize = 12f
+            setTextColor(androidx.core.content.ContextCompat.getColor(this@CloudBackupActivity, R.color.red_primary))
+            background = null
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                (36 * dp).toInt()
+            ).also { it.marginStart = (4 * dp).toInt() }
+            setOnClickListener { confirmDelete(file, token) }
+        }
+
         row.addView(infoLayout)
         row.addView(restoreBtn)
+        row.addView(deleteBtn)
 
         // Divider above item (except first)
         if (binding.containerBackupItems.childCount > 0) {
@@ -260,13 +287,26 @@ class CloudBackupActivity : AppCompatActivity() {
 
         lifecycleScope.launch(Dispatchers.IO) {
             try {
+                // 1. 데이터 복원 (Posts)
                 val json = CloudBackupManager.downloadFile(token, file.id)
-                val count = CloudBackupManager.restoreFromJson(applicationContext, json)
+                val count = CloudBackupManager.restoreFromJson(applicationContext, json, token)
+
+                // 2. 설정 복원 시도 (파일명에서 타임스탬프 추출)
+                val ts = file.name.substringAfter("siteboard_sites_", "").substringBefore(".json", "")
+                if (ts.isNotEmpty()) {
+                    val settingsFileName = "siteboard_settings_$ts.json"
+                    val settingsFile = CloudBackupManager.findFileByName(token, settingsFileName)
+                    if (settingsFile != null) {
+                        val settingsJson = CloudBackupManager.downloadFile(token, settingsFile)
+                        SettingsBackupManager.applySettingsBackupJson(applicationContext, settingsJson)
+                    }
+                }
+
                 withContext(Dispatchers.Main) {
                     binding.layoutProgress.visibility = View.GONE
                     binding.btnUpload.isEnabled = true
                     Toast.makeText(this@CloudBackupActivity,
-                        "복원 완료: $count 건의 기록이 복원되었습니다.", Toast.LENGTH_LONG).show()
+                        "복원 완료: $count 건의 기록과 설정이 복원되었습니다.", Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
@@ -278,4 +318,51 @@ class CloudBackupActivity : AppCompatActivity() {
             }
         }
     }
-}
+
+    private fun confirmDelete(file: CloudBackupManager.DriveFile, token: String) {
+        AlertDialog.Builder(this)
+            .setTitle("백업 삭제")
+            .setMessage("'${file.name}'\n\n이 백업 파일을 정말 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.")
+            .setPositiveButton("삭제") { _, _ -> performDelete(file, token) }
+            .setNegativeButton("취소", null)
+            .show()
+    }
+
+    private fun performDelete(file: CloudBackupManager.DriveFile, token: String) {
+        binding.layoutProgress.visibility = View.VISIBLE
+        binding.tvProgressMessage.text = "삭제 중..."
+        binding.btnUpload.isEnabled = false
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                CloudBackupManager.deleteFile(token, file.id)
+
+                // 연결된 settings 파일도 삭제 시도
+                val ts = file.name.substringAfter("siteboard_sites_", "").substringBefore(".json", "")
+                if (ts.isNotEmpty()) {
+                    val settingsFileName = "siteboard_settings_$ts.json"
+                    val settingsFileId = CloudBackupManager.findFileByName(token, settingsFileName)
+                    if (settingsFileId != null) {
+                        CloudBackupManager.deleteFile(token, settingsFileId)
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    binding.layoutProgress.visibility = View.GONE
+                    binding.btnUpload.isEnabled = true
+                    Toast.makeText(this@CloudBackupActivity,
+                        "백업 파일 삭제 완료: ${file.name}", Toast.LENGTH_LONG).show()
+                    val account = GoogleSignIn.getLastSignedInAccount(this@CloudBackupActivity)
+                    if (account != null) loadBackupList(account)
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    binding.layoutProgress.visibility = View.GONE
+                    binding.btnUpload.isEnabled = true
+                    Toast.makeText(this@CloudBackupActivity,
+                        "백업 파일 삭제 실패: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+}}
